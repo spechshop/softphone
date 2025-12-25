@@ -12,6 +12,34 @@ Evite mensagens genéricas.
 
 ---
 
+## Idioma (Obrigatório)
+
+Todas as mensagens de commit **DEVEM ser escritas em Português (pt-BR)**.
+
+### Regras
+- Não usar inglês, exceto para:
+  - Nomes de arquivos
+  - Nomes de classes, funções ou métodos
+  - Termos técnicos amplamente aceitos (ex: RTP, SIP, worker, buffer, codec)
+
+### Estilo do idioma
+- Linguagem técnica e objetiva
+- Frases claras e diretas
+- Sem gírias
+- Sem emojis
+- Sem traduções literais ruins do inglês
+
+### Exemplos corretos
+- `Refatora ciclo de vida do worker RTP`
+- `Corrige condição de corrida no roteamento UDP`
+- `Adiciona suporte a transcodificação Opus no MediaChannel`
+
+### Exemplos incorretos
+- `Refactor RTP worker lifecycle`
+- `Fix UDP race condition`
+- `Update stuff`
+
+
 ## Estrutura obrigatória da mensagem
 
 ### 1. Título (primeira linha)
