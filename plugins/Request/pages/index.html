@@ -6,19 +6,17 @@
 <body>
  <!-- NAVBAR -->
   <div class="navbar">
-     <a class="navbar-brand text-blue" href="/">
-                <i class="fa-brands fa-deskpro fa-2xl" style="color: #74C0FC; margin-bottom:7px"></i>&nbsp;&nbsp;
-                <span class="text-white fw-bold" id="branded">SPECHSHOP</span>
-            </a>
+      <div class="text-white fw-bold" id="branded">sip:username</div>
 
 
-            <div id="top-bar" style="transition: width 0.2s ease"></div>
+      <div id="top-bar" style="transition: width 0.2s ease"></div>
 
 
-            <a class="text-decoration-none text-white" href="#" onclick="user.logout()" id="regStatus"
-                style="color: white !important;">
-            </a>
-            <!--   -->
+      <!-- status de conexao  -->
+      <div id="connection-status" class="me-3">
+          <i id="connection-icon" class="fa-solid fa-circle text-success"></i>
+          Conectado
+      </div>
   </div>
 
 <!-- Conteúdo Principal -->
