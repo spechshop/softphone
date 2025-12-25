@@ -7,6 +7,7 @@
       <sourceFolder url="file://$MODULE_DIR$/plugins/Message" isTestSource="false" />
       <sourceFolder url="file://$MODULE_DIR$/plugins/Message/server" isTestSource="false" packagePrefix="plugins" />
       <sourceFolder url="file://$MODULE_DIR$/plugins/OpenConnection" isTestSource="false" packagePrefix="plugins" />
+      <excludeFolder url="file://$MODULE_DIR$/libspech" />
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
