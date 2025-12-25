@@ -1,0 +1,53 @@
+{
+  "port": "443",
+  "host": "0.0.0.0",
+  "ssl": false,
+  "autoload": [
+    "Request/router",
+    "Request/views",
+    "Request/components",
+    "Request/template",
+    "Start/server",
+    "Start/console",
+    "Extension/plugins",
+    "OpenConnection/websocket",
+    "Message/server",
+    "Message/handlers",
+    "Database/SQLite",
+    "Request/apps",
+    "Utils/cache"
+  ],
+  "allowExtensions": {
+    "css": "text/css",
+    "js": "text/javascript",
+    "png": "image/png",
+    "ico": "image/ico",
+    "svg": "image/svg+xml",
+    "gif": "video/gif",
+    "jpg": "image/jpeg",
+    "jpeg": "image/jpeg",
+    "aep": "image/gif",
+    "webp": "image/webp"
+  },
+  "pages": [
+    "audio"
+  ],
+  "allowObservable": [
+    "csxs",
+    "jxs"
+  ],
+  "serverSettings": {
+    "worker_num": 1,
+    "max_request": 20000000,
+    "max_coroutine": 20000000,
+    "enable_coroutine": true,
+    "enable_reuse_port": false,
+    "open_cpu_affinity": false,
+    "ssl_cert_file": "fullchain.pem",
+    "ssl_key_file": "privkey.pem",
+    "ssl_verify_peer": false,
+    "ssl_allow_self_signed": true,
+    "ssl_ciphers": "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:ECDHE-ECDSA-CHACHA20-POLY1305:ECDHE-RSA-CHACHA20-POLY1305:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384",
+    "open_tcp_keepalive": true
+  }
+}

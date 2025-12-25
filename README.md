@@ -18,12 +18,12 @@ Uma aplicação **VoIP SIP moderna** com interface estilo **PortSIP**, construí
   - Ajuste de volume independente
 
 ### Rede & SIP
-- 📡 **Transporte SIP**: UDP, TCP, TLS
-- 🌐 **NAT Traversal**: Suporte a STUN (Google STUN ou servidor customizado)
-- 🔐 **Autenticação SIP** com usuário/domínio/senha
-- 🔄 **Registro dinâmico** no servidor SIP
-- 📊 **RTP raw** em UDP porta 9600
-- 🌊 **WebSocket** para streaming de áudio
+ - **Transporte SIP**: UDP, TCP, TLS
+ - **NAT Traversal**: Suporte a STUN (Google STUN ou servidor customizado)
+ - **Autenticação SIP** com usuário/domínio/senha
+ - **Registro dinâmico** no servidor SIP
+ - **RTP raw** em UDP porta 9600
+ - **WebSocket** para streaming de áudio
 
 ### Interface
 - 🎨 **Dark mode** moderno com design PortSIP
