@@ -1,0 +1,67 @@
+<script src="https://unpkg.com/@dotlottie/player-component@latest/dist/dotlottie-player.mjs" type="module"></script>
+<script>
+
+    function goToPathFile(namefile) {
+        const split = namefile.split('/');
+        const name = split[split.length];
+        const path = namefile.replace('/' + name, '');
+        setPath('/' + path);
+    }
+
+    function getFilename(path) {
+        const split = path.split('/');
+        return split[split.length - 1];
+    }
+
+    function searchInternal() {
+        const valueInScriptSearch = $('#contentOffCanvasSearch').val();
+        if (valueInScriptSearch === '') {
+            return Swal.fire({
+                title: `<center><dotlottie-player src="https://lottie.host/cc3020a5-3b3c-4003-b19b-eaab14c83020/yc1C9ncynw.json" background="transparent" speed="1" style="width: 300px; height: 300px;" loop autoplay></dotlottie-player></center>`,
+                background: '#1c2f48',
+                html: `<center><h3 style="color: white;">Digite algo para pesquisar!</h3></center>`,
+            });
+        }
+        Swal.fire({
+            title: `<center><dotlottie-player src="https://lottie.host/10e0cc29-b4c2-4e7c-9fa8-cd52457fd11c/zAX4joQTLX.json" background="transparent" speed="1" style="width: 300px; height: 300px;" loop autoplay></dotlottie-player></center>`,
+            allowEscapeKey: false,
+            allowOutsideClick: false,
+            showConfirmButton: false,
+            background: '#1c2f48',
+            html: `<center><h3 style="color: white;">Pesquisando...</h3></center>`,
+            showCloseButton: false,
+            showCancelButton: false,
+            focusConfirm: false,
+        });
+        $.ajax({
+            url: 'searchInFile',
+            type: 'POST',
+            dataType: 'json',
+            data: {
+                tokenBrowser: $('#fp').text(),
+                search: $('#contentOffCanvasSearch').val(),
+            },
+            success: function (data) {
+                Swal.close();
+                if (data.success) {
+                    if (data['information'].length === 0) {
+                        return Swal.fire({
+                            icon: 'error',
+                            background: '#1c2f48',
+                            html: `<center><h3 style="color: white;">Nenhum resultado encontrado!</h3></center>`,
+                        });
+                    } else {
+                        $('#listFoundSearch').html('');
+                        for (let i = 0; i < data['information'].length; i++) {
+                            let addressPathOfSearch = data['information'][i].replaceAll(getFilename(data['information'][i]), '');
+                            $('#listFoundSearch').append(`<li onclick="setPath('${addressPathOfSearch}');$('#hiddenFileEdit').html('${data['information'][i].split(' ')[0]}');$('#nameFileForEdit').html('${getFilename(data['information'][i])}');$('#edit-code').modal('show');" class="list-group-item" data-bs-dismiss="offcanvas" style="background-color: #1c2f48; color: white;">${getFilename(data['information'][i])} &nbsp; ${getIconFile(data['information'][i])}</li>`);
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+
+</script>
+

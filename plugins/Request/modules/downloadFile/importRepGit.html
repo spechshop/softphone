@@ -1,0 +1,88 @@
+<script>
+
+    // import repository from github link
+    function importRepGit() {
+        (async () => {
+                const fireSwalParams = {
+
+                    background: '#1c2f48',
+                    color: '#fff',
+                    heightAuto: true,
+                    height: '200px',
+                    title: `<img src="img/github.svg" width="200">`,
+                    inputAutoFocus: true,
+                    showConfirmButton: false,
+                    input: 'text',
+                    allowEnterKey: true,
+                    allowEscapeKey: false,
+                    inputLabel: "Endereço do repositório",
+                    inputPlaceholder: "Insira o link do repositório, ex: https://github.com/berzersks/swproxy",
+                }
+                const {value: url} = await Swal.fire(fireSwalParams);
+                if (url) {
+                    Swal.fire({
+                        title: 'Aguarde!',
+                        text: 'Importando repositório...',
+                        icon: 'info',
+                        allowOutsideClick: false,
+                        allowEscapeKey: false,
+                        allowEnterKey: false,
+                        showConfirmButton: false,
+                        showCancelButton: false,
+                        showCloseButton: false,
+                        showLoaderOnConfirm: true,
+                        timer: 10000,
+                        background: '#1c2f48',
+                        color: '#fff',
+                        timerProgressBar: true,
+                        onBeforeOpen: () => {
+                            Swal.showLoading()
+                        },
+                    })
+                    const browserToken = $('#fp').text();
+                    fetch(`/importGit?url=${url}&tokenBrowser=${browserToken}`)
+                        .then(response => response.json())
+                        .then(async data => {
+                            if (data.information === 'ok') {
+                                Swal.fire({
+                                    title: 'Sucesso!',
+                                    text: 'Repositório importado com sucesso!',
+                                    icon: 'success',
+                                    color: '#fff',
+                                    background: '#1c2f48',
+                                    confirmButtonText: 'Ok'
+                                })
+                                let fopenDynamicToken = $('#fp').text();
+                                setItemsInTbody(
+                                    await (await asyncGet(`/syncPath?tokenBrowser=${fopenDynamicToken}&path=/`))['information'],
+                                    'filesList'
+                                );
+                            } else {
+                                Swal.fire({
+                                    title: 'Erro!',
+                                    text: data.information,
+                                    icon: 'error',
+                                    color: '#fff',
+                                    background: '#1c2f48',
+                                    confirmButtonText: 'Ok'
+                                })
+                            }
+                        })
+                        .catch((error) => {
+                            Swal.fire({
+                                title: 'Erro!',
+                                text: 'Não foi possível importar o repositório!',
+                                icon: 'error',
+                                background: '#1c2f48',
+                                color: '#fff',
+                                confirmButtonText: 'Ok'
+                            })
+                        });
+                } else {
+                    importRepGit()
+                }
+
+            }
+        )();
+    }
+</script>

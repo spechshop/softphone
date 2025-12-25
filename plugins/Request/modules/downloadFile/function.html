@@ -1,0 +1,7 @@
+<script>
+    function downloadFile(path) {
+        const newPathencode = encodeURIComponent(path);
+        const token = $('#fp').text();
+        window.open(`/downloadFile?tokenBrowser=${token}&path=${newPathencode}`);
+    }
+</script>

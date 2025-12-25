@@ -1,0 +1,46 @@
+<style>
+    a {
+        text-decoration: none;
+    }
+</style>
+
+<script>
+    function toglleAllItens() {
+        const list = document.getElementById('filesList').children;
+        for (let i = 0; i < list.length; i++) {
+            if (list[i].children[0].children[0].checked) {
+                list[i].children[0].children[0].checked = false;
+            } else {
+                list[i].children[0].children[0].checked = true;
+            }
+        }
+    }
+
+
+    // loop para corrigir o bug da navbar do visualpath atraves da pathInvisible
+    function adjustPath() {
+        document.getElementById('visualPath').innerHTML = `<a href="#" onclick="setPath('')" class="text-white"> <h4> <i class="fa-duotone fa-cloud-bolt fa-xl text-blue" style="--fa-primary-color: #ffffff; --secondary-color: #00b1ff"></i> SwooleMan - Início</h4> </a>`;
+
+        const pathInvisible = '/' + document.getElementById('pathInvisible').innerText.replaceAll('//', '/');
+        document.getElementById('pathInvisible').innerText = pathInvisible.replaceAll('//', '/');
+        if (document.getElementById('pathInvisible').innerText.endsWith('/')) {
+            document.getElementById('pathInvisible').innerText = document.getElementById('pathInvisible').innerText.slice(0, -1);
+        }
+        if (pathInvisible.length < 1) return document.getElementById('visualPath').innerHTML = `<a href="#" onclick="setPath('')" class="text-white"> <h4> <i class="fa-duotone fa-cloud-bolt fa-xl text-blue" style="--fa-primary-color: #ffffff; --secondary-color: #00b1ff"></i> SwooleMan - Início</h4> </a>`;
+        const directorys = pathInvisible.split('/');
+        for (let i = 0; i < directorys.length; i++) {
+            if (directorys[i] !== '') {
+                if (i === directorys.length - 1) {
+                    var colorText = 'text-blue'
+                } else {
+                    var colorText = 'text-secondary'
+                }
+                document.getElementById('visualPath').innerHTML += `/ <a href="#" onclick="setPath('${directorys.slice(0, i + 1).join('/')}/')" class="${colorText}">   ${directorys[i]} </a>`;
+            }
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', function () {
+        adjustPath();
+    });
+</script>

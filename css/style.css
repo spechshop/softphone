@@ -1,0 +1,236 @@
+/* Tornar o checkbox transparente */
+.transparent-checkbox {
+    opacity: 0;
+    position: relative;
+    z-index: -1;
+}
+
+.input-error {
+    color: #ce0202 !important;
+}
+
+/* Estilos para o pseudo-elemento do label */
+.transparent-checkbox + .form-check-label::before {
+    content: "";
+    display: inline-block;
+    width: 16px;
+    height: 16px;
+    border: 2px solid #007bff;
+    border-radius: 3px;
+    margin-right: 5px;
+    vertical-align: middle;
+    background-color: transparent;
+    transition: background-color 0.3s;
+}
+
+/* Estilos para o checkbox marcado */
+.transparent-checkbox:checked + .form-check-label::before {
+    background-color: #007bff;
+    border-color: #007bff;
+}
+
+.transparent-checkbox:checked + .form-check-label::after {
+    content: "\2713"; /* Unicode do símbolo de check */
+    position: absolute;
+    display: none;
+    top: 2px;
+    left: 3px;
+    width: 12px;
+    height: 12px;
+    color: white;
+    font-size: 14px;
+    line-height: 12px;
+    text-align: center;
+}
+
+.form-check {
+    padding-left: 0 !important;
+}
+
+
+ul {
+    list-style-type: none;
+    padding-left: 8px;
+}
+
+.folder {
+    font-weight: bold;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+}
+
+.file {
+    display: flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.hidden {
+    display: none;
+}
+
+.icon {
+    margin-right: 5px;
+}
+
+
+#xterm {
+    z-index: 9999999 !important;
+}
+
+#resizable {
+    background-color: rgba(0, 0, 0, 0.1);
+    position: relative;
+    height: 100px;
+}
+
+
+#handle {
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+    background-color: rgb(149, 150, 154);
+    height: 10px;
+}
+
+
+#editor {
+    width: 100%;
+    height: 600px;
+}
+
+.zindex-toast {
+    z-index: 999999999 !important;
+}
+
+eol {
+    display: block;
+}
+
+.custom-quote {
+    color: #ff5370;
+    position: relative;
+    display: inline-block;
+}
+
+.monaco-editor .margin-view-overlays .folding {
+    margin-left: 5px;
+    cursor: pointer;
+    background-repeat: no-repeat;
+    background-origin: border-box;
+    background-position: 3px;
+    background-size: 15px;
+    opacity: 0;
+    transition: opacity .5s
+}
+
+
+.monaco-editor .inline-folded:after {
+    color: grey;
+    margin: .1em .2em 0;
+    content: "?";
+    display: inline;
+    line-height: 1em;
+    cursor: pointer
+}
+
+
+ul[role="tree"] {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 120%;
+}
+
+ul[role="tree"] li {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+[role="treeitem"][aria-expanded="false"] + [role="group"] {
+    display: none;
+}
+
+[role="treeitem"][aria-expanded="true"] + [role="group"] {
+    display: block;
+}
+
+[role="treeitem"].doc::before {
+    font-family: "Font Awesome 6 Pro";
+    content: "";
+    display: inline-block;
+    padding-right: 2px;
+    padding-left: 5px;
+    vertical-align: middle;
+}
+
+[role="treeitem"][aria-expanded="false"] > ul {
+    display: none;
+}
+
+[role="treeitem"][aria-expanded="true"] > ul {
+    display: block;
+}
+
+[role="treeitem"][aria-expanded="false"] > span::before {
+    font-family: "Font Awesome 6 Pro";
+    content: "";
+    display: inline-block;
+    padding-right: 3px;
+    vertical-align: middle;
+    font-weight: 500;
+}
+
+[role="treeitem"][aria-expanded="true"] > span::before {
+    font-family: "Font Awesome 6 Pro";
+    content: "";
+    display: inline-block;
+    padding-right: 3px;
+    vertical-align: middle;
+    font-weight: 900;
+}
+
+[role="treeitem"],
+[role="treeitem"] span {
+    width: 12em;
+    margin: 0;
+    padding: 0.125em;
+    display: block;
+}
+
+/* disable default keyboard focus styling for treeitems
+   Keyboard focus is styled with the following CSS */
+[role="treeitem"]:focus {
+    outline: 0;
+}
+
+[role="treeitem"][aria-selected="true"] {
+    padding-left: 4px;
+}
+
+[role="treeitem"].focus,
+[role="treeitem"] span.focus {
+    border-color: black;
+    background-color: #43454A;
+}
+
+[role="treeitem"].hover,
+[role="treeitem"] span:hover {
+    padding-left: 4px;
+}
+
+ol, ul {
+    padding-left: .6rem;
+}
+
+[role="treeitem"] span {
+    width: 12em;
+    margin: 0;
+    padding: 0em;
+    display: block;
+}
+
+.selected {
+    background-color: #43454A;
+}

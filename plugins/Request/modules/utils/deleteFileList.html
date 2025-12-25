@@ -1,0 +1,385 @@
+<input id="typeCutTap" type="hidden" value="move">
+<input id="pathToMove" type="hidden">
+<script>
+    Swal = !window.Swal ? {} : window.Swal;
+    $ = !window.$ ? {} : window.$;
+
+
+    function deleteFileList() {
+        Swal.fire({
+            title: 'Tem certeza?',
+            text: 'Você não poderá reverter esta ação!',
+            icon: 'warning',
+            color: '#fff',
+            confirmButtonColor: '#7367f0',
+            cancelButtonColor: '#424659',
+            background: '#1c2f48',
+            showCancelButton: true,
+            confirmButtonText: 'Sim, excluir!',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) deleteFileListConfirmed();
+        })
+    }
+
+    function compressFiles() {
+        Swal.fire({
+            title: 'Desejas compactar os itens selecionados?',
+            text: 'Será utilizado o formato .zip',
+            color: '#fff',
+            confirmButtonColor: '#7367f0',
+            cancelButtonColor: '#424659',
+            background: '#1c2f48',
+            showCancelButton: true,
+            confirmButtonText: 'Continuar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                const compressStatus = compressFileListConfirmed();
+                if (!compressStatus.success) {
+                    Swal.fire({
+                        title: 'Nenhum item selecionado!',
+                        text: 'Selecione pelo menos um arquivo/pasta para compactar.',
+                        icon: 'error',
+                        color: '#fff',
+                        background: '#1c2f48',
+                        confirmButtonColor: '#7367f0',
+                    })
+                }
+            }
+        })
+    }
+
+    function deleteFileListConfirmed() {
+        const list = document.getElementById('filesList').children;
+        let files = [];
+        for (let i = 0; i < list.length; i++) {
+            if (list[i].children[0].children[0].checked) {
+                files.push(list[i].children[0].children[0].value);
+            }
+        }
+        if (files.length === 0) {
+            return {
+                success: false
+            }
+        }
+        const token = $('#fp').text();
+        const path = encodeURI($('#pathInvisible').text());
+
+        $.ajax({
+            url: `deleteMultipleFiles?tokenBrowser=${token}&path=${path}`,
+            type: 'POST',
+            data: {files: files},
+            success: async function (data) {
+                const fopenDynamicToken = $('#fp').text();
+                const pathUsing = $('#pathInvisible').text();
+                setItemsInTbody(
+                    await (await asyncGet(`/syncPath?tokenBrowser=${fopenDynamicToken}&path=${pathUsing}`))['information'],
+                    'filesList'
+                );
+                Swal.fire({
+                    title: 'Arquivos excluídos!',
+                    text: 'Não será possível recuperar os arquivos excluídos.',
+                    icon: 'success',
+                    color: '#fff',
+                    background: '#1c2f48',
+                    confirmButtonColor: '#7367f0',
+                })
+            }
+        });
+    }
+
+    function compressFileListConfirmed() {
+        const list = document.getElementById('filesList').children;
+        let files = [];
+        for (let i = 0; i < list.length; i++) {
+            if (list[i].children[0].children[0].checked) {
+                const file = list[i].children[0].children[0].value.split('item-')[0].split(' (')[0].replaceAll("'", '')
+                files.push(file);
+            }
+        }
+        if (files.length === 0) {
+            return {
+                success: false
+            }
+        }
+        const token = $('#fp').text();
+        const path = encodeURI($('#pathInvisible').text());
+        $.ajax({
+            url: `compressMultipleFiles?tokenBrowser=${token}&path=${path}`,
+            type: 'POST',
+            data: {files: files},
+            success: async function (data) {
+                const fopenDynamicToken = $('#fp').text();
+                const pathUsing = $('#pathInvisible').text();
+                setItemsInTbody(
+                    await (await asyncGet(`/syncPath?tokenBrowser=${fopenDynamicToken}&path=${pathUsing}`))['information'],
+                    'filesList'
+                );
+                Swal.fire({
+                    title: 'itens compactados!',
+                    icon: 'success',
+                    color: '#fff',
+                    background: '#1c2f48',
+                    confirmButtonColor: '#7367f0',
+                })
+            }
+        });
+    }
+
+    function setActionMove() {
+        $('#gifAction').html(`<dotlottie-player src="img/person-clone.json" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></dotlottie-player>`);
+        $('#actionMoveBtn').removeClass('btn-outline-warning');
+        $('#actionMoveBtn').addClass('btn-warning');
+        $('#actionCopyBtn').removeClass('btn-warning');
+        $('#actionCopyBtn').addClass('btn-outline-warning');
+        $('#typeCutTap').val('move');
+    }
+
+    function setActionCopy() {
+        $('#gifAction').html(`<dotlottie-player src="/img/person-copy-file.json" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></dotlottie-player>`);
+        $('#actionMoveBtn').removeClass('btn-warning');
+        $('#actionMoveBtn').addClass('btn-outline-warning');
+        $('#actionCopyBtn').removeClass('btn-outline-warning');
+        $('#actionCopyBtn').addClass('btn-warning');
+        $('#typeCutTap').val('copy');
+    }
+
+
+    async function cutCopyUpDate() {
+        const list = document.getElementById('filesList').children;
+        let files = [];
+        for (let i = 0; i < list.length; i++) {
+
+            if (list[i].children[0].children[0].checked) {
+                files.push(list[i].children[1].getAttribute('fullpath'));
+            }
+        }
+        if (files.length === 0) {
+            localStorage.setItem('pathToMove', JSON.stringify([]));
+            return;
+        }
+        localStorage.setItem('pathToMove', JSON.stringify(files));
+    }
+
+    async function htmlFoldersListSwall() {
+        let pathUsing = $('#pathInvisible').text();
+        let tableElement = `
+<style>
+   .list-group{
+   width: 90%!important;
+   height: 49%!important;
+   }
+   .list-group-item{
+   margin-top:10px;
+   cursor: pointer;
+   transition: all 0.3s ease-in-out;
+   }
+   .list-group-item:hover{
+   transform: scaleX(1.05);
+   }
+   .check{
+   opacity: 0;
+   transition: all 0.6s ease-in-out;
+   }
+   .list-group-item:hover .check {
+   opacity: 1;
+   }
+   .about span{
+   font-size: 12px;
+   margin-right: 10px;
+   }
+   .btn {
+   display: inline-flex;
+   align-items: center;
+   justify-content: center;
+   }
+   .dotlottie-player {
+   margin-right: 10px;
+   }
+   label.radio {
+   cursor: pointer;
+   text-align: center;
+   margin-right: 5px;
+   }
+   label.radio input {
+   position: absolute;
+   top: 0;
+   left: 0;
+   visibility: hidden;
+   pointer-events: none
+   }
+   label.radio span {
+   padding: 12px 20px;
+   border: 2px solid #0d6efd;
+   display: inline-block;
+   color: #0d6efd;
+   border-radius: 3px;
+   text-transform: uppercase;
+   width: 100%;
+   }
+   label.radio input:checked+span {
+   border-color: #0d6efd;
+   background-color: #0d6efd;
+   color: #fff;
+   }
+
+
+
+
+
+   
+</style>
+
+<li class="d-flex justify-content-between align-items-center" style="margin-left: 10%;width: 90%; display: grid">
+    <!-- Botão "Voltar" alinhado à esquerda -->
+    <div id="backButtonSwallTmp">
+    <button onclick="(() => {
+            setPath('${pathUsing.split('/').slice(0, -1).join('/')}');
+            cutCopy();
+})()"  type="button" class="btn btn-primary d-flex align-items-center">
+        <dotlottie-player src="img/arrows.json" background="transparent" speed="1" style="width: 30px; height: 30px;" loop autoplay></dotlottie-player>
+        <span style="font-size: 20px; margin-left: 10px;">Voltar</span>
+    </button>
+</div>
+
+    <!-- Botões de rádio "Designs" e "Projects" alinhados à direita -->
+    <div class="d-flex align-items-center" style="margin-right: 12%;">
+        <label class="d-flex align-items-center btn btn-warning" id="actionMoveBtn" onclick="setActionMove()" style="width: 200px !important;">
+            <input type="radio" name="project" style="position: absolute; clip: rect(0,0,0,0);" checked>
+            <dotlottie-player src ="img/folder.json" background="transparent" speed="1" style="width: 30px; height: 30px; margin-right: 5px;" loop autoplay></dotlottie-player>
+            <span style="font-size: 20px;">Mover</span>
+        </label>
+       &nbsp;&nbsp;
+        <label id="actionCopyBtn" class="d-flex align-items-center btn btn-outline-warning" style="width: 200px !important;" onclick="setActionCopy()">
+            <input type="radio" name="project" style="position: absolute; clip: rect(0,0,0,0);">
+            <dotlottie-player src="img/Animation - 1703405201281.json" background="transparent" speed="1" style="width: 30px; height: 30px; margin-right: 5px;" loop autoplay></dotlottie-player>
+            <span style="font-size: 20px;">Copiar</span>
+        </label>
+    </div>
+</li>
+
+
+
+
+<center class="mt-2 mb-2">
+<div class="d-flex mt-2" style="max-height: 350px !important">
+   <ul class="list-group text-white" id="listFilesCutPaste" style="margin-right: 5%;width: 90% !important"></ul>
+</div>
+<center
+`;
+
+        let fopenDynamicToken = $('#fp').text();
+        let schemaList = await (await asyncGet(`/syncPath?tokenBrowser=${fopenDynamicToken}&path=${pathUsing}`))['information'];
+        const invisibleTmp = document.createElement('html');
+        invisibleTmp.style.display = 'none';
+        invisibleTmp.id = 'invisibleTmp';
+
+
+        invisibleTmp.innerHTML = tableElement;
+        const list = invisibleTmp.querySelector('#listFilesCutPaste');
+        for (let i = 0; i < schemaList.length; i++) {
+            if (schemaList[i].type === 'folder') {
+                let pathOnList = schemaList[i]['path'];
+                list.innerHTML += `<li onclick="(() => {
+            setPath('${pathOnList}');
+            htmlFoldersListSwall();
+            cutCopy();
+})()" class="list-group-item d-flex justify-content-between" style="margin-left: 10%;background-color: rgba(0, 0, 0, .3) !important; color: white; border-color: transparent; border-radius: 4px">
+         <div class="d-flex flex-row">
+            <img src="img/pasta-aberta.png" width="40" height="40" alt="icon" class="mt-1">
+            <div>
+               <span class="mb-1" style="margin-top: -60px !important;">&nbsp;&nbsp;${schemaList[i]['name']}</span>
+               <div class="about">&nbsp;&nbsp;
+                  <span>${schemaList[i]['path']}</span>
+               </div>
+            </div>
+         </div>
+      </li>`;
+            }
+        }
+        const pathUsingBack = pathUsing.split('/').slice(0, -1).join('/');
+        const buttonBack = invisibleTmp.querySelector('#backButtonSwallTmp');
+        buttonBack.innerHTML = `<button onclick="setPath('${pathUsingBack}');  htmlFoldersListSwall(); cutCopy();"  type="button" class="btn btn-primary d-flex align-items-center">
+        <dotlottie-player src="img/arrows.json" background="transparent" speed="1" style="width: 30px; height: 30px;" loop autoplay></dotlottie-player>
+        <span style="font-size: 20px;">Voltar</span>
+    </button>`;
+
+        const typeAction = $('#typeCutTap').val();
+        if (typeAction === 'move') {
+            $('#gifAction').html(`<dotlottie-player src="img/person-clone.json" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></dotlottie-player>`);
+            $('#actionMoveBtn').removeClass('btn-outline-warning');
+            $('#actionMoveBtn').addClass('btn-warning');
+            $('#actionCopyBtn').removeClass('btn-warning');
+            $('#actionCopyBtn').addClass('btn-outline-warning');
+        } else {
+            $('#gifAction').html(`<dotlottie-player src="/img/person-copy-file.json" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></dotlottie-player>`);
+            $('#actionMoveBtn').removeClass('btn-warning');
+            $('#actionMoveBtn').addClass('btn-outline-warning');
+            $('#actionCopyBtn').removeClass('btn-outline-warning');
+            $('#actionCopyBtn').addClass('btn-warning');
+        }
+        return invisibleTmp.innerHTML;
+    }
+
+
+    async function cutCopy() {
+        const listLocal = localStorage.getItem('pathToMove');
+        const files = JSON.parse(listLocal);
+        if (files.length === 0) {
+            return Swal.fire({
+                title: 'Nenhum item selecionado!',
+                text: 'Selecione pelo menos um arquivo/pasta para mover/copiar.',
+                icon: 'error',
+                color: '#fff',
+                background: '#1c2f48',
+                confirmButtonColor: '#7367f0',
+            })
+        }
+
+        let titleAction;
+        const pathToMove = $('#pathInvisible').text();
+        const abreviation = files.length > 1 ? `${files.length} Itens` : files[0];
+        const typeAction = $('#typeCutTap').val();
+        if (typeAction === 'move') titleAction = `<center><h3 style="color: #fff;">Movendo <code>${abreviation}</code> para (<code>${pathToMove}</code>)</h3> <span id="gifAction"><dotlottie-player id="gifAction" src="img/person-clone.json" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></dotlottie-player></span></center>`;
+        else titleAction = `<center><h3 style="color: #fff;">Copiar <code>${abreviation}</code> para (<code>${pathToMove}</code>)</h3><span id="gifAction"><dotlottie-player src="/img/person-copy-file.json" background="transparent" speed="1" style="width: 200px; height: 200px;" loop autoplay></dotlottie-player></span></center>`;
+        let hold = await htmlFoldersListSwall()
+        if ($('#typeCutTap').val() === 'move') setActionMove();
+        else setActionCopy();
+        Swal.fire({
+            title: titleAction,
+            html: hold,
+            showConfirmButton: true,
+            confirmButtonText: 'Selecionar pasta atual e continuar',
+            confirmButtonColor: '#08b274',
+            showCancelButton: false,
+            color: '#fff',
+            background: '#1c2f48',
+            width: '90%',
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: `cutCopy?tokenBrowser=${$('#fp').text()}&dest=${encodeURI($('#pathInvisible').text())}`,
+                    type: 'POST',
+                    data: {files: files, type: $('#typeCutTap').val()},
+                    success: async function (data) {
+                        const fopenDynamicToken = $('#fp').text();
+                        const pathUsing = $('#pathInvisible').text();
+                        setItemsInTbody(
+                            await (await asyncGet(`/syncPath?tokenBrowser=${fopenDynamicToken}&path=${pathUsing}`))['information'],
+                            'filesList'
+                        );
+                        Swal.fire({
+                            title: 'itens movidos!',
+                            icon: 'success',
+                            color: '#fff',
+                            background: '#1c2f48',
+                            confirmButtonColor: '#7367f0',
+                        })
+                    }
+                });
+            }
+        })
+    }
+
+</script>

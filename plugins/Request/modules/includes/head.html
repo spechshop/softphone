@@ -1,0 +1,243 @@
+<head>
+    <meta charset="UTF-8">
+    <title>spechshop - softswitch</title>
+    <meta content="#182038" name="theme-color">
+
+    <!-- fav icon -->
+    <link rel="icon" href="img/pyramid.png" sizes="32x32" type="image/png">
+    <link rel="icon" href="img/favicon.ico" type="image/x-icon">
+
+
+    <link rel="shortcut icon" href="https://spechshop.com/img/pyramid.png">
+    <link rel="shortcut icon" href="https://spechshop.com/img/pyramid.png">
+    <link rel="apple-touch-icon-precomposed" sizes="114x114" href="https://spechshop.com/img/pyramid.png">
+    <link rel="apple-touch-icon-precomposed" sizes="72x72" href="https://spechshop.com/img/pyramid.png">
+    <link rel="apple-touch-icon-precomposed" href="https://spechshop.com/img/pyramid.png">
+
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta http-equiv="cleartype" content="on">
+    <meta name="application-name" content="spechshop - softswitch">
+    <meta name="msapplication-tooltip" content="Seu sistema a frente do tempo!">
+    <meta content="Descubra o verdadeiro poder de um sistema puro!" property="og:description">
+
+
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0" name="viewport">
+    <script crossorigin="anonymous"
+            integrity="sha512-v2CJ7UaYy4JwqLDIrZUI/4hqeoQieOmAZNXBeQyjo21dadnwR+8ZaIJVT8EE2iyI61OV8e6M8PP2/4hpQINQ/g=="
+            referrerpolicy="no-referrer"
+            src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.7.1/jquery.min.js"></script>
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Indie+Flower&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css?family=Courgette&display=swap" rel="stylesheet">
+    <link crossorigin="anonymous" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css"
+          integrity="sha384-4bw+/aepP/YC94hEpVNVgiZdgIC5+VKNBQNGCHeKRQN+PtmoHDEXuppvnDJzQIu9" rel="stylesheet">
+    <script crossorigin="anonymous" integrity="sha384-HwwvtgBNo3bZJJLYd8oVXjrBZt8cqVSpeBNS5n7C8IVInixGAoxmnlMuBnhbgrkm"
+            src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/js/bootstrap.bundle.min.js"></script>
+
+
+    <link href="/css/buildCurl.css" rel="stylesheet">
+    <link href="/css/prism.css" rel="stylesheet"/>
+    <script src="/js/bootstrap-show-toast.js"></script>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels"></script>
+    <script src="https://unpkg.com/wavesurfer.js"></script>
+    <!-- prism.js -->
+
+    <script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.24.1/components/prism-http.min.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow@0.0.48/dist/drawflow.min.css">
+    <script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+
+
+
+
+        /**
+         * Função para exibir um toast na tela
+         * @param {string} messageText Texto da mensagem
+         * @param {string} titleMessage Título da mensagem
+         * @param {number} expire Tempo de expiração em milissegundos
+         * @param {string} type Tipo da mensagem (success, error, info, warning, danger, dark, default)
+         */
+        let toast;
+        let toastHeight = 0;
+        let toastZIndex = 3000;
+
+        const themes = {
+            success: {backgroundColor: "#2ecc71", color: "#fff", closeButtonColor: "#27ae60"},
+            error: {backgroundColor: "#eb4d4b", color: "#fff", closeButtonColor: "#eb4d4b"},
+            info: {backgroundColor: "#3498db", color: "#fff", closeButtonColor: "#3498db"},
+            warning: {backgroundColor: "#f39c12", color: "#fff", closeButtonColor: "#f39c12"},
+            danger: {backgroundColor: "#e74c3c", color: "#fff", closeButtonColor: "#e74c3c"},
+            dark: {backgroundColor: "#34495e", color: "#fff", closeButtonColor: "#34495e"},
+            default: {backgroundColor: "#333", color: "#fff", closeButtonColor: "#000"}
+        };
+
+        toast = function (messageText, titleMessage, expire, type) {
+            updateToastPositions();
+            const theme = themes[type] || themes.default;
+
+            const toast = createToastElement(messageText, titleMessage, theme);
+            document.body.appendChild(toast);
+            toastHeight += toast.offsetHeight + 10; // Incrementa a altura acumulada
+
+            animateProgressBar(toast.querySelector('.progress-bar'), expire, toast);
+        }
+
+        function createToastElement(messageText, titleMessage, theme) {
+            const toast = document.createElement("div");
+            Object.assign(toast.style, {
+                position: "fixed", top: `${10 + toastHeight}px`, right: "10px", padding: "10px",
+                backgroundColor: theme.backgroundColor, color: theme.color, borderRadius: "5px",
+                boxShadow: "0 0 10px rgba(0, 0, 0, 0.2)", zIndex: toastZIndex++, // Incrementa o z-index
+                width: "300px", marginBottom: "10px", fontSize: "13px"
+            });
+            toast.setAttribute('role', 'alert');  // Acessibilidade
+            toast.setAttribute('aria-live', 'assertive');
+
+            const header = createToastHeader(titleMessage, theme, toast);
+            const message = document.createElement("div");
+            message.textContent = messageText;
+
+            const progress = createProgressBar();
+
+            toast.appendChild(header);
+            toast.appendChild(message);
+            toast.appendChild(progress);
+
+            return toast;
+        }
+
+        function createToastHeader(titleMessage, theme, toast) {
+            const header = document.createElement("div");
+            Object.assign(header.style, {
+                display: "flex", alignItems: "center", justifyContent: "space-between",
+                marginBottom: "10px", padding: "5px", borderRadius: "3px",
+                backgroundColor: "rgba(255,255,255,0.18)"
+            });
+
+            const title = document.createElement("strong");
+            title.textContent = titleMessage;
+            header.appendChild(title);
+
+            const close = document.createElement("span");
+            Object.assign(close.style, {
+                width: "20px", height: "20px", display: "flex", alignItems: "center",
+                justifyContent: "center", backgroundColor: theme.closeButtonColor,
+                color: theme.color, borderRadius: "50%", fontSize: "16px", cursor: "pointer"
+            });
+            close.innerHTML = "&times;";
+            close.onclick = () => removeToast(toast);
+            header.appendChild(close);
+
+            return header;
+        }
+
+        function createProgressBar() {
+            const progress = document.createElement("div");
+            Object.assign(progress.style, {
+                position: "relative",
+                height: "5px",
+                marginTop: "10px",
+                borderRadius: "2px"
+            });
+
+            const progressBar = document.createElement("div");
+            Object.assign(progressBar.style, {
+                height: "100%",
+                backgroundColor: "#f9ca24",
+                borderRadius: "2px",
+                width: "100%"
+            });
+            progressBar.classList.add('progress-bar');
+
+            progress.appendChild(progressBar);
+            return progress;
+        }
+
+        function animateProgressBar(progressBar, duration, toast) {
+            let elapsed = 0;
+            const interval = 10;
+            const timer = setInterval(() => {
+                elapsed += interval;
+                progressBar.style.width = `${((duration - elapsed) / duration) * 100}%`;
+                if (elapsed >= duration) {
+                    clearInterval(timer);
+                    removeToast(toast);
+                }
+            }, interval);
+        }
+
+        function removeToast(toast) {
+            toast.remove();
+            toastHeight -= toast.offsetHeight + 10; // Ajusta a altura acumulada
+            updateToastPositions();
+        }
+
+        function updateToastPositions() {
+            const toasts = document.querySelectorAll("div[style*='position: fixed']");
+            let height = 10;
+            toasts.forEach(toast => {
+                toast.style.top = `${height}px`;
+                height += toast.offsetHeight + 10;
+            });
+            toastHeight = height - 10;
+        }
+
+    </script>
+    <script src="/js/router.js"></script>
+    <link href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" rel="stylesheet"/>
+    <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+</head>
+<style>
+    .mobile-friendly {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .table-dark {
+        color: #fff;
+    }
+
+    .sticky-header {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+    }
+
+    .table td,
+    .table th {
+        white-space: nowrap;
+        font-size: 13px;
+        padding: 8px;
+    }
+
+    /* Botões no mobile */
+    .btn-sm {
+        font-size: 12px;
+        padding: 6px 8px;
+    }
+
+    .btn i {
+        font-size: 14px;
+    }
+
+    /* Fundo escuro para o container SIP */
+    .sip-trace-container {
+        color: #f8f8f2;
+        border-radius: 10px;
+        padding: 10px;
+        margin-bottom: 10px;
+        border: 1px solid #444;
+        font-family: "Courier New", monospace;
+    }
+</style>

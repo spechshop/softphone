@@ -1,0 +1,1033 @@
+<script>
+    window.copiarAcesso = async function () {
+        const dominio = location.hostname;
+        const usuario = document.getElementById("username")?.value || "user";
+        const senha = document.getElementById("password")?.value || "pass";
+        const saldo = document.getElementById("balance")?.value || "0.00";
+        const callerId = document.getElementById("number")?.value || "0";
+        const simultaneosCalls = document.getElementById("lmc")?.value || "1";
+
+        // Tenta resolver IP do domínio via DNS
+        let ip = dominio;
+        try {
+            const res = await fetch("https://" + dominio + "/dns"); // fallback
+            if (res.ok) {
+                const json = await res.json();
+                if (json.ip) ip = json.ip;
+            }
+        } catch (e) {
+            console.warn("Não foi possível resolver IP via fetch, usando domínio mesmo.");
+        }
+
+        const texto = `
+> Você pode utilizar o painel para acompanhar o seu saldo, alterar seu callerID, escutar chamadas (Apenas chamadas ativas, após serem encerradas não guardamos os dados) e encerrar chamadas.
+* Link de acesso ao painel: https://${dominio}
+
+* Usuário SIP e WEB: \`${usuario}\`
+* Senha SIP e WEB: \`${senha}\`
+* Saldo: \`${saldo}\`
+* Seu CallerID: \`${callerId}\`
+* Limite de chamadas simultâneas: \`${simultaneosCalls}\`
+
+
+> Conexão SIP
+* Servidor: \`${ip}\` ou \`${dominio}\`
+* Ex: \`${ip}:${usuario}:${senha}\`
+
+`.trim();
+
+        navigator.clipboard.writeText(texto).then(() => {
+            toast('Copiado para área de transferência', 'Sucesso', 3000, 'success');
+        }).catch(err => {
+            toast('Erro ao copiar', 'Erro', 3000, 'error');
+        });
+    };
+    window.acessarUsuario = async function () {
+        if (!confirm('Deseja acessar o usuário?')) return;
+        const username = document.getElementById('username').value;
+        const password = document.getElementById('password').value;
+        const remember = false;
+
+
+        user.removeUserDataField('token');
+        user.updateUserData('username', username);
+        user.updateUserData('password', password);
+
+
+        let data = {
+            username: username,
+            password: password,
+            remember: remember
+        };
+        let response = await fetch('authenticate', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(data)
+        }).then(r => r.json());
+        user.updateUserData('remember', remember);
+        user.updateUserData('username', username);
+        user.updateUserData('password', password);
+        if (response.success) {
+            let tokenAuth = response['tokenAuth'];
+            user.updateUserData('token', tokenAuth);
+            toast('Seja bem vindo', 'Sucesso', 3000, 'success');
+            socketGlobal.send(JSON.stringify({
+                type: 'connect',
+                data: (new UserManager()).getUserData()
+            }));
+
+            window.location.reload();
+
+
+        } else {
+            toast(response.message, 'Atenção', 3000, 'error');
+        }
+    }
+
+    // Função para alternar o estado do botão (texto e cor)
+    function toggleButtonState(button) {
+        if (button.textContent.trim() === "SIM") {
+            button.textContent = "NÃO";
+            button.classList.remove("btn-primary");
+            button.classList.add("btn-light");
+        } else {
+            button.textContent = "SIM";
+            button.classList.remove("btn-light");
+            button.classList.add("btn-primary");
+        }
+    }
+
+    // Seleciona os botões pelos IDs e adiciona os event listeners
+    const distributeCallsButton = document.getElementById("distributeCalls");
+    const respectTrunkButton = document.getElementById("respectTrunk");
+    const predictBadChannelButton = document.getElementById("predictBadChannel");
+    const recordCallsButton = document.getElementById("recordCalls");
+    const rccbtn = document.getElementById("record");
+
+    distributeCallsButton.addEventListener("click", function () {
+        toggleButtonState(distributeCallsButton);
+    });
+
+    predictBadChannelButton.addEventListener("click", function () {
+        toggleButtonState(predictBadChannelButton);
+    });
+
+    recordCallsButton.addEventListener("click", function () {
+        toggleButtonState(recordCallsButton);
+    });
+    rccbtn.addEventListener("click", function () {
+        toggleButtonState(rccbtn);
+    })
+
+
+    window.setTab = (tab) => {
+        if (tab === 'generalTabs') {
+            document.getElementById('geralsip').classList.add('active');
+            document.getElementById('extrasip').classList.remove('active');
+            document.getElementById('generalTabs').style.display = 'block';
+            document.getElementById('extraTabs').style.display = 'none';
+
+            // set text-white
+            document.getElementById('geralsip').classList.add('text-white');
+            document.getElementById('extrasip').classList.remove('text-white');
+        } else {
+            document.getElementById('geralsip').classList.remove('active');
+            document.getElementById('extrasip').classList.add('active');
+            document.getElementById('generalTabs').style.display = 'none';
+            document.getElementById('extraTabs').style.display = 'block';
+            // set text-white
+            document.getElementById('geralsip').classList.remove('text-white');
+            document.getElementById('extrasip').classList.add('text-white');
+        }
+    }
+
+    window.getTrunks = async () => {
+        let response = await fetch('listTrunks', {
+            method: 'POST',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({authToken: (new UserManager).getValue('token')})
+        });
+        return await response.json();
+    }
+
+    window.trunks = getTrunks();
+
+
+    window.openModal = async (mode, id = null) => {
+        const modalLabel = document.getElementById('accountModalLabel');
+        const form = document.getElementById('accountForm');
+        form.reset();
+        const trunks = await getTrunks();
+        const trunkSelect = document.getElementById('trunk');
+        trunkSelect.innerHTML = '';
+        trunks.forEach(trunk => {
+            const option = document.createElement('option');
+            option.value = trunk.id;
+            option.textContent = trunk.name;
+            trunkSelect.appendChild(option);
+        });
+        //ex: [{id: 1, name: 'NextBilling', ip: '45.167.30.9', status: 'Online'}]
+
+        if (mode === 'add') {
+            // Configura o modal para adicionar uma nova conta
+            // modalLabel.textContent = 'Adicionar Conta';
+            document.getElementById('accountId').value = '';
+        } else if (mode === 'edit') {
+            // Configura o modal para editar uma conta existente
+            // modalLabel.textContent = 'Editar Conta';
+            document.getElementById('accountId').value = id;
+
+            try {
+                // Fazendo a requisição POST para obter os dados da conta pelo ID
+                const response = await fetch('getAccount', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        id: id,
+                        authToken: (new UserManager).getValue('token')
+                    }) // Envia o ID da conta no corpo da requisição
+                });
+
+                if (!response.ok) {
+                    throw new Error('Erro ao carregar os dados da conta.');
+                }
+
+                const account = await response.json(); // Parse dos dados da conta
+
+                // Preenche os campos do formulário com os dados da conta
+                let randId = () => {
+                    return Math.floor(Math.random() * 10000); // Gera um número inteiro aleatório de 0 a 9999
+                }
+                console.log(account);
+                document.getElementById('accountId').value = account.id || '0';
+                document.getElementById('username').value = account.u || '';
+                document.getElementById('balance').value = account.b || '0.00';
+                document.getElementById('trunk').value = account.t || '0';
+                document.getElementById('number').value = account.c || '';
+                document.getElementById('prefix').value = account.prefix || '';
+                document.getElementById('password').value = account.p || '';
+                document.getElementById('status').value = account.bi || 'active';
+                document.getElementById('type').value = account.type || 'user';
+                document.getElementById('dmedia').value = account.dmedia || 'no';
+                document.getElementById('observations').value = account.obs || '';
+                document.getElementById('rprix').value = account.rprix || '';
+                document.getElementById('aprix').value = account.aprix || '';
+                document.getElementById('lmc').value = account.lmc || '10';
+                document.getElementById('phosts').value = account.phosts || '';
+
+
+                // Configura os botões de opções de chamada
+                let dc = account.dc || false;
+                let pbc = account.pbc || false;
+                let rc = account.rc || false;
+                let rcc = account.rcc || false;
+                // atualiza os botões de opções de chamada
+                if (dc) {
+                    distributeCallsButton.textContent = "SIM";
+                    distributeCallsButton.classList.remove("btn-light");
+                    distributeCallsButton.classList.add("btn-primary");
+                } else {
+                    distributeCallsButton.textContent = "NÃO";
+                    distributeCallsButton.classList.remove("btn-primary");
+                    distributeCallsButton.classList.add("btn-light");
+                }
+
+                if (rcc) {
+                    rccbtn.textContent = "SIM";
+                    rccbtn.classList.remove("btn-light");
+                    rccbtn.classList.add("btn-primary");
+                } else {
+                    rccbtn.textContent = "NÃO";
+                    rccbtn.classList.remove("btn-primary");
+                    rccbtn.classList.add("btn-light");
+                }
+
+                if (pbc) {
+                    predictBadChannelButton.textContent = "SIM";
+                    predictBadChannelButton.classList.remove("btn-light");
+                    predictBadChannelButton.classList.add("btn-primary");
+                } else {
+                    predictBadChannelButton.textContent = "NÃO";
+                    predictBadChannelButton.classList.remove("btn-primary");
+                    predictBadChannelButton.classList.add("btn-light");
+                }
+
+                if (rc) {
+                    recordCallsButton.textContent = "SIM";
+                    recordCallsButton.classList.remove("btn-light");
+                    recordCallsButton.classList.add("btn-primary");
+                } else {
+                    recordCallsButton.textContent = "NÃO";
+                    recordCallsButton.classList.remove("btn-primary");
+                    recordCallsButton.classList.add("btn-light");
+                }
+
+
+            } catch (error) {
+                console.error('Erro ao carregar os dados da conta:', error.message);
+                alert('Erro ao carregar os dados da conta.');
+                return;
+            }
+        }
+
+        // Exibe o modal
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('accountModal')).show();
+    };
+
+
+    // Função para abrir modal de definição de tronco em massa
+    window.openSetTrunkModal = async () => {
+        const trunks = await getTrunks();
+        const bulkTrunkSelect = document.getElementById('bulkTrunk');
+
+        // Limpa e popula o select de troncos
+        bulkTrunkSelect.innerHTML = '';
+
+        // Adiciona opção padrão
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Selecione um tronco...';
+        bulkTrunkSelect.appendChild(defaultOption);
+
+        // Adiciona opções de troncos
+        trunks.forEach(trunk => {
+            const option = document.createElement('option');
+            option.value = trunk.id;
+            option.textContent = trunk.name;
+            bulkTrunkSelect.appendChild(option);
+        });
+
+        // Reset do progresso
+        document.getElementById('setBulkTrunkProgress').style.display = 'none';
+        document.getElementById('setBulkTrunkButton').disabled = false;
+
+        // Exibe o modal
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('setTrunkModal')).show();
+    };
+
+    // Função para aplicar tronco a todas as contas
+    window.setBulkTrunk = async () => {
+        const bulkTrunkSelect = document.getElementById('bulkTrunk');
+        const selectedTrunkId = bulkTrunkSelect.value;
+
+        if (!selectedTrunkId) {
+            alert('Por favor, selecione um tronco.');
+            return;
+        }
+
+        const progressDiv = document.getElementById('setBulkTrunkProgress');
+        const progressBar = document.getElementById('setBulkTrunkProgressBar');
+        const statusText = document.getElementById('setBulkTrunkStatus');
+        const applyButton = document.getElementById('setBulkTrunkButton');
+
+        try {
+            // Mostra progresso e desabilita botão
+            progressDiv.style.display = 'block';
+            applyButton.disabled = true;
+            statusText.textContent = 'Obtendo lista de contas...';
+            progressBar.style.width = '10%';
+            progressBar.textContent = '10%';
+
+            // Obter lista de contas
+            const accountsResponse = await fetch('accountsList', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({authToken: (new UserManager).getValue('token')})
+            });
+
+            if (!accountsResponse.ok) {
+                throw new Error('Erro ao obter lista de contas');
+            }
+
+            const accounts = await accountsResponse.json();
+            const totalAccounts = accounts.length;
+
+            if (totalAccounts === 0) {
+                alert('Nenhuma conta encontrada para atualizar.');
+                progressDiv.style.display = 'none';
+                applyButton.disabled = false;
+                return;
+            }
+
+            statusText.textContent = `Atualizando ${totalAccounts} contas...`;
+            progressBar.style.width = '20%';
+            progressBar.textContent = '20%';
+
+            // Aplicar tronco a cada conta
+            let updatedAccounts = 0;
+            let errors = [];
+
+            for (let i = 0; i < accounts.length; i++) {
+                const account = accounts[i];
+                const progress = 20 + (i / totalAccounts) * 70; // 20% a 90%
+
+                statusText.textContent = `Atualizando conta ${account.u} (${i + 1}/${totalAccounts})...`;
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${Math.round(progress)}%`;
+
+                try {
+                    const updateResponse = await fetch('setBulkTrunk', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            authToken: (new UserManager).getValue('token'),
+                            accountId: account.u,
+                            trunkId: selectedTrunkId
+                        })
+                    });
+
+                    if (updateResponse.ok) {
+                        updatedAccounts++;
+                    } else {
+                        errors.push(`Erro ao atualizar conta ${account.u}`);
+                    }
+                } catch (error) {
+                    errors.push(`Erro ao atualizar conta ${account.u}: ${error.message}`);
+                }
+
+                // Pequena pausa para não sobrecarregar o servidor
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // Finalização
+            progressBar.style.width = '100%';
+            progressBar.textContent = '100%';
+            progressBar.classList.remove('progress-bar-animated');
+
+            if (errors.length === 0) {
+                statusText.innerHTML = `<i class="fa-duotone fa-check-circle text-success me-2"></i>Sucesso! ${updatedAccounts} contas atualizadas.`;
+                progressBar.classList.remove('progress-bar-striped');
+                progressBar.classList.add('bg-success');
+            } else {
+                statusText.innerHTML = `<i class="fa-duotone fa-exclamation-triangle text-warning me-2"></i>Concluído com ${errors.length} erros. ${updatedAccounts} contas atualizadas.`;
+                progressBar.classList.add('bg-warning');
+                console.error('Erros durante atualização em massa:', errors);
+            }
+
+            // Atualizar tabela
+            await updateTable();
+
+            // Auto-fechar modal após 3 segundos em caso de sucesso
+            if (errors.length === 0) {
+                setTimeout(() => {
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('setTrunkModal')).hide();
+                }, 3000);
+            }
+
+        } catch (error) {
+            statusText.innerHTML = `<i class="fa-duotone fa-times-circle text-danger me-2"></i>Erro: ${error.message}`;
+            progressBar.classList.add('bg-danger');
+            console.error('Erro durante definição de tronco em massa:', error);
+        } finally {
+            applyButton.disabled = false;
+            progressBar.classList.remove('progress-bar-animated');
+        }
+    };
+
+    // Função para abrir modal de alteração de BINA em massa
+    window.openSetBinaModal = () => {
+        // Reset do progresso e campos
+        document.getElementById('setBulkBinaProgress').style.display = 'none';
+        document.getElementById('setBulkBinaButton').disabled = false;
+        document.getElementById('bulkBina').value = '';
+
+        // Exibe o modal
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('setBinaModal')).show();
+    };
+
+    // Função para aplicar BINA a todas as contas
+    window.setBulkBina = async () => {
+        const bulkBinaInput = document.getElementById('bulkBina');
+        const newBina = bulkBinaInput.value.trim();
+
+        if (!newBina) {
+            alert('Por favor, digite o número da BINA.');
+            return;
+        }
+
+        // Validação básica do formato de número
+        if (newBina.length < 8) {
+            alert('Por favor, digite um número válido (mínimo 8 dígitos).');
+            return;
+        }
+
+        const progressDiv = document.getElementById('setBulkBinaProgress');
+        const progressBar = document.getElementById('setBulkBinaProgressBar');
+        const statusText = document.getElementById('setBulkBinaStatus');
+        const applyButton = document.getElementById('setBulkBinaButton');
+
+        try {
+            // Mostra progresso e desabilita botão
+            progressDiv.style.display = 'block';
+            applyButton.disabled = true;
+            statusText.textContent = 'Obtendo lista de contas...';
+            progressBar.style.width = '10%';
+            progressBar.textContent = '10%';
+
+            // Obter lista de contas
+            const accountsResponse = await fetch('accountsList', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({authToken: (new UserManager).getValue('token')})
+            });
+
+            if (!accountsResponse.ok) {
+                throw new Error('Erro ao obter lista de contas');
+            }
+
+            const accounts = await accountsResponse.json();
+            const totalAccounts = accounts.length;
+
+            if (totalAccounts === 0) {
+                alert('Nenhuma conta encontrada para atualizar.');
+                progressDiv.style.display = 'none';
+                applyButton.disabled = false;
+                return;
+            }
+
+            statusText.textContent = `Atualizando BINA de ${totalAccounts} contas...`;
+            progressBar.style.width = '20%';
+            progressBar.textContent = '20%';
+
+            // Aplicar BINA a cada conta
+            let updatedAccounts = 0;
+            let errors = [];
+
+            for (let i = 0; i < accounts.length; i++) {
+                const account = accounts[i];
+                const progress = 20 + (i / totalAccounts) * 70; // 20% a 90%
+
+                statusText.textContent = `Atualizando BINA da conta ${account.u} (${i + 1}/${totalAccounts})...`;
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${Math.round(progress)}%`;
+
+                try {
+                    const updateResponse = await fetch('setBulkBina', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            authToken: (new UserManager).getValue('token'),
+                            accountId: account.u,
+                            bina: newBina
+                        })
+                    });
+
+                    if (updateResponse.ok) {
+                        updatedAccounts++;
+                    } else {
+                        errors.push(`Erro ao atualizar BINA da conta ${account.u}`);
+                    }
+                } catch (error) {
+                    errors.push(`Erro ao atualizar BINA da conta ${account.u}: ${error.message}`);
+                }
+
+                // Pequena pausa para não sobrecarregar o servidor
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // Finalização
+            progressBar.style.width = '100%';
+            progressBar.textContent = '100%';
+            progressBar.classList.remove('progress-bar-animated');
+
+            if (errors.length === 0) {
+                statusText.innerHTML = `<i class="fa-duotone fa-check-circle text-success me-2"></i>Sucesso! BINA de ${updatedAccounts} contas atualizada para ${newBina}.`;
+                progressBar.classList.remove('progress-bar-striped');
+                progressBar.classList.add('bg-success');
+            } else {
+                statusText.innerHTML = `<i class="fa-duotone fa-exclamation-triangle text-warning me-2"></i>Concluído com ${errors.length} erros. ${updatedAccounts} contas atualizadas.`;
+                progressBar.classList.add('bg-warning');
+                console.error('Erros durante atualização de BINA em massa:', errors);
+            }
+
+            // Atualizar tabela
+            await updateTable();
+
+            // Auto-fechar modal após 3 segundos em caso de sucesso
+            if (errors.length === 0) {
+                setTimeout(() => {
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('setBinaModal')).hide();
+                }, 3000);
+            }
+
+        } catch (error) {
+            statusText.innerHTML = `<i class="fa-duotone fa-times-circle text-danger me-2"></i>Erro: ${error.message}`;
+            progressBar.classList.add('bg-danger');
+            console.error('Erro durante alteração de BINA em massa:', error);
+        } finally {
+            applyButton.disabled = false;
+            progressBar.classList.remove('progress-bar-animated');
+        }
+    };
+
+    // Função para abrir modal de alteração de Direct Media em massa
+    // Função para renderizar cards no mobile
+    window.renderMobileCards = (accounts) => {
+        const container = document.getElementById('accountsCardsContainer');
+        if (!container) return;
+
+        container.innerHTML = '';
+
+        accounts.forEach((account, index) => {
+            const card = document.createElement('div');
+            card.className = 'account-card';
+            card.innerHTML = `
+                <div class="account-card-header">
+                    <div class="account-username">
+                        <i class="fa-duotone fa-user me-2 text-primary"></i>
+                        ${account.username || 'N/A'}
+                    </div>
+                    <div class="account-actions">
+                        <button class="btn btn-primary card-action-btn" onclick="openModal('edit', ${index})" title="Editar">
+                            <i class="fa-duotone fa-edit"></i>
+                        </button>
+                        <button class="btn btn-danger card-action-btn" onclick="deleteAccount(${index})" title="Excluir">
+                            <i class="fa-duotone fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="account-info-grid">
+                    <div class="account-info-item">
+                        <span class="account-info-label">
+                            <i class="fa-duotone fa-coins me-1"></i>
+                            Saldo
+                        </span>
+                        <span class="account-info-value">${account.balance || '0'}</span>
+                    </div>
+                    <div class="account-info-item">
+                        <span class="account-info-label">
+                            <i class="fa-duotone fa-phone me-1"></i>
+                            BINA
+                        </span>
+                        <span class="account-info-value">${account.number || 'N/A'}</span>
+                    </div>
+                    <div class="account-info-item">
+                        <span class="account-info-label">
+                            <i class="fa-duotone fa-chart-line me-1"></i>
+                            Tráfego
+                        </span>
+                        <span class="account-info-value">${account.traffic || '0'}</span>
+                    </div>
+                    <div class="account-info-item">
+                        <span class="account-info-label">
+                            <i class="fa-duotone fa-user-tag me-1"></i>
+                            Tipo
+                        </span>
+                        <span class="account-info-value">${account.type || 'N/A'}</span>
+                    </div>
+                    <div class="account-info-item">
+                        <span class="account-info-label">
+                            <i class="fa-duotone fa-network-wired me-1"></i>
+                            Tronco
+                        </span>
+                        <span class="account-info-value">${account.trunk || 'N/A'}</span>
+                    </div>
+                    <div class="account-info-item">
+                        <span class="account-info-label">
+                            <i class="fa-duotone fa-toggle-on me-1"></i>
+                            Direct Media
+                        </span>
+                        <span class="account-info-value">${account.dmedia === 'yes' ? '✅ Sim' : '❌ Não'}</span>
+                    </div>
+                </div>
+            `;
+            container.appendChild(card);
+        });
+    };
+
+    window.openSetDirectMediaModal = () => {
+        // Reset do progresso e campos
+        document.getElementById('setBulkDirectMediaProgress').style.display = 'none';
+        document.getElementById('setBulkDirectMediaButton').disabled = false;
+        document.getElementById('bulkDirectMedia').value = '';
+
+        // Exibe o modal
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('setDirectMediaModal')).show();
+    };
+
+    // Função para aplicar Direct Media a todas as contas
+    window.setBulkDirectMedia = async () => {
+        const bulkDirectMediaSelect = document.getElementById('bulkDirectMedia');
+        const selectedDirectMedia = bulkDirectMediaSelect.value;
+
+        if (!selectedDirectMedia) {
+            alert('Por favor, selecione uma configuração para o Direct Media.');
+            return;
+        }
+
+        const progressDiv = document.getElementById('setBulkDirectMediaProgress');
+        const progressBar = document.getElementById('setBulkDirectMediaProgressBar');
+        const statusText = document.getElementById('setBulkDirectMediaStatus');
+        const applyButton = document.getElementById('setBulkDirectMediaButton');
+
+        const directMediaText = selectedDirectMedia === 'yes' ? 'ativado' : 'desativado';
+
+        try {
+            // Mostra progresso e desabilita botão
+            progressDiv.style.display = 'block';
+            applyButton.disabled = true;
+            statusText.textContent = 'Obtendo lista de contas...';
+            progressBar.style.width = '10%';
+            progressBar.textContent = '10%';
+
+            // Obter lista de contas
+            const accountsResponse = await fetch('accountsList', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({authToken: (new UserManager).getValue('token')})
+            });
+
+            if (!accountsResponse.ok) {
+                throw new Error('Erro ao obter lista de contas');
+            }
+
+            const accounts = await accountsResponse.json();
+            const totalAccounts = accounts.length;
+
+            if (totalAccounts === 0) {
+                alert('Nenhuma conta encontrada para atualizar.');
+                progressDiv.style.display = 'none';
+                applyButton.disabled = false;
+                return;
+            }
+
+            statusText.textContent = `Configurando Direct Media como ${directMediaText} em ${totalAccounts} contas...`;
+            progressBar.style.width = '20%';
+            progressBar.textContent = '20%';
+
+            // Aplicar Direct Media a cada conta
+            let updatedAccounts = 0;
+            let errors = [];
+
+            for (let i = 0; i < accounts.length; i++) {
+                const account = accounts[i];
+                const progress = 20 + (i / totalAccounts) * 70; // 20% a 90%
+
+                statusText.textContent = `Configurando Direct Media da conta ${account.u} (${i + 1}/${totalAccounts})...`;
+                progressBar.style.width = `${progress}%`;
+                progressBar.textContent = `${Math.round(progress)}%`;
+
+                try {
+                    const updateResponse = await fetch('setBulkDirectMedia', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({
+                            authToken: (new UserManager).getValue('token'),
+                            accountId: account.u,
+                            directMedia: selectedDirectMedia
+                        })
+                    });
+
+                    if (updateResponse.ok) {
+                        updatedAccounts++;
+                    } else {
+                        errors.push(`Erro ao configurar Direct Media da conta ${account.u}`);
+                    }
+                } catch (error) {
+                    errors.push(`Erro ao configurar Direct Media da conta ${account.u}: ${error.message}`);
+                }
+
+                // Pequena pausa para não sobrecarregar o servidor
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+
+            // Finalização
+            progressBar.style.width = '100%';
+            progressBar.textContent = '100%';
+            progressBar.classList.remove('progress-bar-animated');
+
+            if (errors.length === 0) {
+                statusText.innerHTML = `<i class="fa-duotone fa-check-circle text-success me-2"></i>Sucesso! Direct Media ${directMediaText} em ${updatedAccounts} contas.`;
+                progressBar.classList.remove('progress-bar-striped');
+                progressBar.classList.add('bg-success');
+            } else {
+                statusText.innerHTML = `<i class="fa-duotone fa-exclamation-triangle text-warning me-2"></i>Concluído com ${errors.length} erros. ${updatedAccounts} contas atualizadas.`;
+                progressBar.classList.add('bg-warning');
+                console.error('Erros durante configuração de Direct Media em massa:', errors);
+            }
+
+            // Atualizar tabela
+            await updateTable();
+
+            // Auto-fechar modal após 3 segundos em caso de sucesso
+            if (errors.length === 0) {
+                setTimeout(() => {
+                    bootstrap.Modal.getOrCreateInstance(document.getElementById('setDirectMediaModal')).hide();
+                }, 3000);
+            }
+
+        } catch (error) {
+            statusText.innerHTML = `<i class="fa-duotone fa-times-circle text-danger me-2"></i>Erro: ${error.message}`;
+            progressBar.classList.add('bg-danger');
+            console.error('Erro durante configuração de Direct Media em massa:', error);
+        } finally {
+            applyButton.disabled = false;
+            progressBar.classList.remove('progress-bar-animated');
+        }
+    };
+
+    window.updateTable = async () => {
+        const listTrunks = await getTrunks();
+        let trunksIndex = {};
+        let totalBalance = 0;
+        listTrunks.forEach(trunk => {
+            trunksIndex[trunk.id] = trunk.name;
+        });
+
+
+        try {
+            // URL do endpoint que retorna os dados das contas SIP
+            const endpointUrl = 'accountsList'; // Substitua pela URL do seu endpoint
+
+            // Fazendo a requisição ao endpoint
+            const response = await fetch(endpointUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    authToken: (new UserManager).getValue('token')
+                })
+            });
+            if (!response.ok) {
+                throw new Error('Erro ao carregar os dados das contas.');
+            }
+
+            // Parse do JSON
+            const accounts = await response.json();
+
+            // Selecionando o corpo da tabela
+            const tableBody = document.getElementById('accountsTableBody');
+
+            // Limpando a tabela antes de atualizar
+            tableBody.innerHTML = '';
+
+            // Iterando sobre as contas e adicionando linhas na tabela
+            accounts.forEach((account, index) => {
+                const row = document.createElement('tr');
+
+                // Coluna: #
+                const cellIndex = document.createElement('td');
+                cellIndex.textContent = index + 1;
+                row.appendChild(cellIndex);
+
+                // Coluna: Usuário
+                const cellUser = document.createElement('td');
+                cellUser.textContent = account.u;
+                row.appendChild(cellUser);
+
+                const cellBalance = document.createElement('td');
+                cellBalance.textContent = account.b || '0.00';
+
+                totalBalance += account.bint;
+
+
+                $('#totalBalance').text(totalBalance.toFixed(2));
+                // converte para float
+
+                row.appendChild(cellBalance);
+
+                // Coluna: Número (bina)
+                const cellNumber = document.createElement('td');
+                cellNumber.textContent = account.c;
+                row.appendChild(cellNumber);
+
+                // Coluna: Status (mocked como ativo)
+                const cellStatus = document.createElement('td');
+                const statusBadge = document.createElement('span');
+                statusBadge.innerHTML = account.dmedia === 'yes' ?
+                    `
+                    <span class="badge bg-success">Midia Direta</span>
+                    ` : `<span class="badge bg-warning text-dark">Controle total</span>`;
+                cellStatus.appendChild(statusBadge);
+                row.appendChild(cellStatus);
+
+
+                // Coluna: Tipo
+                const cellType = document.createElement('td');
+                // automatic user central
+                let accountType = 'Desconhecido';
+                console.log(account.type);
+                if (account.type === 'user') accountType = 'Usuário geral';
+                if (account.type === 'automatic') accountType = 'Discadora automática';
+                if (account.type === 'central') accountType = 'Central de atendimento';
+                cellType.textContent = accountType;
+                row.appendChild(cellType);
+
+
+                console.log(trunksIndex);
+
+                const cellTrunk = document.createElement('td');
+                cellTrunk.textContent = trunksIndex[account.t];
+
+                ////// =============================================================================
+                row.appendChild(cellTrunk);
+
+
+                // Coluna: Ações
+                const cellActions = document.createElement('td');
+
+// Wrapper para alinhar os botões lado a lado
+                const actionsWrapper = document.createElement('div');
+                actionsWrapper.className = 'd-flex justify-content-start align-items-center gap-2';
+
+// Botão Editar
+                const editButton = document.createElement('button');
+                editButton.className = 'btn btn-sm btn-primary d-flex align-items-center';
+                editButton.innerHTML = `
+    <i class="fa-duotone fa-edit"></i>
+    <span class="d-none d-sm-inline ms-2">Editar</span>
+`;
+                editButton.onclick = () => openModal('edit', account.u);
+
+// Botão Remover
+                const deleteButton = document.createElement('button');
+                deleteButton.className = 'btn btn-sm btn-danger d-flex align-items-center';
+                deleteButton.innerHTML = `
+    <i class="fa-duotone fa-trash"></i>
+    <span class="d-none d-sm-inline ms-2">Remover</span>
+`;
+                deleteButton.onclick = () => removeAccount(account.u);
+
+// Adicionar os botões ao wrapper
+                actionsWrapper.appendChild(editButton);
+                actionsWrapper.appendChild(deleteButton);
+
+// Adicionar o wrapper à célula
+                cellActions.appendChild(actionsWrapper);
+                row.appendChild(cellActions);
+
+                // Adicionando a linha na tabela
+                tableBody.appendChild(row);
+            });
+        } catch (error) {
+        }
+    };
+
+    window.saveAccount = async () => {
+        const form = document.getElementById('accountForm');
+        const data = new FormData(form);
+        const jsonData = Object.fromEntries(data.entries());
+        jsonData.authToken = (new UserManager).getValue('token');
+        let distributeCallsButton = document.getElementById("distributeCalls");
+        let respectTrunkButton = document.getElementById("respectTrunk");
+        let predictBadChannelButton = document.getElementById("predictBadChannel");
+        let recordCallsButton = document.getElementById("recordCalls");
+        let recc = document.getElementById("record");
+        let aprix = document.getElementById("aprix");
+        let prefix = document.getElementById("prefix");
+        let lmc = document.getElementById("lmc");
+
+
+        jsonData.distributeCalls = distributeCallsButton.textContent.trim() === "SIM";
+        jsonData.record = recc.textContent.trim() === "SIM";
+        jsonData.predictBadChannel = predictBadChannelButton.textContent.trim() === "SIM";
+        jsonData.recordCalls = recordCallsButton.textContent.trim() === "SIM";
+        jsonData.aprix = aprix.value || '';
+        jsonData.prefix = prefix.value || '';
+        jsonData.lmc = lmc.value || 10;
+
+        console.log('Salvando conta:', jsonData);
+
+        const response = await fetch('saveAccount', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(jsonData)
+        });
+
+        toast('Conta salva com sucesso!', 'Sucesso', 3000, 'success');
+        await window.updateTable();
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('accountModal')).hide();
+    };
+
+
+    window.removeAccount = async (id) => {
+        if (!confirm('Tem certeza que deseja remover esta conta?')) return;
+
+        const response = await fetch(`deleteAccount`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({id: id, authToken: (new UserManager).getValue('token')})
+        });
+
+        if (response.ok) {
+            updateTable();
+        } else {
+            toast('Erro ao remover conta!', 'Erro', 3000, 'error');
+        }
+    };
+
+    window.deleteAccounts = async () => {
+        const endpointAllList = 'accountsList';
+        const response = await fetch(endpointAllList, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                authToken: (new UserManager).getValue('token')
+            })
+        });
+        if (!response.ok) {
+            throw new Error('Erro ao carregar os dados das contas.');
+        }
+        const accounts = await response.json();
+        if (accounts.length < 1) {
+            return toast('Não há contas para deletar', 'Erro', 3000, 'error');
+        }
+        if (!confirm('Tem certeza que deseja remover todas as contas?')) return;
+        // percorre todas as contas e deleta uma por uma
+        for (let i = 0; i < accounts.length; i++) {
+            await removeAccount(accounts[i].u);
+        }
+    };
+
+    window.refreshAccounts = () => {
+        console.log('Atualizar lista de contas.');
+        // Implementar lógica para recarregar tabela dinamicamente, se necessário
+    };
+
+    window.bulkAccounts = () => {
+        // abrir modal de adicionar em massa
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('bulkAccountsModal')).show();
+    };
+
+
+    window.createAccount = async (username, trunk, number, password, status, type, rprix, prefix) => {
+
+        const response = await fetch('saveAccount', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+                username: username,
+                trunk: trunk,
+                number: number,
+                password: password,
+                status: status,
+                type: type,
+                rprix: rprix,
+                aprix: '',
+                prefix: prefix,
+                distributeCalls: distributeCallsButton.textContent.trim() === "SIM",
+                respectTrunk: respectTrunkButton.textContent.trim() === "SIM",
+                predictBadChannel: predictBadChannelButton.textContent.trim() === "SIM",
+                recordCalls: recordCallsButton.textContent.trim() === "SIM",
+                authToken: (new UserManager).getValue('token')
+            })
+        });
+    };
+
+
+    updateTable();
+
+</script>

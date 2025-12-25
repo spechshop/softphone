@@ -1,0 +1,77 @@
+<script>
+
+
+    window.updateTableIpBan = async () => {
+        try {
+            // URL do endpoint que retorna os dados dos IPs banidos
+            const endpointUrl = 'bannedIpsList'; // Substitua pela URL do seu endpoint
+
+            // Fazendo a requisição ao endpoint
+            const response = await fetch(endpointUrl, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    authToken: (new UserManager).getValue('token')
+                })
+            });
+            if (!response.ok) {
+                throw new Error('Erro ao carregar os dados dos IPs.');
+            }
+
+            // Parse do JSON
+            const bannedIps = await response.json(); // {"0.0.0.0":{"expires":1733666767,"sip":"unknown"},"10.0.2.6":{"expires":1733667145,"sip":"unknown"}}
+            const tableBody = document.getElementById('bannedIpsTableBody');
+            tableBody.innerHTML = '';
+
+
+            // percorrer os ips
+            for (const ip in bannedIps) {
+                const row = document.createElement('tr');
+                const cellIp = document.createElement('td');
+                cellIp.textContent = ip;
+                row.appendChild(cellIp);
+                const cellReason = document.createElement('td');
+                cellReason.textContent = bannedIps[ip].reason;
+                row.appendChild(cellReason);
+                // tempo que falta para desbanir
+                const cellExpires = document.createElement('td');
+                const expires = bannedIps[ip].expires;
+                const convert = convertTimestampToDate(expires);
+                cellExpires.textContent = convert;
+                row.appendChild(cellExpires);
+
+                const cellActions = document.createElement('td');
+                const unbanButton = document.createElement('button');
+                unbanButton.className = 'btn btn-sm btn-success me-2';
+                unbanButton.textContent = 'Desbanir';
+                unbanButton.onclick = () => unbanIp(ip);
+                cellActions.appendChild(unbanButton);
+                row.appendChild(cellActions);
+                tableBody.appendChild(row);
+            }
+
+
+        } catch (error) {
+            console.error('Erro ao atualizar tabela de IPs:', error.message);
+        }
+    };
+    window.unbanIp = async (ip) => {
+        if (!confirm('Tem certeza que deseja desbanir este IP?')) return;
+        const response = await fetch(`unbanIp`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ip: ip, authToken: (new UserManager).getValue('token')})
+        });
+        if (response.ok) {
+            toast('IP desbanido com sucesso!', 'Sucesso', 3000, 'success');
+        }
+        await updateTableIpBan();
+    }
+
+
+    updateTableIpBan();
+</script>

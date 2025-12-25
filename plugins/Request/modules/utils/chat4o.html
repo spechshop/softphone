@@ -1,0 +1,450 @@
+<script>
+    function chat() {
+        $('#chat4o').modal('show');
+        // rolar para o final do chat
+        const chatList = document.getElementById('chat-list');
+        chatList.scrollTop = chatList.scrollHeight;
+        forceScroll();
+        sleep(1000).then(() => {
+            forceScroll();
+        });
+        chatList.scrollTop = chatList.scrollHeight;
+    }
+</script>
+<link href="https://cdn.jsdelivr.net/npm/prismjs@1.25.0/themes/prism.min.css" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/prismjs@1.25.0/prism.min.js"></script>
+<link href="css/prism.css" rel="stylesheet"/>
+<div aria-hidden="true" class="modal fade" id="chat4o" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-fullscreen" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">GPT4o</h5>
+                <button aria-label="Close" class="btn btn-outline-secondary" data-dismiss="modal"
+                        onclick="$('#chat4o').modal('hide');"
+                        type="button">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body chat">
+                <!-- chat -->
+                <div class="scrollable" style="max-height: 80vh;">
+                    <ul class="list-group list-group-flush" id="chat-list" style="max-height: 80vh;">
+
+
+                    </ul>
+
+                    <div class="float-right" style="display: none;">
+                        <button class="btn btn-primary" id="load-more">Carregar mais</button>
+                    </div>
+
+                </div>
+
+                <style>
+                    .input-container {
+                        height: 100px;
+                        display: flex;
+                        flex-direction: row;
+                        justify-content: space-between;
+                        align-items: center;
+                        padding: 10px;
+                    }
+
+                    #prompt-textarea {
+                        width: 100%;
+                        background-color: #2c2f4a;
+                        color: white;
+                        border: none;
+                        border-radius: 10px;
+                        padding: 10px;
+                        margin: 5px;
+                        resize: none;
+                        overflow: hidden;
+                        height: 100px;
+                    }
+
+                    #prompt-textarea:focus {
+                        outline: none;
+                    }
+
+                    /**
+ * prism.js tomorrow night eighties for JavaScript, CoffeeScript, CSS and HTML
+ * Based on https://github.com/chriskempson/tomorrow-theme
+ * @author Rose Pritchard
+ */
+
+                    code[class*="language-"],
+                    pre[class*="language-"] {
+                        color: #d867ef;
+                        background: none;
+                        font-family: Consolas, Monaco, 'Andale Mono', 'Ubuntu Mono', monospace;
+                        font-size: 1em;
+                        text-align: left;
+                        white-space: pre;
+                        word-spacing: normal;
+                        word-break: normal;
+                        word-wrap: normal;
+                        line-height: 1.5;
+
+                        -moz-tab-size: 4;
+                        -o-tab-size: 4;
+                        tab-size: 4;
+
+                        -webkit-hyphens: none;
+                        -moz-hyphens: none;
+                        -ms-hyphens: none;
+                        hyphens: none;
+
+                    }
+
+                    /* Code blocks */
+                    pre[class*="language-"] {
+                        padding: 1em;
+                        margin: .5em 0;
+                        overflow: auto;
+                    }
+
+                    :not(pre) > code[class*="language-"],
+                    pre[class*="language-"] {
+                        background: #1e1e2e;
+                    }
+
+                    /* Inline code */
+                    :not(pre) > code[class*="language-"] {
+                        padding: .1em;
+                        border-radius: .3em;
+                        white-space: normal;
+                    }
+
+                    .token.comment,
+                    .token.block-comment,
+                    .token.prolog,
+                    .token.doctype,
+                    .token.cdata {
+                        color: #999;
+                    }
+
+                    .token.punctuation {
+                        color: #ccc;
+                    }
+
+                    .token.tag,
+                    .token.attr-name,
+                    .token.namespace,
+                    .token.deleted {
+                        color: #e2777a;
+                    }
+
+                    .token.function-name {
+                        color: #6196cc;
+                    }
+
+                    .token.boolean,
+                    .token.number,
+                    .token.function {
+                        color: #f08d49;
+                    }
+
+                    .token.property,
+                    .token.class-name,
+                    .token.constant,
+                    .token.symbol {
+                        color: #f8c555;
+                    }
+
+                    .token.selector,
+                    .token.important,
+                    .token.atrule,
+                    .token.keyword,
+                    .token.builtin {
+                        color: #cc99cd;
+                    }
+
+                    .token.string,
+                    .token.char,
+                    .token.attr-value,
+                    .token.regex,
+                    .token.variable {
+                        color: #7ec699;
+                    }
+
+                    .token.operator,
+                    .token.entity,
+                    .token.url {
+                        color: #67cdcc;
+                    }
+
+                    .token.important,
+                    .token.bold {
+                        font-weight: bold;
+                    }
+
+                    .token.italic {
+                        font-style: italic;
+                    }
+
+                    .token.entity {
+                        cursor: help;
+                    }
+
+                    .token.inserted {
+                        color: green;
+                    }
+
+                    code {
+                        text-shadow: none !important;
+                    }
+                </style>
+
+                <div class="input-container">
+                    <textarea id="prompt-textarea" placeholder="Mensagem ChatGPT" rows="1"></textarea>
+                    <button disabled id="send-button">
+                        <svg class="icon-2xl" fill="none" height="32" viewBox="0 0 32 32" width="32"
+                             xmlns="http://www.w3.org/2000/svg">
+                            <path clip-rule="evenodd"
+                                  d="M15.192 8.906a1.143 1.143 0 0 1 1.616 0l5.143 5.143a1.143 1.143 0 0 1-1.616 1.616l-3.192-3.192v9.813a1.143 1.143 0 0 1-2.286 0v-9.813l-3.192 3.192a1.143 1.143 0 1 1-1.616-1.616z"
+                                  fill="currentColor"
+                                  fill-rule="evenodd"></path>
+                        </svg>
+                    </button>
+                </div>
+
+
+                <script>
+                    let socket4o;
+
+                    function forceScroll() {
+                        const chatList = document.getElementById('chat-list');
+                        chatList.scrollTop = chatList.scrollHeight;
+                        chatList.scrollTop = chatList.scrollHeight;
+                        window.scrollTo(0, document.body.scrollHeight);
+                    }
+
+                    const promptTextarea = document.getElementById('prompt-textarea');
+                    const sendButton = document.getElementById('send-button');
+                    const chatList = document.getElementById('chat-list');
+
+                    promptTextarea.addEventListener('input', () => {
+                        if (promptTextarea.value.length > 0) {
+                            sendButton.disabled = false;
+                        } else {
+                            sendButton.disabled = true;
+                        }
+                    });
+                    promptTextarea.addEventListener('keydown', function (event) {
+                        if (event.key === 'Enter' && event.shiftKey) {
+                            event.preventDefault(); // Para prevenir quebras de linha indesejadas no textarea
+                            console.log('Shift+Enter foi pressionado!'); // Substitua isso pelo seu código de envio
+                            sendButton.click();
+                        } else if (event.key === 'Enter' && event.ctrlKey) {
+                            event.preventDefault(); // Para prevenir quebras de linha indesejadas no textarea
+                            console.log('Ctrl+Enter foi pressionado!'); // Substitua isso pelo seu código de envio
+                            sendButton.click();
+                        }
+                    });
+
+
+                    sendButton.addEventListener('click', async () => {
+                        const message = promptTextarea.value;
+                        promptTextarea.value = '';
+                        sendButton.disabled = true;
+                        writeMessageMe(message);
+                        const send = await fetch('/chat4o', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                token: $('#fp').text(),
+                                message: message,
+                                isChat: true,
+                            }),
+                        }).then((res) => res.json());
+                        if (send.status === 'success') {
+                            writeMessage(send.message);
+                        }
+                    });
+
+
+                    document.addEventListener('DOMContentLoaded', async function () {
+                        chatList.scrollTop = chatList.scrollHeight;
+                        for (let i = 0; i < 10; i++) {
+                            if ($('#fp').text() !== '') break;
+                            await new Promise((resolve) => setTimeout(resolve, 1000));
+
+                        }
+                        const getConversation = await fetch('/chat4o', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                                token: $('#fp').text(),
+                                message: '',
+                                isChat: true,
+                                action: 'getConversation',
+                            }),
+                        }).then((res) => res.json());
+                        if (getConversation.status === 'success') {
+                            const messages = getConversation.conversation;
+                            for (let i = 0; i < messages.length; i++) {
+                                const message = messages[i];
+                                const role = message.role;
+                                if (role === 'user') {
+                                    writeMessageMe(message.content[0].text);
+                                } else {
+                                    writeMessage(message.content[0].text);
+                                }
+                            }
+                        }
+                        chatList.scrollTop = chatList.scrollHeight;
+                    });
+
+                    document.onreadystatechange = async function () {
+
+                    };
+
+
+                    async function writeMessage(message) {
+                        const li = document.createElement('li');
+                        li.classList.add('list-group-item');
+                        const div = document.createElement('div');
+                        div.classList.add('from');
+                        const div2 = document.createElement('div');
+                        div2.classList.add('from-message');
+                        const div3 = document.createElement('div');
+                        div3.classList.add('friend-head');
+                        const img = document.createElement('img');
+                        img.src = '/img/go.png';
+                        img.height = 35;
+                        img.width = 35;
+                        img.alt = 'GPT4o Official';
+                        img.classList.add('rounded-circle');
+                        const div4 = document.createElement('div');
+                        div4.classList.add('from-name');
+                        div4.innerText = 'GPT4o Official';
+                        div3.appendChild(img);
+                        div3.appendChild(div4);
+                        div2.appendChild(div3);
+                        const div5 = document.createElement('div');
+                        div5.classList.add('text-left');
+                        div5.innerHTML = parseMessage(message).innerHTML;
+                        div2.appendChild(div5);
+                        div.appendChild(div2);
+                        li.appendChild(div);
+                        chatList.appendChild(li);
+                        chatList.scrollTop = chatList.scrollHeight;
+                    }
+
+                    async function writeMessageMe(message) {
+                        const li = document.createElement('li');
+                        li.classList.add('list-group-item');
+                        const div = document.createElement('div');
+                        div.classList.add('your');
+                        const div2 = document.createElement('div');
+                        div2.classList.add('your-message');
+                        const div3 = document.createElement('div');
+                        div3.classList.add('you-head');
+                        const img = document.createElement('img');
+                        img.src = '/img/mascote.png';
+                        img.height = 50;
+                        img.width = 50;
+                        img.alt = 'User';
+                        img.classList.add('rounded-circle');
+                        const div4 = document.createElement('div');
+                        div4.classList.add('you-name');
+                        div4.innerText = 'Você';
+                        div4.style.color = 'white';
+                        div4.style.fontWeight = 'bold';
+                        div4.style.fontSize = '1.25em';
+                        div4.style.marginRight = '10px';
+
+                        div3.appendChild(div4);
+                        div3.appendChild(img);
+                        div2.appendChild(div3);
+                        const div5 = document.createElement('div');
+                        div5.classList.add('text-right');
+                        div5.innerHTML = parseMessage(message).innerHTML;
+                        div2.appendChild(div5);
+                        div.appendChild(div2);
+                        li.appendChild(div);
+                        chatList.appendChild(li);
+                        chatList.scrollTop = chatList.scrollHeight;
+                    }
+
+
+                    function parseMessage(message) {
+                        // Divide o texto em linhas
+                        const lines = message.split('\n');
+                        let container = '';
+                        let insideCodeBlock = false;
+                        let codeLanguage = '';
+
+                        lines.forEach(line => {
+                            if (line.startsWith('```')) {
+                                if (insideCodeBlock) {
+                                    container += '</code></pre>\n';
+                                    insideCodeBlock = false;
+                                } else {
+                                    codeLanguage = line.substring(3).trim();
+                                    if (!codeLanguage.includes('<') && !codeLanguage.includes('>')) {
+                                        container += `<pre class="language-${codeLanguage}"><code class="language-${codeLanguage}">`;
+                                        insideCodeBlock = true;
+                                    } else {
+                                        container += `${line}\n`;
+                                    }
+                                }
+                            } else if (insideCodeBlock) {
+                                container += `${escapeHTML(line)}\n`;
+                            } else if (line.startsWith('# ')) {
+                                container += `<h1>${line.substring(2)}</h1>\n`;
+                            } else if (line.startsWith('## ')) {
+                                container += `<h2>${line.substring(3)}</h2>\n`;
+                            } else if (line.startsWith('### ')) {
+                                container += `<h3>${line.substring(4)}</h3>\n`;
+                            } else if (line.startsWith('> ')) {
+                                container += `<blockquote>${line.substring(2)}</blockquote>\n`;
+                            } else if (line.match(/^\d+\.\s/)) {
+                                container += `<ol><li>${line.substring(line.indexOf(' ') + 1)}</li></ol>\n`;
+                            } else if (line.startsWith('- ') || line.startsWith('* ')) {
+                                container += `<ul><li>${line.substring(2)}</li></ul>\n`;
+                            } else {
+                                container += `<p>${formatText(line)}</p>\n`;
+                            }
+                        });
+
+                        if (insideCodeBlock) {
+                            container += '</code></pre>\n';
+                        }
+
+                        const div = document.createElement('div');
+                        div.innerHTML = container.trim();
+                        Prism.highlightAllUnder(div);
+                        return div;
+                    }
+
+                    // Função auxiliar para escapar caracteres HTML
+                    function escapeHTML(text) {
+                        return text
+                            .replace(/&/g, '&amp;')
+                            .replace(/</g, '&lt;')
+                            .replace(/>/g, '&gt;');
+                    }
+
+                    // Função auxiliar para formatar o texto com markdown
+                    function formatText(text) {
+                        return text
+                            .replace(/\*\*\*(.*?)\*\*\*/g, '<b><i>$1</i></b>')
+                            .replace(/___(.*?)___/g, '<b><i>$1</i></b>')
+                            .replace(/\*\*(.*?)\*\*/g, '<b>$1</b>')
+                            .replace(/__(.*?)__/g, '<b>$1</b>')
+                            .replace(/\*(.*?)\*/g, '<i>$1</i>')
+                            .replace(/_(.*?)_/g, '<i>$1</i>');
+                    }
+
+
+                </script>
+
+            </div>
+        </div>
+    </div>
+</div>

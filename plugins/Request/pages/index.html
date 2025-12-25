@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="pt">
+@import(includes/head)
+@import(bypassFontAwesome)
+
+<body>
+ <!-- NAVBAR -->
+  <div class="navbar">
+     <a class="navbar-brand text-blue" href="/">
+                <i class="fa-brands fa-deskpro fa-2xl" style="color: #74C0FC; margin-bottom:7px"></i>&nbsp;&nbsp;
+                <span class="text-white fw-bold" id="branded">SPECHSHOP</span>
+            </a>
+
+
+            <div id="top-bar" style="transition: width 0.2s ease"></div>
+
+
+            <a class="text-decoration-none text-white" href="#" onclick="user.logout()" id="regStatus"
+                style="color: white !important;">
+            </a>
+            <!--   -->
+  </div>
+
+<!-- Conteúdo Principal -->
+<div id="root">
+    <!-- O conteúdo dinâmico será carregado aqui -->
+</div>
+
+  <!-- Bottom Nav -->
+
+
+<div id="loadingPage" style="display: none">
+    <center>
+        <div class="spinner-grow text-primary" role="status"></div>
+        <div class="spinner-grow text-primary" role="status"></div>
+        <div class="spinner-grow text-primary" role="status"></div>
+    </center>
+</div>
+
+
+
+
+
+
+
+
+
+<div class="footer mt-1">
+    <div class="tabbtn active" data-tab="call">
+        <div class="t">Chamada</div>
+    </div>
+    <div class="tabbtn" data-tab="audio">
+         <div class="t">Áudio</div>
+    </div>
+    <div class="tabbtn" data-tab="config">
+         <div class="t">Config</div>
+    </div>
+</div>
+</body>
+
+</html>

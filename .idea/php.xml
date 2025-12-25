@@ -10,24 +10,16 @@
     <option name="highlightLevel" value="WARNING" />
     <option name="transferred" value="true" />
   </component>
-  <component name="PhpCodeSniffer">
-    <phpcs_settings>
-      <phpcs_by_interpreter asDefaultInterpreter="true" interpreter_id="3e121e83-59ab-440d-8b28-7649c284698c" timeout="30000" />
-    </phpcs_settings>
+  <component name="PhpProjectSharedConfiguration" php_language_level="8.5">
+    <option name="suggestChangeDefaultLanguageLevel" value="false" />
   </component>
-  <component name="PhpProjectSharedConfiguration" php_language_level="8.5" />
-  <component name="PhpStan">
-    <PhpStan_settings>
-      <phpstan_by_interpreter asDefaultInterpreter="true" interpreter_id="3e121e83-59ab-440d-8b28-7649c284698c" tool_path="$PROJECT_DIR$/../pcg729/vendor/bin/phpstan" />
-    </PhpStan_settings>
+  <component name="PhpRuntimeConfiguration">
+    <extensions>
+      <extension name="swoole" enabled="true" />
+    </extensions>
   </component>
   <component name="PhpStanOptionsConfiguration">
     <option name="transferred" value="true" />
-  </component>
-  <component name="Psalm">
-    <Psalm_settings>
-      <psalm_fixer_by_interpreter asDefaultInterpreter="true" interpreter_id="3e121e83-59ab-440d-8b28-7649c284698c" timeout="60000" />
-    </Psalm_settings>
   </component>
   <component name="PsalmOptionsConfiguration">
     <option name="transferred" value="true" />

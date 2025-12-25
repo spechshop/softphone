@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Layout App</title>
+
+<style>
+/* ===== RESET ===== */
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+}
+
+/* ===== LAYOUT PRINCIPAL ===== */
+body {
+  display: grid;
+  grid-template-rows: auto 1fr auto;
+  overflow: hidden;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  background: #0a0f1e;
+  color: #fff;
+}
+
+/* ===== NAVBAR ===== */
+.navbar {
+  height: 48px;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(15, 27, 58, 0.9);
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+
+/* ===== ROOT (CONTEÚDO) ===== */
+#root {
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 16px;
+}
+
+/* ===== FOOTER ===== */
+.footer {
+  height: 56px;
+  display: flex;
+  align-items: center;
+  justify-content: space-around;
+  background: rgba(10,15,30,.9);
+  border-top: 1px solid rgba(255,255,255,.08);
+}
+
+/* ===== EXTRAS VISUAIS ===== */
+.card {
+  background: rgba(255,255,255,.05);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 14px;
+  padding: 16px;
+  margin-bottom: 12px;
+}
+</style>
+</head>
+
+<body>
+
+  <!-- NAVBAR -->
+  <div class="navbar">
+    <div><strong>Spech App</strong></div>
+    <div>🟢 Online</div>
+  </div>
+
+  <!-- ROOT (SCROLL AQUI) -->
+  <div id="root">
+    <div class="card">Conteúdo 1</div>
+    <div class="card">Conteúdo 2</div>
+    <div class="card">Conteúdo 3</div>
+
+    <!-- só pra provar scroll -->
+    <div class="card">Conteúdo 4</div>
+    <div class="card">Conteúdo 5</div>
+    <div class="card">Conteúdo 6</div>
+    <div class="card">Conteúdo 7</div>
+    <div class="card">Conteúdo 8</div>
+    <div class="card">Conteúdo 9</div>
+    <div class="card">Conteúdo 10</div>
+  </div>
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div>📞</div>
+    <div>🎛</div>
+    <div>⚙️</div>
+  </div>
+
+</body>
+</html>

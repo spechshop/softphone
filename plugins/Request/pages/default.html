@@ -1,0 +1,589 @@
+<style>
+
+ :root{
+      --bg0:#0a0f1e;
+      --bg1:#0f1730;
+      --card:#0f1b3a;
+      --card2:#0c1530;
+      --border:rgba(255,255,255,.08);
+      --text:rgba(255,255,255,.92);
+      --muted:rgba(255,255,255,.62);
+      --accent:#2aa9ff;      /* “vibe PortSIP” */
+      --accent2:#6c5ce7;
+      --good:#2bd576;
+      --warn:#ffcc00;
+      --bad:#ff4d4d;
+      --shadow: 0 18px 50px rgba(0,0,0,.55);
+      --r:18px;
+    }
+
+ section {
+     max-height: calc(100vh - var(--r));
+    }
+
+    .app{
+      max-width: 490px;
+      margin: 0 auto;
+
+    }
+
+    .topbar{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      backdrop-filter: blur(14px);
+      background: rgba(10,15,30,.72);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .brand-pill{
+      display:flex; align-items:center; gap:10px;
+      padding: 10px 12px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+    }
+
+    .logo{
+      width: 34px; height: 34px; border-radius: 10px;
+      background: linear-gradient(135deg, rgba(42,169,255,1), rgba(108,92,231,1));
+      box-shadow: 0 10px 25px rgba(42,169,255,.25);
+    }
+
+ .cardx{
+       border: 1px solid var(--border);
+      border-radius: var(--r);
+     }
+
+    .soft-input{
+      background: rgba(255,255,255,.06) !important;
+      border: 1px solid var(--border) !important;
+      color: var(--text) !important;
+    }
+    .soft-input::placeholder{ color: rgba(255,255,255,.45); }
+
+    .digits{
+      font-size: 28px;
+      letter-spacing: 2px;
+      font-weight: 700;
+      user-select: none;
+      word-break: break-word;
+      min-height: 42px;
+    }
+
+    .dial-pad{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .dial-btn{
+      aspect-ratio: 1/1;
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      display:flex;
+      flex-direction: column;
+      align-items:center;
+      justify-content:center;
+      cursor: pointer;
+      transition: transform .08s ease, background .15s ease, border-color .15s ease;
+    }
+    .dial-btn:active{
+      transform: scale(.98);
+      background: rgba(255,255,255,.08);
+      border-color: rgba(42,169,255,.35);
+    }
+    .dial-btn .n{
+      font-size: 26px;
+      line-height: 1;
+      font-weight: 400;
+    }
+    .dial-btn .l{
+      font-size: 11px;
+      color: var(--muted);
+      margin-top: 4px;
+      letter-spacing: 1px;
+    }
+
+    .action-row{
+      display:flex;
+      gap: 10px;
+      align-items:center;
+      justify-content: space-between;
+      margin-top: 12px;
+    }
+
+    .btn-soft{
+      background: rgba(255,255,255,.06);
+      border: 1px solid var(--border);
+      color: var(--text);
+      border-radius: 14px;
+    }
+    .btn-soft:hover{ background: rgba(255,255,255,.08); color: var(--text); }
+
+    .btn-call{
+      border: 0;
+      background: radial-gradient(120px 90px at 30% 20%, rgba(255,255,255,.22), transparent 55%),
+                  linear-gradient(135deg, rgba(43,213,118,1), rgba(42,169,255,1));
+      color: #071015;
+      font-weight: 900;
+      border-radius: 18px;
+      padding: 14px 16px;
+      width: 100%;
+      box-shadow: 0 18px 35px rgba(43,213,118,.18);
+    }
+    .btn-call:active{ transform: translateY(1px); }
+
+    .btn-end{
+      border: 0;
+      background: linear-gradient(135deg, rgba(255,77,77,1), rgba(255,122,122,1));
+      color: #160708;
+      font-weight: 900;
+      border-radius: 18px;
+      padding: 14px 16px;
+      width: 100%;
+      box-shadow: 0 18px 35px rgba(255,77,77,.16);
+    }
+
+    .mini{
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .status-dot{
+      width:10px;height:10px;border-radius:99px;
+      background: var(--good);
+      box-shadow: 0 0 0 5px rgba(43,213,118,.12);
+    }
+
+    /* Bottom nav */
+    .bottom-nav{
+      position: fixed;
+      left: 50%;
+      transform: translateX(-50%);
+      bottom: 10px;
+      width: min(520px, calc(100% - 18px));
+      z-index: 60;
+      border-radius: 22px;
+      background: rgba(10,15,30,.78);
+      backdrop-filter: blur(16px);
+      border: 1px solid var(--border);
+      box-shadow: 0 22px 65px rgba(0,0,0,.55);
+      padding: 10px;
+    }
+    .navgrid{
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 10px;
+    }
+
+ .tabbtn .t{
+      font-weight: 800;
+      font-size: 12px;
+      margin-top: 4px;
+    }
+    .tabbtn .i{
+      font-size: 18px;
+      line-height: 1;
+    }
+
+    /* “call floating” vibe */
+    .callbar{
+      border-radius: 18px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.05);
+      padding: 12px;
+    }
+
+    /* sliders */
+    .form-range{ filter: brightness(1.05); }
+    .section-title{
+      font-weight: 900;
+      letter-spacing: .3px;
+      margin: 0 0 4px 0;
+    }
+
+    .divider{
+      height: 1px;
+      background: var(--border);
+      margin: 12px 0;
+    }
+
+    /* hide/show tabs */
+    [data-view]{ display:none; }
+    [data-view].show{ display:block; }
+
+    </style>
+
+  <div class="app px-3 pt-0">
+
+    <!-- VIEW: CHAMADA -->
+    <section data-view="call" class="show">
+
+
+
+
+        <div class="digits" id="digits"></div>
+
+
+
+      <div class=" cardx p-3">
+        <div class="dial-pad" id="pad">
+          <!-- 1..9 -->
+          <button class="dial-btn" data-key="1"><div class="n">1</div><div class="l">&nbsp;</div></button>
+          <button class="dial-btn" data-key="2"><div class="n">2</div><div class="l">ABC</div></button>
+          <button class="dial-btn" data-key="3"><div class="n">3</div><div class="l">DEF</div></button>
+          <button class="dial-btn" data-key="4"><div class="n">4</div><div class="l">GHI</div></button>
+          <button class="dial-btn" data-key="5"><div class="n">5</div><div class="l">JKL</div></button>
+          <button class="dial-btn" data-key="6"><div class="n">6</div><div class="l">MNO</div></button>
+          <button class="dial-btn" data-key="7"><div class="n">7</div><div class="l">PQRS</div></button>
+          <button class="dial-btn" data-key="8"><div class="n">8</div><div class="l">TUV</div></button>
+          <button class="dial-btn" data-key="9"><div class="n">9</div><div class="l">WXYZ</div></button>
+          <!-- * 0 # -->
+          <button class="dial-btn" data-key="*"><div class="n">*</div> </button>
+          <button class="dial-btn" data-key="0"><div class="n">0</div><div class="l">+</div></button>
+          <button class="dial-btn" id="btnBackspace"><div class="n">
+          <i class="fa-solid fa-backspace"></i></div>
+          </button>
+        </div>
+
+        <div class="mt-3 d-flex gap-2">
+          <button class="btn btn-soft w-100" id="btnMute" type="button"><i class="fa-solid fa-volume-xmark me-1"></i><span>Mudo</span></button>
+          <button class="btn btn-soft w-100" id="btnHold" type="button"><i class="fa-solid fa-pause me-1"></i><span>Hold</span></button>
+          <button class="btn btn-soft w-100" id="btnSpk" type="button"><i class="fa-solid fa-volume-high me-1"></i><span>Áudio</span></button>
+        </div>
+
+        <div class="mt-3">
+          <button class="btn btn-call" id="btnCall" type="button"><i class="fa-solid fa-phone me-2"></i>LIGAR</button>
+          <button class="btn btn-end d-none mt-2" id="btnHangup" type="button"><i class="fa-solid fa-phone-slash me-2"></i>ENCERRAR</button>
+          <div class="mini mt-2" id="callState">Pronto.</div>
+        </div>
+      </div>
+
+      <div class="mt-3 callbar">
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-bold">Conta SIP</div>
+            <div class="mini">sip:1001@seu-dominio • UDP/TCP/TLS</div>
+          </div>
+          <button class="btn btn-soft btn-sm" id="btnFakeReg" type="button">Alternar</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: ÁUDIO -->
+    <section data-view="audio"  >
+      <div class="cardx p-3">
+        <div class="section-title">Áudio</div>
+        <div class="mini">Ajustes rápidos (front-end)</div>
+        <div class="divider"></div>
+
+        <div class="mb-3">
+          <label class="form-label mini mb-1">Volume do microfone</label>
+          <input type="range" class="form-range" min="0" max="100" value="75" id="micVol">
+          <div class="mini" id="micVolTxt">75%</div>
+        </div>
+
+        <div class="mb-3">
+          <label class="form-label mini mb-1">Volume do alto-falante</label>
+          <input type="range" class="form-range" min="0" max="100" value="80" id="spkVol">
+          <div class="mini" id="spkVolTxt">80%</div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="d-flex gap-2 flex-wrap">
+          <button class="btn btn-soft" type="button" id="btnNoise"><i class="fa-solid fa-broom me-1"></i><span>Noise Suppression</span></button>
+          <button class="btn btn-soft" type="button" id="btnEcho"><i class="fa-solid fa-bullhorn me-1"></i><span>Echo Cancel</span></button>
+          <button class="btn btn-soft" type="button" id="btnAgc"><i class="fa-solid fa-sliders me-1"></i><span>AGC</span></button>
+        </div>
+
+        <div class="mini mt-3" id="audioFlags">Noise: off • Echo: off • AGC: off</div>
+      </div>
+
+      <div class="mt-3 cardx p-3">
+        <div class="section-title">Codecs</div>
+        <div class="mini">Simulação de preferência (pra sua UI)</div>
+        <div class="divider"></div>
+
+        <div class="row g-2">
+          <div class="col-6">
+            <div class="p-3 rounded-4 border" style="border-color:var(--border); background:rgba(255,255,255,.04)">
+              <div class="fw-bold">PCMA</div>
+              <div class="mini">PT 8 • 8 kHz</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 rounded-4 border" style="border-color:var(--border); background:rgba(255,255,255,.04)">
+              <div class="fw-bold">PCMU</div>
+              <div class="mini">PT 0 • 8 kHz</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 rounded-4 border" style="border-color:var(--border); background:rgba(255,255,255,.04)">
+              <div class="fw-bold">G.729</div>
+              <div class="mini">8 kbps</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="p-3 rounded-4 border" style="border-color:var(--border); background:rgba(255,255,255,.04)">
+              <div class="fw-bold">Opus</div>
+              <div class="mini">48 kHz • PT dinâmico</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- VIEW: CONFIG -->
+    <section data-view="config">
+      <div class="cardx p-3">
+        <div class="section-title">Configurações</div>
+        <div class="mini">Visual “PortSIP-style”, só front</div>
+        <div class="divider"></div>
+
+        <div class="mb-3">
+          <label class="form-label mini mb-1">Servidor SIP</label>
+          <input class="form-control soft-input" id="sipServer" placeholder="ex: sip.spechshop.com:5060" value="sip.spechshop.com:5060">
+        </div>
+
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label mini mb-1">Usuário</label>
+            <input class="form-control soft-input" id="sipUser" value="1001">
+          </div>
+          <div class="col-6">
+            <label class="form-label mini mb-1">Domínio</label>
+            <input class="form-control soft-input" id="sipDomain" value="spechshop.com">
+          </div>
+        </div>
+
+        <div class="mt-2 mb-3">
+          <label class="form-label mini mb-1">Senha</label>
+          <input type="password" class="form-control soft-input" id="sipPass" value="********">
+        </div>
+
+        <div class="d-flex gap-2">
+          <button class="btn btn-soft w-100" type="button" id="btnSave"><i class="fa-solid fa-floppy-disk me-1"></i><span>Salvar</span></button>
+          <button class="btn btn-soft w-100" type="button" id="btnReset"><i class="fa-solid fa-arrows-rotate me-1"></i><span>Reset</span></button>
+        </div>
+
+        <div class="mini mt-3" id="cfgState">Nenhuma alteração pendente.</div>
+      </div>
+
+      <div class="mt-3 cardx p-3">
+        <div class="section-title">Rede</div>
+        <div class="mini">Só pra ficar bonito — igual app mesmo</div>
+        <div class="divider"></div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-bold">Transporte</div>
+            <div class="mini">UDP / TCP / TLS</div>
+          </div>
+          <select class="form-select soft-input" style="width: 140px" id="transport">
+            <option selected>UDP</option>
+            <option>TCP</option>
+            <option>TLS</option>
+          </select>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="d-flex justify-content-between align-items-center">
+          <div>
+            <div class="fw-bold">STUN</div>
+            <div class="mini">NAT traversal</div>
+          </div>
+          <div class="form-check form-switch">
+            <input class="form-check-input" type="checkbox" role="switch" id="stunOn">
+          </div>
+        </div>
+
+        <div class="mt-2">
+          <input class="form-control soft-input" id="stunServer" placeholder="stun:stun.l.google.com:19302" disabled>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <script>
+    // ===== Tabs
+    const tabBtns = document.querySelectorAll('.tabbtn');
+    const views = document.querySelectorAll('[data-view]');
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        const tab = btn.getAttribute('data-tab');
+        views.forEach(v => v.classList.toggle('show', v.getAttribute('data-view') === tab));
+      });
+    });
+
+    // ===== Dialer
+    const digitsEl = document.getElementById('digits');
+    const hintEl = document.getElementById('hint');
+    let digits = "";
+
+    function renderDigits(){
+      digitsEl.textContent = digits || " ";
+
+    }
+
+    function pushKey(k){
+      if (digits.length > 32) return;
+      digits += k;
+      renderDigits();
+    }
+    function backspace(){
+      digits = digits.slice(0, -1);
+      renderDigits();
+    }
+    function clearAll(){
+      digits = "";
+      renderDigits();
+    }
+
+    document.getElementById('pad').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-key]');
+      if (!btn) return;
+      pushKey(btn.getAttribute('data-key'));
+    });
+
+    document.getElementById('btnBackspace').addEventListener('click', backspace);
+
+    // teclado
+    window.addEventListener('keydown', (e) => {
+      const k = e.key;
+      if (/^[0-9]$/.test(k) || k === '*' || k === '#' || k === '+') pushKey(k);
+      if (k === 'Backspace') backspace();
+      if (k === 'Escape') clearAll();
+      if (k === 'Enter') document.getElementById('btnCall').click();
+    });
+
+    renderDigits();
+
+    // ===== Fake call state (UI only)
+    const btnCall = document.getElementById('btnCall');
+    const btnHangup = document.getElementById('btnHangup');
+    const callState = document.getElementById('callState');
+
+    let inCall = false;
+
+    function setCall(on){
+      inCall = on;
+      btnHangup.classList.toggle('d-none', !on);
+      btnCall.classList.toggle('d-none', on);
+      callState.textContent = on
+        ? `Em chamada com ${digits || '(sem número?)'}…`
+        : 'Pronto.';
+    }
+
+    btnCall.addEventListener('click', () => {
+      if (!digits) {
+        callState.innerHTML = '<i class="fa-solid fa-face-smile me-1"></i>Digite um número antes de ligar, campeão.';
+        return;
+      }
+      setCall(true);
+    });
+
+    btnHangup.addEventListener('click', () => setCall(false));
+
+    // ===== Toggle buttons (UI)
+    function toggleBtn(id, onText, offText){
+      const el = document.getElementById(id);
+      let on = false;
+      el.addEventListener('click', () => {
+        on = !on;
+        el.innerHTML = (on ? onText : offText);
+        el.style.borderColor = on ? "rgba(42,169,255,.45)" : "rgba(255,255,255,.08)";
+        el.style.background = on ? "rgba(42,169,255,.14)" : "rgba(255,255,255,.06)";
+      });
+    }
+    toggleBtn('btnMute', '<i class="fa-solid fa-volume-xmark me-1"></i><span>Mudo (on)</span>', '<i class="fa-solid fa-volume-xmark me-1"></i><span>Mudo</span>');
+    toggleBtn('btnHold', '<i class="fa-solid fa-pause me-1"></i><span>Hold (on)</span>', '<i class="fa-solid fa-pause me-1"></i><span>Hold</span>');
+    toggleBtn('btnSpk',  '<i class="fa-solid fa-volume-high me-1"></i><span>Áudio (on)</span>', '<i class="fa-solid fa-volume-high me-1"></i><span>Áudio</span>');
+
+    // ===== Fake register status
+    const regStatus = document.getElementById('regStatus');
+    const btnFakeReg = document.getElementById('btnFakeReg');
+    let reg = true;
+    btnFakeReg.addEventListener('click', () => {
+      reg = !reg;
+      regStatus.textContent = reg ? "Registrado" : "Desconectado";
+      regStatus.style.borderColor = reg ? "rgba(43,213,118,.35)" : "rgba(255,77,77,.35)";
+      regStatus.style.background = reg ? "rgba(43,213,118,.10)" : "rgba(255,77,77,.10)";
+    });
+    regStatus.style.border = "1px solid rgba(43,213,118,.35)";
+    regStatus.style.background = "rgba(43,213,118,.10)";
+
+    // ===== Audio view toggles
+    const micVol = document.getElementById('micVol');
+    const spkVol = document.getElementById('spkVol');
+    const micVolTxt = document.getElementById('micVolTxt');
+    const spkVolTxt = document.getElementById('spkVolTxt');
+    micVol.addEventListener('input', () => micVolTxt.textContent = micVol.value + "%");
+    spkVol.addEventListener('input', () => spkVolTxt.textContent = spkVol.value + "%");
+
+    const flags = { noise:false, echo:false, agc:false };
+    const audioFlags = document.getElementById('audioFlags');
+
+    function renderFlags(){
+      audioFlags.textContent =
+        `Noise: ${flags.noise?'on':'off'} • Echo: ${flags.echo?'on':'off'} • AGC: ${flags.agc?'on':'off'}`;
+    }
+    function flipFlag(btnId, key){
+      const b = document.getElementById(btnId);
+      b.addEventListener('click', () => {
+        flags[key] = !flags[key];
+        b.style.borderColor = flags[key] ? "rgba(42,169,255,.45)" : "rgba(255,255,255,.08)";
+        b.style.background  = flags[key] ? "rgba(42,169,255,.14)" : "rgba(255,255,255,.06)";
+        renderFlags();
+      });
+    }
+    flipFlag('btnNoise', 'noise');
+    flipFlag('btnEcho', 'echo');
+    flipFlag('btnAgc', 'agc');
+    renderFlags();
+
+    // ===== Config view
+    const cfgState = document.getElementById('cfgState');
+    const btnSave = document.getElementById('btnSave');
+    const btnReset = document.getElementById('btnReset');
+
+    const cfgInputs = ['sipServer','sipUser','sipDomain','sipPass','transport','stunOn','stunServer']
+      .map(id => document.getElementById(id));
+
+    let dirty = false;
+    cfgInputs.forEach(el => {
+      el.addEventListener('input', () => {
+        dirty = true;
+        cfgState.textContent = "Alterações pendentes…";
+      });
+      el.addEventListener('change', () => {
+        dirty = true;
+        cfgState.textContent = "Alterações pendentes…";
+      });
+    });
+
+    btnSave.addEventListener('click', () => {
+      dirty = false;
+      cfgState.textContent = "Salvo (no front).";
+    });
+
+    btnReset.addEventListener('click', () => {
+      dirty = false;
+      cfgState.textContent = "Resetado (no front).";
+    });
+
+    // STUN enable/disable
+    const stunOn = document.getElementById('stunOn');
+    const stunServer = document.getElementById('stunServer');
+    stunOn.addEventListener('change', () => {
+      stunServer.disabled = !stunOn.checked;
+      stunServer.value = stunOn.checked ? "stun:stun.l.google.com:19302" : "";
+    });
+  </script>

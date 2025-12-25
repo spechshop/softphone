@@ -1,0 +1,180 @@
+<div class="modal fade" id="modalFileUpload" role="dialog" tabindex="-1">
+    <div class="modal-dialog modal-xl" role="document">
+        <div class="modal-content headerModal" style="border-bottom: none; border-radius: 13px !important;">
+            <div class="modal-header" onclick="$('#modalFileUpload').modal('hide')" style="border: none !important;">
+                <i class="fa-duotone fa-circle-xmark fa-2xl mt-2"></i>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col col-sm-12">
+                        <div class="card" style="background: transparent !important; border: none !important;">
+                            <div id="drop-area"
+                                 style="border: 2px dashed #007bff;border-radius: 20px;width: 400px;margin: 50px auto;padding: 20px;position: relative;text-align: center;">
+                                <i class="fa-duotone fa-upload fa-2x text-blue"></i>
+                                <h3 class="text-blue mt-2">Arraste ou clique</h3>
+                                <code>Limite máximo de upload: 2GB*</code>
+                                <input id="file-input" multiple name="files[]"
+                                       style="opacity: 0;position: absolute;width: 100%;height: 100%;cursor: pointer;top: 0;left: 0;display: none;"
+                                       type="file"/>
+                            </div>
+
+                            <div>
+                                <p class="text-center text-white">
+                                <h4>
+                                    <span class="text-white">Progresso atual: </span>
+                                    <span class="text-info text-decoration-underline link-underline-opacity-25"
+                                          id="valueUploadProgress">12%</span>
+                                </h4>
+                                </p>
+                                <div class="progress mb-5" style="height: 20px; margin-top: -10px;">
+                                    <div aria-valuemax="100"
+                                         aria-valuemin="0"
+                                         aria-valuenow="75"
+                                         class="progress-bar progress-bar-striped progress-bar-animated bg-success"
+                                         id="progressBarUpload" role="progressbar"
+                                         style="width: 75%"></div>
+                                </div>
+                            </div>
+
+
+                            <script>
+
+                                const dropArea = document.getElementById('drop-area');
+                                const fileInput = document.getElementById('file-input');
+                                const fileList = document.getElementById('file-list');
+
+                                dropArea.addEventListener('dragover', (event) => {
+                                    event.stopPropagation();
+                                    event.preventDefault();
+                                    event.dataTransfer.dropEffect = 'copy';
+                                });
+
+                                dropArea.addEventListener('drop', handleFiles, false);
+                                fileInput.addEventListener('change', handleFiles, false);
+
+                                function handleFiles(event) {
+                                    let files;
+                                    if (event.type === "drop") {
+                                        event.stopPropagation();
+                                        event.preventDefault();
+                                        files = event.dataTransfer.files;
+                                    } else {
+                                        files = event.target.files;
+                                    }
+
+                                    for (const file of files) {
+                                        document.getElementById('file-list').innerHTML += '<li>' + file.name + '</li>';
+                                    }
+                                    const filesBuffer = [];
+                                    for (const file of files) filesBuffer.push(file);
+                                    const formData = new FormData();
+                                    for (const file of filesBuffer) formData.append('files[]', file);
+                                    const tokenBrowser = document.getElementById('fp').innerText;
+                                    const pathUsing = document.getElementById('pathInvisible').innerText;
+                                    $.ajax({
+                                        url: `/uploadFile?tokenBrowser=${tokenBrowser}&path=${pathUsing}`,
+                                        type: 'POST',
+                                        data: formData,
+                                        processData: false,
+                                        contentType: false,
+                                        onprogress: function (e) {
+                                            if (e.lengthComputable) {
+                                                console.log(e.loaded, e.total);
+                                            }
+                                        },
+                                        xhr: function () {
+                                            var xhr = new window.XMLHttpRequest();
+                                            xhr.upload.addEventListener("progress", function (evt) {
+                                                if (evt.lengthComputable) {
+                                                    var percentComplete = evt.loaded / evt.total;
+                                                    percentComplete = parseInt(percentComplete * 100);
+                                                    $('#progressBarUpload').css('width', percentComplete + '%');
+                                                    $('#progressBarUpload').html(percentComplete + '%');
+                                                    $('#valueUploadProgress').html(percentComplete + '%');
+                                                    if (percentComplete === 100) {
+                                                        Swal.fire({
+                                                            background: '#1c2f48',
+                                                            title: `<img src="https://i.gifer.com/47tj.gif" width="200px">`,
+                                                            color: '#fff',
+                                                            html: `<h3 class="text-white">Enviando arquivos...</h3>`,
+                                                            showConfirmButton: false,
+                                                            allowOutsideClick: false,
+                                                            allowEscapeKey: false,
+                                                            allowEnterKey: false,
+                                                            onBeforeOpen: () => {
+                                                                Swal.showLoading();
+                                                            },
+                                                        });
+                                                    }
+                                                }
+                                            }, false);
+                                            return xhr;
+                                        },
+                                        success: async function (data) {
+                                            Swal.close();
+                                            Swal.fire({
+                                                icon: 'success',
+                                                title: 'Sucesso',
+                                                background: '#1c2f48',
+                                                color: '#fff',
+                                                text: 'Arquivos enviados com sucesso! (Pode demorar alguns segundos para atualizar a lista de arquivos)',
+                                                showConfirmButton: false,
+                                                allowOutsideClick: false,
+                                                allowEscapeKey: false,
+                                                allowEnterKey: false,
+                                                timer: 2000,
+                                                timerProgressBar: true,
+                                                onBeforeOpen: () => {
+                                                    Swal.showLoading();
+                                                },
+                                            });
+                                            const fopenDynamicToken = $('#fp').text();
+                                            const pathUsing = $('#pathInvisible').text();
+                                            (async () => {
+                                                setItemsInTbody(await (await asyncGet(`/syncPath?tokenBrowser=${fopenDynamicToken}&path=${pathUsing}`))['information'], 'filesList')
+                                            })().then(r => {
+                                            });
+                                            $('#modalFileUpload').modal('hide');
+                                            $('#file-list').html('');
+                                        }
+                                    });
+
+
+                                }
+
+                                dropArea.addEventListener('click', () => fileInput.click());
+                            </script>
+                        </div>
+
+                    </div>
+
+                    <center>
+
+
+                        <p class="d-inline-flex gap-1">
+                            <button aria-controls="collapseExample" aria-expanded="false"
+                                    class="btn btn-midnight text-white"
+                                    data-bs-target="#collapseExample" data-bs-toggle="collapse"
+                                    type="button">
+                                exibir/ocultar lista de arquivos
+                            </button>
+                        </p>
+
+
+                        <div class="collapse show" id="collapseExample">
+                            <div class="card card-body card-distak">
+                                <ul id="file-list"></ul>
+                            </div>
+                        </div>
+                    </center>
+                </div>
+
+
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+
+</script>
