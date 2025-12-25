@@ -15,6 +15,7 @@
       --bad:#ff4d4d;
       --shadow: 0 18px 50px rgba(0,0,0,.55);
       --r:18px;
+      --z-modal:9999;
     }
 
  section {
@@ -224,7 +225,7 @@
       height: 100%;
       background: rgba(10, 15, 30, 0.95);
       backdrop-filter: blur(10px);
-      z-index: 9999;
+      z-index: var(--z-modal);
       display: none;
       align-items: center;
       justify-content: center;
@@ -607,6 +608,7 @@
     const modalCancel = document.getElementById('modalCancel');
 
     let inCall = false;
+    const CALL_CONNECTION_DELAY_MS = 2000; // Time to simulate call connection
 
     function showCallModal(number) {
       modalNumber.textContent = number;
@@ -639,11 +641,11 @@
       // Show modal first
       showCallModal(digits);
       
-      // Simulate connection after 2 seconds
+      // Simulate connection
       setTimeout(() => {
         hideCallModal();
         setCall(true);
-      }, 2000);
+      }, CALL_CONNECTION_DELAY_MS);
     });
 
     btnHangup.addEventListener('click', () => setCall(false));
