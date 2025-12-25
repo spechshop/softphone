@@ -41,7 +41,7 @@ class consoleManage
         if (isset($this->foreground_colors[$colorText])) {
             $colored_string .= "\033[" . $this->foreground_colors[$colorText] . "m";
         }
-        if (isset($this->background_colors[$background_color])) {
+        if (!empty($this->background_colors[$background_color ?? ''])) {
             $colored_string .= "\033[" . $this->background_colors[$background_color] . "m";
         }
         $colored_string .= $string . "\033[0m";
