@@ -48,7 +48,7 @@ class connect
 
         // Timer de timeout (60 segundos)
         $timeoutTimerId = Timer::after(320000, function () use ($fd) {
-            self::clearConnectionTimers($fd);
+           // self::clearConnectionTimers($fd);
         });
 
         self::addTimerToConnection($fd, $timeoutTimerId);
