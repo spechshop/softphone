@@ -1,0 +1,108 @@
+
+
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spechphone</title>
+  <link rel="stylesheet" href="css/bootstrap.css" />
+  <style>
+    body {
+      background-color: #0f172a;
+      color: #e2e8f0;
+    }
+    .navbar {
+      background: #1e293b;
+    }
+    .section {
+      padding: 1.5rem;
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
+    .input-number {
+      font-size: 24px;
+      text-align: center;
+    }
+    .btn-dial {
+      padding: 1rem 0;
+      font-size: 20px;
+    }
+    .dialer .col-4 {
+      padding: 0.3rem;
+    }
+    .call-btn {
+      width: 64px;
+      height: 64px;
+      font-size: 24px;
+    }
+    .menu-bottom {
+      background: #1e293b;
+      color: #94a3b8;
+    }
+    .menu-item.active {
+      color: #2563eb;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <nav class="navbar navbar-dark text-white px-3">
+    <span class="navbar-brand mb-0 h1">SPECH</span>
+    <span>● Desconectado</span>
+  </nav>
+
+  <main class="container py-4">
+    <!-- Aba: Chamada -->
+    <div id="tab-chamada" class="section active text-center">
+      <input type="text" class="form-control input-number mb-4" placeholder="Digite o número" id="inputNumber" />
+
+      <div class="row dialer justify-content-center">
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">1</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">2</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">3</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">4</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">5</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">6</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">7</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">8</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">9</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">*</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">0</button></div>
+        <div class="col-4"><button class="btn btn-secondary w-100 btn-dial">#</button></div>
+      </div>
+
+      <div class="mt-4">
+        <button class="btn btn-success rounded-circle call-btn">📞</button>
+      </div>
+    </div>
+  </main>
+
+  <div class="menu-bottom fixed-bottom d-flex justify-content-around py-2 border-top">
+    <div class="menu-item active text-center" data-tab="chamada">📞<br>Chamada</div>
+    <div class="menu-item text-center" data-tab="audio">🎧<br>Áudio</div>
+    <div class="menu-item text-center" data-tab="config">⚙️<br>Config</div>
+  </div>
+
+  <script>
+    document.querySelectorAll(".btn-dial").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const input = document.getElementById("inputNumber");
+        input.value += btn.textContent.trim();
+      });
+    });
+
+    document.querySelectorAll(".menu-item").forEach(item => {
+      item.addEventListener("click", () => {
+        document.querySelectorAll(".section").forEach(tab => tab.classList.remove("active"));
+        document.querySelector("#tab-" + item.dataset.tab).classList.add("active");
+        document.querySelectorAll(".menu-item").forEach(i => i.classList.remove("active"));
+        item.classList.add("active");
+      });
+    });
+
+  </script>
+</body>
+</html>
