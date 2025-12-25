@@ -44,16 +44,17 @@ const autoSocket = () => {
     socketGlobal = socket;
     socket.onopen = () => onOpenSocket(socket);
     socket.onerror = (event) => {
-        console.error('Erro ao conectar ao servidor:', event);
-        toast('Erro ao conectar ao servidor', 'Erro', 5000, 'danger');
-
-
+        document.getElementById('connection-icon').className = 'fa-solid fa-plug-circle-xmark text-danger';
+        document.getElementById('connection-status').innerText = 'Connection error';
+        console.error('Erro no socket', event);
+        socket.close();
     }
     socket.onmessage = (event) => onMessageSocket(event, socket);
     socket.onclose = () => {
         socket.closed = true;
         console.error('Socket fechado');
-
+        document.getElementById('connection-icon').className = 'fa-solid fa-plug-circle-xmark text-danger';
+        document.getElementById('connection-status').innerText = 'Connection timed out';
         return setTimeout(autoSocket, 1000);
     }
 }
@@ -61,6 +62,10 @@ const autoSocket = () => {
 
 const onOpenSocket = (socket) => {
     socket.closed = false;
+    if (socket.readyState === WebSocket.OPEN) {
+        document.getElementById('connection-icon').className = 'fa-solid fa-plug-circle-check text-success';
+        document.getElementById('connection-status').innerText = 'Connected';
+    }
     template.displayLoading().then(r => {
         socket.send(JSON.stringify({
             type: 'connect',

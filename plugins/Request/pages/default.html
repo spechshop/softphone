@@ -399,16 +399,7 @@
 
     // ===== Fake register status
     const regStatus = document.getElementById('regStatus');
-    const btnFakeReg = document.getElementById('btnFakeReg');
-    let reg = true;
-    btnFakeReg.addEventListener('click', () => {
-        reg = !reg;
-        regStatus.textContent = reg ? "Registrado" : "Desconectado";
-        regStatus.style.borderColor = reg ? "rgba(43,213,118,.35)" : "rgba(255,77,77,.35)";
-        regStatus.style.background = reg ? "rgba(43,213,118,.10)" : "rgba(255,77,77,.10)";
-    });
-    regStatus.style.border = "1px solid rgba(43,213,118,.35)";
-    regStatus.style.background = "rgba(43,213,118,.10)";
+
 
     // ===== Audio view toggles
     const micVol = document.getElementById('micVol');
