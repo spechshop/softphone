@@ -608,6 +608,7 @@
     const modalCancel = document.getElementById('modalCancel');
 
     let inCall = false;
+    let callConnectionTimeout = null; // Store timeout ID to prevent race conditions
     const CALL_CONNECTION_DELAY_MS = 2000; // Time to simulate call connection
 
     function showCallModal(number) {
@@ -617,6 +618,11 @@
 
     function hideCallModal() {
       callModal.classList.remove('show');
+      // Clear any pending connection timeout
+      if (callConnectionTimeout) {
+        clearTimeout(callConnectionTimeout);
+        callConnectionTimeout = null;
+      }
     }
 
     function setCall(on){
@@ -642,7 +648,8 @@
       showCallModal(digits);
       
       // Simulate connection
-      setTimeout(() => {
+      callConnectionTimeout = setTimeout(() => {
+        callConnectionTimeout = null;
         hideCallModal();
         setCall(true);
       }, CALL_CONNECTION_DELAY_MS);
