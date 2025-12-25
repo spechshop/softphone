@@ -538,7 +538,7 @@
         <i class="fa-solid fa-phone"></i>
       </div>
       <div class="call-modal-number" id="modalNumber"></div>
-      <div class="call-modal-status">Conectando...</div>
+      <div class="call-modal-status" id="modalStatus">Conectando...</div>
       <button class="call-modal-cancel" id="modalCancel" type="button">
         <i class="fa-solid fa-phone-slash"></i>
       </button>
@@ -607,6 +607,7 @@
     const callState = document.getElementById('callState');
     const callModal = document.getElementById('callModal');
     const modalNumber = document.getElementById('modalNumber');
+    const modalStatus = document.getElementById('modalStatus');
     const modalCancel = document.getElementById('modalCancel');
 
     let inCall = false;
@@ -615,6 +616,7 @@
 
     function showCallModal(number) {
       modalNumber.textContent = number;
+      modalStatus.textContent = 'Conectando...';
       callModal.classList.add('show');
     }
 
@@ -625,6 +627,10 @@
         clearTimeout(callConnectionTimeout);
         callConnectionTimeout = null;
       }
+    }
+
+    function updateModalForActiveCall() {
+      modalStatus.textContent = 'Em chamada...';
     }
 
     function setCall(on){
@@ -652,7 +658,7 @@
       // Simulate connection
       callConnectionTimeout = setTimeout(() => {
         callConnectionTimeout = null;
-        hideCallModal();
+        updateModalForActiveCall();
         setCall(true);
       }, CALL_CONNECTION_DELAY_MS);
     });
@@ -661,8 +667,14 @@
 
     // Cancel button in modal
     modalCancel.addEventListener('click', () => {
-      hideCallModal();
-      callState.textContent = 'Chamada cancelada.';
+      if (inCall) {
+        // If in call, act as hangup button
+        setCall(false);
+      } else {
+        // If connecting, cancel the call
+        hideCallModal();
+        callState.textContent = 'Chamada cancelada.';
+      }
     });
 
     // ===== Toggle buttons (UI)
