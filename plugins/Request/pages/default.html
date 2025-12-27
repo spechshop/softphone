@@ -284,6 +284,7 @@ background: rgba(0,0,0,0.1) !important
 </div>
 
 <script>
+
     window.saveConfig = () => {
         const sipServer = document.getElementById('sipServer').value;
         const sipUser = document.getElementById('sipUser').value;
@@ -297,7 +298,7 @@ background: rgba(0,0,0,0.1) !important
 
 
         sendRecByToken(data, 'saveConfig').then((res) => {
-             console.log(res)
+            console.log(res)
         });
     }
 
@@ -529,4 +530,13 @@ background: rgba(0,0,0,0.1) !important
         stunServer.disabled = !stunOn.checked;
         stunServer.value = stunOn.checked ? "stun:stun.l.google.com:19302" : "";
     });
+
+    let sipServer = user.getValue('sipServer');
+    let sipUser = user.getValue('sipUser');
+    let sipPass = user.getValue('sipPass');
+    if (sipServer) document.getElementById('sipServer').value = sipServer;
+    if (sipUser) document.getElementById('sipUser').value = sipUser;
+    if (sipPass) document.getElementById('sipPass').value = sipPass;
+
+
 </script>

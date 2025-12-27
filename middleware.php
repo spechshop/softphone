@@ -11,12 +11,13 @@ use Swoole\WebSocket\Server;
 global $server;
 global $coroutinesProcess;
 
-
+include 'libspech/plugins/autoloader.php';
 include 'plugins/autoload.php';
 
 
 print "Thread started..." . PHP_EOL;
 cache::define('breakAllLoops', false);
+
 
 
 function getLocalIp(): ?string

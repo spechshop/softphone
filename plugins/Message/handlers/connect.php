@@ -3,6 +3,7 @@
 namespace handlers;
 
 
+use libspech\Cli\cli;
 use Swoole\Timer;
 
 class connect
@@ -18,12 +19,6 @@ class connect
 
 
         $data = $model['data'];
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
-        if (!$vault) {
-            return false;
-        }
-
-
 
 
         if (empty($data['token'])) {
@@ -34,7 +29,6 @@ class connect
                     'page' => $currentPage,
                 ]));
             } else {
-
                 $socket->push($fd, json_encode([
                     'type' => 'setPage',
                     'page' => $data['currentPage'],
@@ -46,15 +40,29 @@ class connect
                 'value' => '.'
             ]));
         }
-
-
-
-
         $socket->push($fd, json_encode([
             'type' => 'setPage',
             'page' => $data['currentPage'],
         ]));
 
+        $idTimer = Timer::tick(1000, function ($idTimer) use ($socket, $fd, $data) {
+            $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+            if ($vault->exists($data['fp'])) {
+                $userDatas = $vault->get($data['fp']);
+                $lastPacket = $userDatas['lastPacket'];
+                $renderURI = $lastPacket['headers']['From'][0];
+
+                if (!$socket->push($fd, json_encode([
+                        'type' => 'brand',
+                        'data' => $renderURI
+                    ]))) {
+                    cli::pcl('Erro ao enviar mensagem para o cliente: '.$fd);
+                   return Timer::clear($idTimer);
+                }
+                return true;
+            }
+        });
+        self::addTimerToConnection($fd, $idTimer);
 
 
         return true;

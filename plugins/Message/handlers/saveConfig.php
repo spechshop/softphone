@@ -3,6 +3,8 @@
 namespace handlers;
 
 
+use libspech\Sip\sip;
+use libspech\Sip\trunkController;
 use Swoole\Timer;
 use Swoole\WebSocket\Server;
 
@@ -68,15 +70,110 @@ class saveConfig
                 'message' => 'Verificando registro...'
             ]
         ]));
+        $needInputs = ['sipServer', 'sipUser', 'sipPass'];
+        foreach ($needInputs as $input) {
+            if (empty($data[$input])) {
+                return $socket->push($fd, json_encode([
+                    'type' => 'notify',
+                    'data' => [
+                        'type' => 'bg-danger text-white',
+                        'message' => 'Campo obrigatório não preenchido: ' . $input
+                    ]
+                ]));
+            }
+        }
+
+
         $sipServer = self::parseSipServer($data['sipServer']);
-
         $sipUser = $data['sipUser'];
-        $sipDomain = $data['sipDomain'];
         $sipPass = $data['sipPass'];
-        $transport = $data['transport'];
-        $stunOn = $data['stunOn'];
-        $stunServer = $data['stunServer'];
+        try {
+            $trunkController = new trunkController($sipUser, $sipPass, $sipServer);
+        } catch (\Exception $e) {
+            return $socket->push($fd, json_encode([
+                'type' => 'notify',
+                'data' => [
+                    'type' => 'bg-danger text-white',
+                    'message' => "Não foi possível resolver o host fornecido"
+                ]
+            ]));
+        }
+        $trunkController->expires = 1800;
+        if (!$trunkController->register(5)) {
+            return $socket->push($fd, json_encode([
+                'type' => 'notify',
+                'data' => [
+                    'type' => 'bg-danger text-white',
+                    'message' => "Registro falhou, verifique as credenciais fornecidas"
+                ]
+            ]));
+        }
+        $modelOptions = $trunkController->modelOptions();
+        $trunkController->socket->sendto($trunkController->host, $trunkController->port, sip::renderSolution($modelOptions));
+        $res = $trunkController->socket->recvPacket(5);
+        $trunkController->close();
+        if (!$res) {
+            $socket->push($fd, json_encode([
+                'type' => 'notify',
+                'data' => [
+                    'type' => 'bg-warning text-white',
+                    'message' => "Servidor não suporta OPTIONS, registrando sem opções"
+                ]
+            ]));
+            $vault->set($fingerprint, $data);
+            foreach ($needInputs as $input) {
+                $socket->push($fd, json_encode([
+                    'type' => 'setKey',
+                    'key' => $input,
+                    'value' => $data[$input]
+                ]));
+            }
+            $socket->push($fd, json_encode([
+                'type' => 'notify',
+                'data' => [
+                    'type' => 'bg-warning text-white',
+                    'message' => "Configuração salva com sucesso"
+                ]
+            ]));
+            return true;
+        }
 
+
+        $parsedRes = sip::parse($res);
+        $data['lastPacket'] = $parsedRes;
+
+
+        $vault->set($fingerprint, $data);
+
+
+        $socket->push($fd, json_encode([
+            'type' => 'notify',
+            'data' => [
+                'type' => 'bg-success text-white',
+                'message' => "Registro bem sucedido"
+            ]
+        ]));
+        $vault->set($fingerprint, $data);
+        foreach ($needInputs as $input) {
+            $socket->push($fd, json_encode([
+                'type' => 'setKey',
+                'key' => $input,
+                'value' => $data[$input]
+            ]));
+        }
+        $socket->push($fd, json_encode([
+            'type' => 'setKey',
+            'key' => 'lastPacket',
+            'value' => $parsedRes
+        ]));
+        $socket->push($fd, json_encode([
+            'type' => 'notify',
+            'data' => [
+                'type' => 'bg-success text-white',
+                'message' => "Configuração salva com sucesso"
+            ]
+        ]));
+        $vault->flush();
 
         return true;
     }

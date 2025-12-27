@@ -120,15 +120,21 @@ const onMessageSocket = (event, socket) => {
         user.updateUserData(data.key, data.value);
     }
     else if (data.type === 'notify') {
-        console.log(data.data);
         bootstrap.showToast({
             header: 'Notificação',
             body: data.data.message,
             toastClass: data.data.type,
             colorHeader: 'text-white',
         });
-
     }
+    else if (data.type === 'brand') {
+       document.getElementById('branded').innerText = data.data;
+    }
+
+
+
+
+
 
 
 }
