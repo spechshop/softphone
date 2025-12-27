@@ -72,7 +72,9 @@ const onOpenSocket = (socket) => {
             data: (new UserManager()).getUserData()
         }));
         sleep(1000).then(() => {
-            sendRecByToken({token: (new UserManager).getValue('token')}, 'stats').then(r => null);
+            sendRecByToken({
+                token: (new UserManager).getValue('token')
+            }, 'stats').then(r => null);
         });
     });
 
@@ -86,10 +88,9 @@ const sendRecByToken = async (command, type) => {
     }
 
 
+    command['fp'] = user.getValue('fp');
     socketGlobal.send(JSON.stringify({
-        id,
-        type,
-        data: command
+        id, type, data: command
     }));
     let wait = 30000;
     let time = new Date().getTime();
@@ -154,6 +155,10 @@ class ProcessManager {
 class UserManager {
     constructor(storageKey) {
         this.storageKey = storageKey || 'user_data';
+        let fp=false;
+        fp = localStorage.fp || false;
+        if(!fp)fp = document.getElementById('fp')?.innerText;
+        this.updateUserData( 'fp', fp)
     }
 
     setUserData(data) {
@@ -238,8 +243,7 @@ class templateManager {
 
     async getPage(page) {
         return await sendRecByToken({
-            'page': page,
-            'token': (new UserManager()).getUserData().token,
+            'page': page, 'token': (new UserManager()).getUserData().token,
         }, 'getPage').then(r => {
             return r;
         })
@@ -248,7 +252,7 @@ class templateManager {
     async setPage(pageName) {
         await this.displayLoading();
         this.clearStops();
-      //  document.getElementById('top-bar').innerHTML = '';
+        //  document.getElementById('top-bar').innerHTML = '';
 
         const scriptData = await this.getPage(pageName);
         const updatedScriptData = this.processScripts(scriptData);
@@ -309,162 +313,3 @@ autoSocket();
 
 
 
-
-
-(() => {
-    const SEP = /[,;]+/g;
-
-    function init(el) {
-        if (!el || el.dataset.tagified) return;
-        el.dataset.tagified = '1';
-
-        // UI
-        const box = document.createElement('div');
-        box.className = 'tag-box';
-        const placeholder = document.createElement('span');
-        placeholder.className = 'tag-placeholder';
-        placeholder.textContent = el.placeholder || 'Add More';
-        const inner = document.createElement('input');
-        inner.className = 'tag-input-inner';
-        inner.type = 'text';
-
-        el.style.display = 'none';
-        el.parentNode.insertBefore(box, el);
-        box.append(placeholder, inner);
-
-        // estado
-        let tags = (el.value || '').split(',').map(s => s.trim()).filter(Boolean);
-
-        // descriptor nativo do 'value'
-        const nativeValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
-        let internalUpdate = false;
-
-        function render() {
-            // limpa chips
-            box.querySelectorAll('.tag-chip').forEach(n => n.remove());
-            // cria chips
-            tags.forEach(t => {
-                const chip = document.createElement('span');
-                chip.className = 'tag-chip';
-                // Securely render user-supplied tag value
-                const tagText = document.createElement('span');
-                tagText.textContent = t;
-                const xSpan = document.createElement('span');
-                xSpan.className = 'x';
-                const xIcon = document.createElement('i');
-                xIcon.className = 'fa-sharp fa-regular fa-circle-xmark x';
-                xSpan.appendChild(xIcon);
-                chip.append(tagText, xSpan);
-                box.insertBefore(chip, inner);
-            });
-
-            // atualiza o input original SEM disparar o nosso setter
-            internalUpdate = true;
-            nativeValue.set.call(el, tags.join(','));
-            internalUpdate = false;
-
-            // placeholder
-            placeholder.style.display = tags.length === 0 && !inner.value ? '' : 'none';
-        }
-
-        function syncFromValue() {
-            // sincroniza do value externo -> estado interno
-            tags = (nativeValue.get.call(el) || '')
-                .split(',')
-                .map(s => s.trim())
-                .filter(Boolean);
-            render();
-        }
-
-        // intercepta .value SÓ desta instância
-        Object.defineProperty(el, 'value', {
-            get() {
-                return nativeValue.get.call(el);
-            },
-            set(v) {
-                nativeValue.set.call(el, v);
-                if (!internalUpdate) syncFromValue(); // evita loop
-            }
-        });
-
-        // também sincroniza se alguém disparar change/input
-        el.addEventListener('change', () => {
-            if (!internalUpdate) syncFromValue();
-        });
-        el.addEventListener('input', () => {
-            if (!internalUpdate) syncFromValue();
-        });
-
-        // helpers
-        const addMany = (text) => {
-            text.split(SEP).map(s => s.trim()).filter(Boolean).forEach(p => {
-                if (!tags.includes(p)) tags.push(p);
-            });
-            render();
-        };
-
-        // eventos UI
-        box.addEventListener('click', e => {
-            if (e.target.classList.contains('x')) {
-                const chip = e.target.closest('.tag-chip');
-                const val = chip.firstChild.textContent;
-                tags = tags.filter(t => t !== val);
-                render();
-            } else inner.focus();
-        });
-
-        inner.addEventListener('keydown', e => {
-            if (e.key === 'Enter' || e.key === ',' || e.key === ';') {
-                e.preventDefault();
-                if (inner.value.trim()) {
-                    addMany(inner.value);
-                    inner.value = '';
-                }
-            } else if (e.key === 'Backspace' && !inner.value && tags.length) {
-                tags.pop();
-                render();
-            }
-        });
-
-        inner.addEventListener('input', () => {
-            placeholder.style.display = tags.length === 0 && !inner.value ? '' : 'none';
-            if (SEP.test(inner.value)) {
-                addMany(inner.value);
-                inner.value = '';
-            }
-            SEP.lastIndex = 0;
-        });
-
-        inner.addEventListener('paste', e => {
-            const text = (e.clipboardData || window.clipboardData).getData('text');
-            if (text) {
-                e.preventDefault();
-                addMany(text);
-                inner.value = '';
-            }
-        });
-
-        inner.addEventListener('blur', () => {
-            if (inner.value.trim()) {
-                addMany(inner.value);
-                inner.value = '';
-            }
-        });
-
-        render();
-    }
-
-    // inicia existentes
-    document.querySelectorAll('input.tagify').forEach(init);
-
-    // pega os que nascerem depois
-    new MutationObserver(muts => {
-        for (const m of muts) {
-            m.addedNodes?.forEach(n => {
-                if (n.nodeType !== 1) return;
-                if (n.matches?.('input.tagify')) init(n);
-                n.querySelectorAll?.('input.tagify').forEach(init);
-            });
-        }
-    }).observe(document.documentElement, {childList: true, subtree: true});
-})();

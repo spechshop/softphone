@@ -17,6 +17,11 @@ class connect
         self::clearConnectionTimers($fd);
 
         $data = $model['data'];
+
+
+
+
+
         if (empty($data['token'])) {
             if (empty($data['currentPage'])) {
                 $currentPage = 'default';
@@ -25,12 +30,13 @@ class connect
                     'page' => $currentPage,
                 ]));
             } else {
+
                 $socket->push($fd, json_encode([
                     'type' => 'setPage',
                     'page' => $data['currentPage'],
                 ]));
             }
-            return $socket->push($fd, json_encode([
+            $socket->push($fd, json_encode([
                 'type' => 'setKey',
                 'key' => 'token',
                 'value' => '.'
@@ -43,15 +49,7 @@ class connect
             'page' => $data['currentPage'],
         ]));
 
-        // Timer para volumes
 
-
-        // Timer de timeout (60 segundos)
-        $timeoutTimerId = Timer::after(320000, function () use ($fd) {
-           // self::clearConnectionTimers($fd);
-        });
-
-        self::addTimerToConnection($fd, $timeoutTimerId);
 
         return true;
     }

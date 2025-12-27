@@ -1,3 +1,5 @@
 .idea
 .git
 libspech
+/fullchain.pem
+/privkey.pem

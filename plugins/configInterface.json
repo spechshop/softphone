@@ -1,7 +1,7 @@
 {
   "port": "443",
   "host": "0.0.0.0",
-  "ssl": false,
+  "ssl": true,
   "autoload": [
     "Request/router",
     "Request/views",

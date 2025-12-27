@@ -1,0 +1,740 @@
+<script>
+    (function () {
+        const host = window.location.hostname;
+
+        if (host.includes("music.")) {
+            //const newUrl = `https://${host}:4455${window.location.pathname}${window.location.search}${window.location.hash}`;
+            if (window.location.port !== "4455") {
+                //window.location.href = newUrl;
+            }
+        }
+    })();
+
+    (function () {
+        const styleId = 'hide-table-data-style';
+
+        function toggleDataVisibility() {
+            const styleEl = document.getElementById(styleId);
+            const icon = toggleBtn.querySelector('i');
+
+            if (styleEl) {
+                styleEl.remove();
+                icon.className = 'fa-solid fa-eye-slash';
+                toggleBtn.title = 'Ocultar Dados';
+            } else {
+                const style = document.createElement('style');
+                style.id = styleId;
+                style.innerHTML = `
+                td {
+                    color: transparent !important;
+                    text-shadow: 0 0 10px rgba(0,0,0,0.5);
+                    transition: color 0.2s ease;
+                }
+            `;
+                document.head.appendChild(style);
+                icon.className = 'fa-solid fa-eye';
+                toggleBtn.title = 'Mostrar Dados';
+            }
+        }
+
+        // Cria botão com ícone do FontAwesome
+        const toggleBtn = document.createElement('button');
+        toggleBtn.title = 'Ocultar Dados';
+        toggleBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
+        Object.assign(toggleBtn.style, {
+            position: 'fixed',
+            bottom: '10px',
+            right: '10px',
+            zIndex: 9999,
+            padding: '10px',
+            background: '#0d6efd',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            fontSize: '18px',
+            width: '46px',
+            height: '46px',
+            display: 'none',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+        });
+
+        toggleBtn.onclick = toggleDataVisibility;
+        document.body.appendChild(toggleBtn);
+
+        // Aplica efeito mesmo com DOM mudando
+        const observer = new MutationObserver(() => {
+            const styleEl = document.getElementById(styleId);
+            if (styleEl) {
+                document.querySelectorAll('td').forEach(td => {
+                    td.style.color = 'transparent';
+                    td.style.textShadow = '0 0 10px rgba(0,0,0,0.5)';
+                });
+            }
+        });
+
+        observer.observe(document.body, {
+            childList: true,
+            subtree: true
+        });
+
+
+    })();
+
+    // Sistema de Troca de Temas
+    (function () {
+        const themes = {
+            golden: {
+                name: 'Golden Noir',
+                icon: 'fa-crown',
+                colors: {
+                    '--primary-bg': '#111111',
+                    '--secondary-bg': '#181818',
+                    '--accent': '#ffcf5b',  // dourado suave (sem virar amarelo berrante)
+                    '--menu-bg': '#181818',
+                    '--text': 'rgb(255 248 230 / 90%)',
+                    '--navbar-bg': '#181818',
+                    '--card-bg': '#151515'
+                }
+            },
+            ocean: {
+                name: 'Ocean Blue',
+                icon: 'fa-water',
+                colors: {
+                    '--primary-bg': '#161d31',
+                    '--secondary-bg': '#283046',
+                    '--accent': '#00b1ff',
+                    '--menu-bg': '#283046',
+                    '--text': 'rgb(225 222 245 / 90%)',
+                    '--navbar-bg': '#283046',
+                    '--card-bg': '#27283c'
+                }
+            },
+            royal: {
+                name: 'Royal Purple',
+                icon: 'fa-gem',
+                colors: {
+                    '--primary-bg': '#1a1326',
+                    '--secondary-bg': '#241933',
+                    '--accent': '#b56dff',
+                    '--menu-bg': '#241933',
+                    '--text': 'rgb(235 225 255 / 90%)',
+                    '--navbar-bg': '#241933',
+                    '--card-bg': '#1f172d'
+                },
+            },
+            amethyst: {
+                name: 'Midnight Amethyst',
+                icon: 'fa-moon',
+                colors: {
+                    '--primary-bg': '#0f0c18',
+                    '--secondary-bg': '#1a1423',
+                    '--accent': '#c17fff',
+                    '--menu-bg': '#1a1423',
+                    '--text': 'rgb(240 230 255 / 90%)',
+                    '--navbar-bg': '#1a1423',
+                    '--card-bg': '#15101e'
+                }
+            },
+            arctic: {
+                name: 'Arctic Frost',
+                icon: 'fa-snowflake',
+                colors: {
+                    '--primary-bg': '#0e141a',
+                    '--secondary-bg': '#18222b',
+                    '--accent': '#7fcaff',   // azul gelo premium
+                    '--menu-bg': '#18222b',
+                    '--text': 'rgb(225 240 255 / 90%)',
+                    '--navbar-bg': '#18222b',
+                    '--card-bg': '#141c24'
+                }
+            },
+
+
+        };
+
+        let currentTheme = localStorage.getItem('selectedTheme') || 'golden';
+        let isMenuOpen = false;
+        let themeStyleElement = null;
+
+        function applyTheme(themeName) {
+            const theme = themes[themeName];
+            if (!theme) return;
+
+            // Remove estilo anterior se existir
+            if (themeStyleElement) {
+                themeStyleElement.remove();
+            }
+
+            // Cria novo elemento de estilo com regras CSS importantes
+            themeStyleElement = document.createElement('style');
+            themeStyleElement.id = 'dynamic-theme-style';
+            themeStyleElement.innerHTML = `
+            /* Backgrounds principais */
+            body, .input-group-text, .offcanvas {
+                background-color: ${theme.colors['--primary-bg']} !important;
+            }
+
+            .bg-dark, #menu-bar, .navbar, .navbar-dark, .modal-content,
+            .offcanvas-start, nav.navbar, .navbar.bg-dark,
+            body > nav, #navbar-top {
+                background-color: ${theme.colors['--secondary-bg']} !important;
+            }
+
+            th {
+                background-color: ${theme.colors['--secondary-bg']} !important;
+            }
+
+            td {
+                background-color: ${theme.colors['--secondary-bg']} !important;
+            }
+
+            /* Acentos e textos coloridos */
+            .text-blue, .form-select, .input-group-text, .modal-content,
+            .label-primary, .label-primary[href]:hover, .label-primary[href]:focus {
+                color: ${theme.colors['--accent']} !important;
+            }
+            .label-primary[href]:hover, .label-primary[href]:focus, .label-primary, .bg-info {
+                color: black !important;
+            }
+
+            /* Cards */
+            .card-distak, .distak {
+                background-color: ${theme.colors['--card-bg']} !important;
+                color: ${theme.colors['--accent']} !important;
+            }
+
+            .card-distak-dark {
+                color: ${theme.colors['--accent']} !important;
+            }
+
+            /* Formulários */
+            .form-control, .input-group > button, .input-group-text,
+            select, .choices__inner {
+                border-color: ${theme.colors['--accent']} !important;
+            }
+
+            .input-group-text {
+                color: ${theme.colors['--accent']} !important;
+                background-color: ${theme.colors['--card-bg']} !important;
+            }
+
+            /* Tabs */
+            .nav-tabs .nav-link.active, .nav-tabs .nav-item.show .nav-link {
+                color: ${theme.colors['--accent']} !important;
+                background-color: ${theme.colors['--primary-bg']} !important;
+                border-top: 3px solid ${theme.colors['--accent']} !important;
+                border-left: 3px solid ${theme.colors['--accent']} !important;
+                border-right: 3px solid ${theme.colors['--accent']} !important;
+            }
+
+            .nav-link {
+                border-bottom-color: ${theme.colors['--accent']} !important;
+            }
+
+            body > nav > div {
+                border-bottom-color: ${theme.colors['--accent']} !important;
+            }
+
+            /* Botões */
+            body > nav > div > button {
+                background-color: ${theme.colors['--card-bg']} !important;
+                color: white !important;
+            }
+
+            /* Backgrounds especiais */
+            .bg-night {
+                background-color: ${theme.colors['--primary-bg']} !important;
+            }
+
+            .bg-deep-night {
+                background-color: ${theme.colors['--primary-bg']} !important;
+                filter: brightness(0.8);
+            }
+
+            .bg-gradient {
+                background: linear-gradient(135deg, ${theme.colors['--secondary-bg']} 0%, ${theme.colors['--primary-bg']} 100%) !important;
+            }
+
+            .bg-gradient-night {
+                background: linear-gradient(135deg, ${theme.colors['--primary-bg']} 0%, ${theme.colors['--card-bg']} 100%) !important;
+            }
+
+            /* ApexCharts */
+            .apexcharts-canvas {
+                background: transparent !important;
+            }
+
+            .apexcharts-tooltip {
+                background: ${theme.colors['--secondary-bg']} !important;
+                border-color: ${theme.colors['--accent']} !important;
+                color: ${theme.colors['--text']} !important;
+            }
+
+            .apexcharts-tooltip-title {
+                background: ${theme.colors['--card-bg']} !important;
+                border-color: ${theme.colors['--accent']} !important;
+                color: ${theme.colors['--text']} !important;
+            }
+
+            .apexcharts-xaxistooltip, .apexcharts-yaxistooltip {
+                background: ${theme.colors['--secondary-bg']} !important;
+                border-color: ${theme.colors['--accent']} !important;
+                color: ${theme.colors['--text']} !important;
+            }
+
+            .apexcharts-menu {
+                background: ${theme.colors['--secondary-bg']} !important;
+                border-color: ${theme.colors['--accent']} !important;
+            }
+
+            .apexcharts-menu-item:hover {
+                background: ${theme.colors['--card-bg']} !important;
+            }
+
+            .apexcharts-legend-text {
+                color: ${theme.colors['--text']} !important;
+            }
+
+            .apexcharts-gridline {
+                stroke: ${theme.colors['--card-bg']} !important;
+            }
+
+            .apexcharts-text {
+                fill: ${theme.colors['--text']} !important;
+            }
+
+            .apexcharts-svg {
+                background: transparent !important;
+            }
+
+            .apexcharts-inner {
+                background: transparent !important;
+            }
+        `;
+
+            document.head.appendChild(themeStyleElement);
+
+            // Atualiza gráficos ApexCharts existentes
+            if (typeof ApexCharts !== 'undefined' && window.Apex) {
+                setTimeout(() => {
+                    const charts = document.querySelectorAll('.apexcharts-canvas');
+                    charts.forEach(chart => {
+                        const chartId = chart.getAttribute('data-apex-chart-id');
+                        if (chartId && ApexCharts.exec) {
+                            try {
+                                ApexCharts.exec(chartId, 'updateOptions', {
+                                    chart: {
+                                        background: 'transparent',
+                                        foreColor: theme.colors['--text']
+                                    },
+                                    theme: {
+                                        mode: 'dark'
+                                    },
+                                    grid: {
+                                        borderColor: theme.colors['--card-bg']
+                                    },
+                                    tooltip: {
+                                        theme: 'dark',
+                                        style: {
+                                            background: theme.colors['--secondary-bg']
+                                        }
+                                    }
+                                }, false, false);
+                            } catch (e) {
+                                console.log('Chart update skipped:', e);
+                            }
+                        }
+                    });
+                }, 100);
+            }
+
+            localStorage.setItem('selectedTheme', themeName);
+            currentTheme = themeName;
+        }
+
+        function createThemeButton() {
+            const buttonContainer = document.createElement('div');
+            buttonContainer.id = 'theme-switcher-container';
+            Object.assign(buttonContainer.style, {
+                position: 'fixed',
+                bottom: '70px',
+                right: '10px',
+                zIndex: '9998',
+                display: 'flex',
+                flexDirection: 'column-reverse',
+                gap: '10px',
+                alignItems: 'center'
+            });
+
+            // Botão principal
+            const mainButton = document.createElement('button');
+            mainButton.id = 'theme-main-btn';
+            mainButton.title = 'Trocar Tema';
+            mainButton.innerHTML = '<i class="fa-solid fa-palette"></i>';
+            Object.assign(mainButton.style, {
+                padding: '10px',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                fontSize: '18px',
+                width: '46px',
+                height: '46px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                transition: 'transform 0.3s ease'
+            });
+
+            mainButton.onclick = () => {
+                isMenuOpen = !isMenuOpen;
+                themeMenu.style.display = isMenuOpen ? 'flex' : 'none';
+                mainButton.style.transform = isMenuOpen ? 'rotate(180deg)' : 'rotate(0deg)';
+            };
+
+            // Menu de temas
+            const themeMenu = document.createElement('div');
+            themeMenu.id = 'theme-menu';
+            Object.assign(themeMenu.style, {
+                display: 'none',
+                flexDirection: 'column',
+                gap: '8px',
+                marginBottom: '5px'
+            });
+
+            // Botão de criar novo tema
+            const createBtn = document.createElement('button');
+            createBtn.title = 'Criar Novo Tema';
+            createBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
+            Object.assign(createBtn.style, {
+                padding: '8px',
+                background: '#10b981',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '50%',
+                cursor: 'pointer',
+                fontSize: '14px',
+                width: '38px',
+                height: '38px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                transition: 'all 0.3s ease'
+            });
+
+            createBtn.onclick = (e) => {
+                e.stopPropagation();
+                openThemeCreator();
+                isMenuOpen = false;
+                themeMenu.style.display = 'none';
+                mainButton.style.transform = 'rotate(0deg)';
+            };
+
+            themeMenu.appendChild(createBtn);
+
+            Object.entries(themes).forEach(([key, theme]) => {
+                const themeContainer = document.createElement('div');
+                Object.assign(themeContainer.style, {
+                    position: 'relative',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center'
+                });
+
+                const themeBtn = document.createElement('button');
+                themeBtn.title = theme.name;
+                themeBtn.innerHTML = `<i class="fa-solid ${theme.icon}"></i>`;
+                Object.assign(themeBtn.style, {
+                    padding: '8px',
+                    background: currentTheme === key ? theme.colors['--accent'] : '#333',
+                    color: '#fff',
+                    border: currentTheme === key ? '2px solid #fff' : 'none',
+                    borderRadius: '50%',
+                    cursor: 'pointer',
+                    fontSize: '14px',
+                    width: '38px',
+                    height: '38px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                    transition: 'all 0.3s ease',
+                    opacity: '0.9'
+                });
+
+                themeBtn.onmouseover = () => {
+                    if (currentTheme !== key) {
+                        themeBtn.style.opacity = '1';
+                        themeBtn.style.transform = 'scale(1.1)';
+                    }
+                };
+
+                themeBtn.onmouseout = () => {
+                    if (currentTheme !== key) {
+                        themeBtn.style.opacity = '0.9';
+                        themeBtn.style.transform = 'scale(1)';
+                    }
+                };
+
+                themeBtn.onclick = () => {
+                    applyTheme(key);
+                    isMenuOpen = false;
+                    themeMenu.style.display = 'none';
+                    mainButton.style.transform = 'rotate(0deg)';
+
+                    // Atualiza visual dos botões
+                    document.querySelectorAll('#theme-menu button').forEach(btn => {
+                        if (!btn.classList.contains('delete-btn')) {
+                            btn.style.border = 'none';
+                            btn.style.background = '#333';
+                        }
+                    });
+                    themeBtn.style.background = theme.colors['--accent'];
+                    themeBtn.style.border = '2px solid #fff';
+                };
+
+                themeContainer.appendChild(themeBtn);
+
+                // Botão X para deletar temas customizados
+                if (theme.custom) {
+                    const deleteBtn = document.createElement('button');
+                    deleteBtn.classList.add('delete-btn');
+                    deleteBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
+                    deleteBtn.title = 'Deletar tema';
+                    Object.assign(deleteBtn.style, {
+                        position: 'absolute',
+                        top: '-5px',
+                        right: '-5px',
+                        width: '18px',
+                        height: '18px',
+                        borderRadius: '50%',
+                        background: '#ef4444',
+                        color: '#fff',
+                        border: '2px solid #fff',
+                        cursor: 'pointer',
+                        fontSize: '10px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        padding: '0',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                        transition: 'all 0.2s ease',
+                        zIndex: '10'
+                    });
+
+                    deleteBtn.onmouseover = () => {
+                        deleteBtn.style.background = '#dc2626';
+                        deleteBtn.style.transform = 'scale(1.1)';
+                    };
+
+                    deleteBtn.onmouseout = () => {
+                        deleteBtn.style.background = '#ef4444';
+                        deleteBtn.style.transform = 'scale(1)';
+                    };
+
+                    deleteBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        if (confirm(`Deletar tema "${theme.name}"?`)) {
+                            deleteCustomTheme(key);
+                            if (currentTheme === key) {
+                                applyTheme('ocean');
+                            }
+                            document.getElementById('theme-switcher-container').remove();
+                            createThemeButton();
+                        }
+                    };
+
+                    themeContainer.appendChild(deleteBtn);
+                }
+
+                themeMenu.appendChild(themeContainer);
+            });
+
+            buttonContainer.appendChild(mainButton);
+            buttonContainer.appendChild(themeMenu);
+            document.body.appendChild(buttonContainer);
+
+            // Fecha o menu ao clicar fora
+            document.addEventListener('click', (e) => {
+                if (!buttonContainer.contains(e.target) && isMenuOpen) {
+                    isMenuOpen = false;
+                    themeMenu.style.display = 'none';
+                    mainButton.style.transform = 'rotate(0deg)';
+                }
+            });
+        }
+
+        function loadCustomThemes() {
+            const customThemes = localStorage.getItem('customThemes');
+            if (customThemes) {
+                try {
+                    const parsed = JSON.parse(customThemes);
+                    Object.assign(themes, parsed);
+                } catch (e) {
+                    console.error('Erro ao carregar temas customizados:', e);
+                }
+            }
+        }
+
+        function saveCustomTheme(key, theme) {
+            const customThemes = JSON.parse(localStorage.getItem('customThemes') || '{}');
+            customThemes[key] = theme;
+            localStorage.setItem('customThemes', JSON.stringify(customThemes));
+            themes[key] = theme;
+        }
+
+        function deleteCustomTheme(key) {
+            const customThemes = JSON.parse(localStorage.getItem('customThemes') || '{}');
+            delete customThemes[key];
+            delete themes[key];
+            localStorage.setItem('customThemes', JSON.stringify(customThemes));
+        }
+
+        function openThemeCreator() {
+            const modalHTML = `
+                    <div class="modal fade" id="themeCreatorModal" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title text-white">Criar Novo Tema</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label text-white">Nome do Tema</label>
+                                        <input type="text" class="form-control" id="theme-name" placeholder="Ex: Meu Tema">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-white">Ícone (FontAwesome)</label>
+                                        <input type="text" class="form-control" id="theme-icon" placeholder="Ex: fa-star" value="fa-star">
+                                        <small class="text-muted">Veja ícones em: fontawesome.com/icons</small>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Fundo Principal</label>
+                                            <input type="color" class="form-control" id="theme-primary-bg" value="#161d31">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Fundo Secundário</label>
+                                            <input type="color" class="form-control" id="theme-secondary-bg" value="#283046">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Cor de Destaque</label>
+                                            <input type="color" class="form-control" id="theme-accent" value="#00b1ff">
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Fundo dos Cards</label>
+                                            <input type="color" class="form-control" id="theme-card-bg" value="#27283c">
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="button" class="btn btn-primary" id="save-theme-btn">Salvar Tema</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            const modal = new bootstrap.Modal(document.getElementById('themeCreatorModal'));
+            modal.show();
+
+            document.getElementById('save-theme-btn').onclick = () => {
+                const name = document.getElementById('theme-name').value.trim();
+                const icon = document.getElementById('theme-icon').value.trim();
+                const primaryBg = document.getElementById('theme-primary-bg').value;
+                const secondaryBg = document.getElementById('theme-secondary-bg').value;
+                const accent = document.getElementById('theme-accent').value;
+                const cardBg = document.getElementById('theme-card-bg').value;
+
+                if (!name) {
+                    alert('Digite um nome para o tema!');
+                    return;
+                }
+
+                const key = 'custom_' + name.toLowerCase().replace(/\s+/g, '_');
+                const newTheme = {
+                    name: name,
+                    icon: icon,
+                    custom: true,
+                    colors: {
+                        '--primary-bg': primaryBg,
+                        '--secondary-bg': secondaryBg,
+                        '--accent': accent,
+                        '--menu-bg': secondaryBg,
+                        '--text': 'rgb(225 222 245 / 90%)',
+                        '--navbar-bg': secondaryBg,
+                        '--card-bg': cardBg
+                    }
+                };
+
+                saveCustomTheme(key, newTheme);
+                modal.hide();
+                document.getElementById('themeCreatorModal').remove();
+
+                // Recria o menu com o novo tema
+                document.getElementById('theme-switcher-container').remove();
+                createThemeButton();
+
+                // Aplica o novo tema
+                applyTheme(key);
+            };
+
+            document.getElementById('themeCreatorModal').addEventListener('hidden.bs.modal', () => {
+                document.getElementById('themeCreatorModal').remove();
+            });
+        }
+
+        // Inicializa
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCustomThemes();
+            applyTheme(currentTheme);
+            createThemeButton();
+        });
+
+    })();
+
+
+    function isVisible(el) {
+        const selectElement = el instanceof HTMLElement ? el : document.querySelector(el);
+    try {
+        return selectElement && selectElement.offsetWidth > 0 && selectElement.offsetHeight > 0;
+    } catch {
+        return false;
+    }
+}
+
+/**
+ * Aguarda um elemento ficar visível na DOM
+ * @param {string} el
+ * @param {number} timeout Tempo máximo em ms
+ * @param {number} interval Intervalo de checagem (default 100ms)
+ * @returns {Promise<HTMLElement>}
+ */
+function waitVisible(el, timeout = 5000, interval = 100) {
+    return new Promise((resolve, reject) => {
+        const start = Date.now();
+
+        (function check() {
+            if (isVisible(el)) {
+                return resolve(el);
+            }
+
+            if (Date.now() - start >= timeout) {
+                return reject(new Error('Elemento não visível'));
+            }
+
+            setTimeout(check, interval);
+        })();
+    });
+}
+
+</script>

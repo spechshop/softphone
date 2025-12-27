@@ -1,101 +1,111 @@
+
 <!doctype html>
 <html lang="pt-BR">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-
-<title>Layout App</title>
-
-<style>
-/* ===== RESET ===== */
-* {
-  box-sizing: border-box;
-}
-
-html, body {
-  height: 100%;
-  margin: 0;
-}
-
-/* ===== LAYOUT PRINCIPAL ===== */
-body {
-  display: grid;
-  grid-template-rows: auto 1fr auto;
-  overflow: hidden;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-  background: #0a0f1e;
-  color: #fff;
-}
-
-/* ===== NAVBAR ===== */
-.navbar {
-  height: 48px;
-  padding: 0 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  background: rgba(15, 27, 58, 0.9);
-  border-bottom: 1px solid rgba(255,255,255,.08);
-}
-
-/* ===== ROOT (CONTEÚDO) ===== */
-#root {
-  overflow-y: auto;
-  overflow-x: hidden;
-  padding: 16px;
-}
-
-/* ===== FOOTER ===== */
-.footer {
-  height: 56px;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  background: rgba(10,15,30,.9);
-  border-top: 1px solid rgba(255,255,255,.08);
-}
-
-/* ===== EXTRAS VISUAIS ===== */
-.card {
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: 14px;
-  padding: 16px;
-  margin-bottom: 12px;
-}
-</style>
+<title>Audio Full Duplex + Save PCM</title>
 </head>
-
 <body>
 
-  <!-- NAVBAR -->
-  <div class="navbar">
-    <div><strong>Spech App</strong></div>
-    <div>🟢 Online</div>
-  </div>
+<button id="start">🎧 Iniciar Áudio</button>
+<button id="save" disabled>💾 Salvar Mic PCM</button>
 
-  <!-- ROOT (SCROLL AQUI) -->
-  <div id="root">
-    <div class="card">Conteúdo 1</div>
-    <div class="card">Conteúdo 2</div>
-    <div class="card">Conteúdo 3</div>
+<script>
+const WS_URL = "ws://" + infoURI().host + ":8080";
 
-    <!-- só pra provar scroll -->
-    <div class="card">Conteúdo 4</div>
-    <div class="card">Conteúdo 5</div>
-    <div class="card">Conteúdo 6</div>
-    <div class="card">Conteúdo 7</div>
-    <div class="card">Conteúdo 8</div>
-    <div class="card">Conteúdo 9</div>
-    <div class="card">Conteúdo 10</div>
-  </div>
+let audioCtx, ws;
+let recordedPCM = [];
 
-  <!-- FOOTER -->
-  <div class="footer">
-    <div>📞</div>
-    <div>🎛</div>
-    <div>⚙️</div>
-  </div>
+document.getElementById("start").onclick = async () => {
+  ws = new WebSocket(WS_URL);
+  ws.binaryType = "arraybuffer";
+
+  audioCtx = new AudioContext({ sampleRate: 8000 });
+
+  // ===== Player
+  await audioCtx.audioWorklet.addModule(URL.createObjectURL(new Blob([`
+    class Player extends AudioWorkletProcessor {
+      constructor(){
+        super();
+        this.buffer = [];
+        this.port.onmessage = e => this.buffer.push(...e.data);
+      }
+      process(_, outputs){
+        const out = outputs[0][0];
+        for(let i=0;i<out.length;i++){
+          out[i] = this.buffer.length ? this.buffer.shift() : 0;
+        }
+        return true;
+      }
+    }
+    registerProcessor("player", Player);
+  `], { type: "application/javascript" })));
+
+  const player = new AudioWorkletNode(audioCtx, "player");
+  player.connect(audioCtx.destination);
+
+  // ===== Mic
+  const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+  const mic = audioCtx.createMediaStreamSource(stream);
+
+  // ===== Recorder
+  await audioCtx.audioWorklet.addModule(URL.createObjectURL(new Blob([`
+    class Recorder extends AudioWorkletProcessor {
+      process(inputs){
+        const input = inputs[0][0];
+        if(input){
+          const pcm = new Int16Array(input.length);
+          for(let i=0;i<input.length;i++){
+            pcm[i] = Math.max(-1, Math.min(1, input[i])) * 32767;
+          }
+          this.port.postMessage(pcm.buffer, [pcm.buffer]);
+        }
+        return true;
+      }
+    }
+    registerProcessor("recorder", Recorder);
+  `], { type: "application/javascript" })));
+
+  const recorder = new AudioWorkletNode(audioCtx, "recorder");
+  recorder.port.onmessage = e => {
+    const buf = e.data;
+    recordedPCM.push(new Int16Array(buf)); // salvar local
+    ws.readyState === 1 && ws.send(buf);
+  };
+
+  mic.connect(recorder);
+
+  // ===== Receive audio
+  ws.onmessage = e => {
+    const pcm16 = new Int16Array(e.data);
+    const f32 = new Float32Array(pcm16.length);
+    for(let i=0;i<pcm16.length;i++) f32[i] = pcm16[i] / 32768;
+    player.port.postMessage(f32);
+  };
+
+  document.getElementById("save").disabled = false;
+  await audioCtx.resume();
+};
+
+// ===== Save PCM
+document.getElementById("save").onclick = () => {
+  if(!recordedPCM.length) return alert("Nada gravado");
+
+  const length = recordedPCM.reduce((s,a)=>s+a.length,0);
+  const pcm = new Int16Array(length);
+  let offset = 0;
+  for(const chunk of recordedPCM){
+    pcm.set(chunk, offset);
+    offset += chunk.length;
+  }
+
+  const blob = new Blob([pcm.buffer], { type: "application/octet-stream" });
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "microfone.pcm";
+  a.click();
+};
+</script>
 
 </body>
 </html>

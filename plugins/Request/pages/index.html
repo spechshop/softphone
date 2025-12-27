@@ -4,27 +4,30 @@
 @import(bypassFontAwesome)
 
 <body>
- <!-- NAVBAR -->
-  <div class="navbar">
-      <div class="text-white fw-bold" id="branded">sip:username</div>
 
 
-      <div id="top-bar" style="transition: width 0.2s ease"></div>
+@import(themeScript)
+<!-- NAVBAR -->
+<div class="navbar">
+    <div class="text-white fw-bold" id="branded">sip:username</div>
 
 
-      <!-- status de conexao  -->
-      <div class="me-3">
-          <i id="connection-icon" class="fa-solid fa-circle text-success"></i>
-          <span id="connection-status">...</span>
-      </div>
-  </div>
+    <div id="top-bar" style="transition: width 0.2s ease"></div>
+
+
+    <!-- status de conexao  -->
+    <div class="me-3">
+        <i id="connection-icon" class="fa-solid fa-circle text-success"></i>
+        <span id="connection-status">...</span>
+    </div>
+</div>
 
 <!-- Conteúdo Principal -->
 <div id="root">
     <!-- O conteúdo dinâmico será carregado aqui -->
 </div>
-
-  <!-- Bottom Nav -->
+<p id="fp" style="display: none"></p>
+<!-- Bottom Nav -->
 
 
 <div id="loadingPage" style="display: none">
@@ -35,25 +38,127 @@
     </center>
 </div>
 
+<!-- Modal de Aviso de Segurança -->
+<div class="modal fade" id="securityWarningModal" tabindex="-1" data-bs-backdrop="static" data-bs-keyboard="false">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title">
+                    <i class="fa-solid fa-triangle-exclamation me-2"></i>
+                    Aviso Importante de Segurança
+                </h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-danger mb-3">
+                    <i class="fa-solid fa-shield-halved me-2"></i>
+                    <strong class="text-dark">Atenção:</strong> Leia cuidadosamente antes de continuar
+                </div>
 
+                <ul class="list-unstyled mb-3">
+                    <li class="mb-2">
+                        <i class="fa-solid fa-database text-info me-2"></i>
+                        Este sistema <strong>armazena informações em banco de dados</strong> para persistência de sessão
+                    </li>
+                    <li class="mb-2">
+                        <i class="fa-solid fa-ban text-danger me-2"></i>
+                        <strong>JAMAIS</strong> utilize com contas VoIP pessoais ou de produção
+                    </li>
+                    <li class="mb-2">
+                        <i class="fa-solid fa-network-wired text-warning me-2"></i>
+                        Este sistema deve ser utilizado <strong>SOMENTE em rede privada</strong>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fa-solid fa-user-shield text-success me-2"></i>
+                        Use apenas para fins de teste e desenvolvimento
+                    </li>
+                </ul>
 
+                <div class="form-check mt-4">
+                    <input class="form-check-input" type="checkbox" id="dontShowAgainCheck">
+                    <label class="form-check-label" for="dontShowAgainCheck">
+                        Não mostrar este aviso novamente
+                    </label>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="acceptWarningBtn">
+                    <i class="fa-solid fa-check me-2"></i>
+                    Li e Compreendi
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 
-
-
-
-
-
-<div class="footer mt-1">
-    <div class="tabbtn active" data-tab="call">
+<div class="footer mt-1 bg-dark">
+    <div class="tabbtn" data-tab="call">
+        <i class="fa-solid fa-phone"></i>
         <div class="t">Chamada</div>
     </div>
     <div class="tabbtn" data-tab="audio">
-         <div class="t">Áudio</div>
+        <i class="fa-solid fa-music"></i>
+        <div class="t">Áudio</div>
     </div>
     <div class="tabbtn" data-tab="config">
-         <div class="t">Config</div>
+        <i class="fa-solid fa-gear"></i>
+        <div class="t">Config</div>
     </div>
 </div>
+
+
+<script>
+
+    window.currentTab = localStorage.getItem("currentTab") || "config";
+
+
+    // Restaura a tab salva ao carregar
+    document.addEventListener('DOMContentLoaded', function () {
+        let tabs = document.getElementsByClassName('tabbtn');
+        for (let tab of tabs) {
+            tab.addEventListener('click', function (e) {
+                const clickedTab = e.currentTarget;
+                const tabName = clickedTab.dataset.tab;
+                for (let t of tabs) {
+                    t.classList.remove('active');
+                }
+
+                clickedTab.classList.add('active');
+                localStorage.setItem("currentTab", tabName);
+                console.log(`Salvando tab ${tabName} no localStorage`);
+                window.currentTab = tabName;
+            });
+        }
+
+
+        // Primeiro aguarda o root ficar visível para selecionar a tab
+        waitVisible('#app', 30000, 1000).then(async () => {
+            for (let tab of tabs) {
+                if (tab.dataset.tab === currentTab) {
+                    tab.click();
+                    break;
+                }
+            }
+            console.log(`Carregado tab ${currentTab} no localStorage`);
+            await sleep(1000);
+
+
+            const securityModal = new bootstrap.Modal(document.getElementById('securityWarningModal'));
+            const dontShowWarning = localStorage.getItem('dontShowSecurityWarning');
+            if (dontShowWarning !== 'true') {
+                securityModal.show();
+            }
+            const accept = document.getElementById('acceptWarningBtn');
+            accept.addEventListener('click', () => {
+                securityModal.hide();
+            });
+        }).catch((error) => {
+            console.error('Erro ao aguardar a visibilidade do root:', error);
+        });
+
+    });
+
+
+</script>
 </body>
 
 </html>

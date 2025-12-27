@@ -1,9 +1,4 @@
-<style>
-
-
-</style>
-
-<div class="app px-3 pt-0">
+<div class="app px-3 pt-0" id="app">
 
     <!-- VIEW: CHAMADA -->
     <section data-view="call" class="show">
@@ -160,29 +155,28 @@
     <section data-view="config">
         <div class="cardx p-3">
             <div class="section-title">Configurações</div>
-            <div class="mini">Visual “PortSIP-style”, só front</div>
             <div class="divider"></div>
 
             <div class="mb-3">
                 <label class="form-label mini mb-1">Servidor SIP</label>
-                <input class="form-control soft-input" id="sipServer" placeholder="ex: sip.spechshop.com:5060"
-                       value="sip.spechshop.com:5060">
+                <input class="form-control soft-input" id="sipServer" placeholder="ex: spechshop.com"
+                       value="">
             </div>
 
             <div class="row g-2">
                 <div class="col-6">
                     <label class="form-label mini mb-1">Usuário</label>
-                    <input class="form-control soft-input" id="sipUser" value="1001">
+                    <input class="form-control soft-input" id="sipUser" value="">
                 </div>
                 <div class="col-6">
                     <label class="form-label mini mb-1">Domínio</label>
-                    <input class="form-control soft-input" id="sipDomain" value="spechshop.com">
+                    <input class="form-control soft-input" id="sipDomain" value="">
                 </div>
             </div>
 
             <div class="mt-2 mb-3">
                 <label class="form-label mini mb-1">Senha</label>
-                <input type="password" class="form-control soft-input" id="sipPass" value="********">
+                <input type="password" class="form-control soft-input" id="sipPass" value="">
             </div>
 
             <div class="d-flex gap-2">
@@ -248,6 +242,10 @@
 </div>
 
 <script>
+
+
+
+
     // ===== Tabs
     const tabBtns = document.querySelectorAll('.tabbtn');
     const views = document.querySelectorAll('[data-view]');
@@ -262,7 +260,7 @@
 
     // ===== Dialer
     const digitsEl = document.getElementById('digits');
-    const hintEl = document.getElementById('hint');
+    document.getElementById('hint');
     let digits = "";
 
     function renderDigits() {

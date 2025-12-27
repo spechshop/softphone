@@ -25,12 +25,10 @@ class server
         self::tick($server, 3000, $tableServer);
 
         \cache::set('cachePages', []);
-
         $listRoutes = \plugins\Request\controller::listPages();
         foreach ($listRoutes as $listRoute) {
             $e = explode('/', $listRoute);
             $idKey = explode('.', $e[count($e) - 1])[0];
-
             \cache::subDefine('cachePages', $idKey, \bufferPages::get($idKey, __DIR__));
         }
 
@@ -41,6 +39,16 @@ class server
     {
         Timer::tick($milliseconds, function ($timerId) use ($server, $tableServer) {
             $algorithm = 'crc32';
+            \cache::set('cachePages', []);
+            $listRoutes = \plugins\Request\controller::listPages();
+            foreach ($listRoutes as $listRoute) {
+                $e = explode('/', $listRoute);
+                $idKey = explode('.', $e[count($e) - 1])[0];
+                \cache::subDefine('cachePages', $idKey, \bufferPages::get($idKey, __DIR__));
+            }
+
+
+
             $Iterator = new RecursiveTreeIterator(new RecursiveDirectoryIterator(".", FilesystemIterator::SKIP_DOTS));
             foreach ($Iterator as $path) {
                 $addressFile = explode('-./', $path)[1];

@@ -11,7 +11,6 @@ class bufferPages
         if (!file_exists($addressPage)) {
             return 'what?';
         }
-        var_dump($addressPage);
         return template::prepare(file_get_contents($addressPage));
     }
 }

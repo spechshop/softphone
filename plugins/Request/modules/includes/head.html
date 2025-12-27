@@ -40,6 +40,7 @@
     <link href="/css/buildCurl.css" rel="stylesheet">
     <link href="/css/prism.css" rel="stylesheet"/>
     <script src="/js/bootstrap-show-toast.js"></script>
+    <script src="/js/jquery.toast.min.js"></script>
 
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
@@ -55,6 +56,7 @@
     <script src="https://cdn.jsdelivr.net/gh/jerosoler/Drawflow/dist/drawflow.min.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 
     <script>
 
@@ -231,13 +233,66 @@
         font-size: 14px;
     }
 
-    /* Fundo escuro para o container SIP */
-    .sip-trace-container {
-        color: #f8f8f2;
-        border-radius: 10px;
-        padding: 10px;
-        margin-bottom: 10px;
-        border: 1px solid #444;
-        font-family: "Courier New", monospace;
+    .tabbtn {
+        flex: 1;
+        padding: 10px 10px;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        border-top: 3px solid transparent;
+        position: relative;
+    }
+
+    .tabbtn:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-top-color: rgba(255, 255, 255, 0.3);
+    }
+
+    .tabbtn.active {
+        border-top-color: var(--accent, #00b1ff);
+    }
+
+    .tabbtn i {
+        display: block;
+        color: rgba(255, 255, 255, 0.7);
+        transition: all 0.3s ease;
+    }
+
+    .tabbtn.active i {
+        color: var(--accent, #00b1ff);
+        transform: scale(1.1);
+    }
+
+    .tabbtn:hover i {
+        color: #fff;
+        transform: translateY(-2px);
+    }
+
+    .tabbtn .t {
+        font-size: 11px;
+        color: rgba(255, 255, 255, 0.6);
+        font-weight: 500;
+        transition: color 0.3s ease;
+    }
+
+    .tabbtn.active .t {
+        color: var(--accent, #00b1ff);
+        font-weight: 600;
+    }
+
+    .tabbtn:hover .t {
+        color: #fff;
+    }
+
+    .footer {
+        display: flex;
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        z-index: 1000;
+        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
     }
 </style>
+
+
