@@ -1,4 +1,23 @@
 <?php
+$envFile =  '.env';
+if (!file_exists($envFile)) {
+    if (file_exists('.env.example')) {
+        copy('.env.example', $envFile);
+    } else {
+        file_put_contents($envFile, '');
+        throw new Exception("Arquivo .env não encontrado e .env.example também não existe.");
+    }
+}
+if (file_exists($envFile)) {
+    $lines = file($envFile, FILE_IGNORE_NEW_LINES | FILE_SKIP_EMPTY_LINES);
+    foreach ($lines as $line) {
+        if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
+            [$key, $value] = explode('=', $line, 2);
+            putenv(trim($key) . '=' . trim($value));
+        }
+    }
+}
+
 $interface = json_decode(file_get_contents(__DIR__ . '/configInterface.json'), true);
 $paths = $interface['autoload'];
 $allowObservable = $interface['allowObservable'];

@@ -71,16 +71,12 @@ const onOpenSocket = (socket) => {
             type: 'connect',
             data: (new UserManager()).getUserData()
         }));
-        sleep(1000).then(() => {
-            sendRecByToken({
-                token: (new UserManager).getValue('token')
-            }, 'stats').then(r => null);
-        });
+        document.getElementById('deviceId').innerText = (new UserManager()).getValue('fp');
     });
 
 }
 
-const sendRecByToken = async (command, type) => {
+window.sendRecByToken = async (params, type) => {
     const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     // checar status do socket
     if (socketGlobal.closed) {
@@ -88,9 +84,9 @@ const sendRecByToken = async (command, type) => {
     }
 
 
-    command['fp'] = user.getValue('fp');
+    params['fp'] = user.getValue('fp');
     socketGlobal.send(JSON.stringify({
-        id, type, data: command
+        id, type, data: params
     }));
     let wait = 30000;
     let time = new Date().getTime();
@@ -108,7 +104,7 @@ const sendRecByToken = async (command, type) => {
     } else {
         return null;
     }
-}
+};
 
 const onMessageSocket = (event, socket) => {
     const data = JSON.parse(event.data);
@@ -122,6 +118,16 @@ const onMessageSocket = (event, socket) => {
         template.setPage(data.page);
     } else if (data.type === 'setKey') {
         user.updateUserData(data.key, data.value);
+    }
+    else if (data.type === 'notify') {
+        console.log(data.data);
+        bootstrap.showToast({
+            header: 'Notificação',
+            body: data.data.message,
+            toastClass: data.data.type,
+            colorHeader: 'text-white',
+        });
+
     }
 
 
@@ -242,9 +248,11 @@ class templateManager {
     }
 
     async getPage(page) {
-        return await sendRecByToken({
+        const params = {
             'page': page, 'token': (new UserManager()).getUserData().token,
-        }, 'getPage').then(r => {
+        }
+
+        return await sendRecByToken(params, 'getPage').then(r => {
             return r;
         })
     }

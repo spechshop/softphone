@@ -6,83 +6,85 @@
 
         <div class="digits" id="digits"></div>
 
-
-        <div class=" cardx p-3">
+        <span style="display: none" id="callState"></span>
+        <div class=" card bg-dark p-3  ">
             <div class="dial-pad" id="pad">
                 <!-- 1..9 -->
-                <button class="dial-btn" data-key="1">
-                    <div class="n">1</div>
+                <div class="btn border-theme dial-btn" data-key="1">
+                    <b class="fs-3 text-white">1</b>
                     <div class="l">&nbsp;</div>
-                </button>
-                <button class="dial-btn" data-key="2">
-                    <div class="n">2</div>
+                </div>
+                <button class="btn border-theme dial-btn" data-key="2">
+                    <b class="fs-3 text-white">2</b>
                     <div class="l">ABC</div>
                 </button>
-                <button class="dial-btn" data-key="3">
-                    <div class="n">3</div>
+                <button class="btn border-theme dial-btn" data-key="3">
+                    <b class="fs-3 text-white">3</b>
                     <div class="l">DEF</div>
                 </button>
-                <button class="dial-btn" data-key="4">
-                    <div class="n">4</div>
+                <button class="btn border-theme dial-btn" data-key="4">
+                    <b class="fs-3 text-white">4</b>
                     <div class="l">GHI</div>
                 </button>
-                <button class="dial-btn" data-key="5">
-                    <div class="n">5</div>
+                <button class="btn border-theme dial-btn" data-key="5">
+                    <b class="fs-3 text-white">5</b>
                     <div class="l">JKL</div>
                 </button>
-                <button class="dial-btn" data-key="6">
-                    <div class="n">6</div>
+                <button class="btn border-theme dial-btn" data-key="6">
+                    <b class="fs-3 text-white">6</b>
                     <div class="l">MNO</div>
                 </button>
-                <button class="dial-btn" data-key="7">
-                    <div class="n">7</div>
+                <button class="btn border-theme dial-btn" data-key="7">
+                    <b class="fs-3 text-white">7</b>
                     <div class="l">PQRS</div>
                 </button>
-                <button class="dial-btn" data-key="8">
-                    <div class="n">8</div>
+                <button class="btn border-theme dial-btn" data-key="8">
+                    <b class="fs-3 text-white">8</b>
                     <div class="l">TUV</div>
                 </button>
-                <button class="dial-btn" data-key="9">
-                    <div class="n">9</div>
+                <button class="btn border-theme dial-btn" data-key="9">
+                    <b class="fs-3 text-white">9</b>
                     <div class="l">WXYZ</div>
                 </button>
                 <!-- * 0 # -->
-                <button class="dial-btn" data-key="*">
-                    <div class="n">*</div>
+                <button class="btn border-theme dial-btn" data-key="*">
+                    <b class="fs-3 text-white">*</b>
                 </button>
-                <button class="dial-btn" data-key="0">
-                    <div class="n">0</div>
+                <button class="btn border-theme dial-btn" data-key="0">
+                    <b class="fs-3 text-white">0</b>
                     <div class="l">+</div>
                 </button>
-                <button class="dial-btn" id="btnBackspace">
-                    <div class="n">
-                        <i class="fa-solid fa-backspace"></i></div>
+                <button class="btn border-theme dial-btn" data-key="#">
+                    <b class="fs-3 text-white">#</b>
+                    <div class="l">#</div>
+                </button>
+
+            </div>
+
+            <div class="gap-2 dial-pad">
+                <button class="btn border-theme dial-btn" style="border-color: transparent !important;">
+                    <i class="fa-duotone fa-regular fa-square-r fa-xl"></i>
+                </button>
+                <button class="btn border-theme dial-btn" style="
+border-radius: 100% !important;
+background: rgba(0,0,0,0.1) !important
+" id="btnCall">
+                    <i class="fa-duotone fa-light fa-phone fa-2xl"></i>
+                </button>
+
+                <button class="btn border-theme dial-btn" id="btnBackspace"
+                        style="border-color: transparent !important;">
+                    <i class="fa-duotone fa-light fa-delete-left fa-xl"></i>
                 </button>
             </div>
 
-            <div class="mt-3 d-flex gap-2">
-                <button class="btn btn-soft w-100" id="btnMute" type="button"><i
-                        class="fa-solid fa-volume-xmark me-1"></i><span>Mudo</span></button>
-                <button class="btn btn-soft w-100" id="btnHold" type="button"><i
-                        class="fa-solid fa-pause me-1"></i><span>Hold</span></button>
-                <button class="btn btn-soft w-100" id="btnSpk" type="button"><i
-                        class="fa-solid fa-volume-high me-1"></i><span>Áudio</span></button>
-            </div>
-
-            <div class="mt-3">
-                <button class="btn btn-call" id="btnCall" type="button"><i class="fa-solid fa-phone me-2"></i>LIGAR
-                </button>
-                <button class="btn btn-end d-none mt-2" id="btnHangup" type="button"><i
-                        class="fa-solid fa-phone-slash me-2"></i>ENCERRAR
-                </button>
-                <div class="mini mt-2" id="callState">Pronto.</div>
-            </div>
         </div>
+
     </section>
 
     <!-- VIEW: ÁUDIO -->
     <section data-view="audio">
-        <div class="cardx p-3">
+        <div class="card bg-dark p-3 p-3">
             <div class="section-title">Áudio</div>
             <div class="mini">Ajustes rápidos (front-end)</div>
             <div class="divider"></div>
@@ -113,7 +115,43 @@
             <div class="mini mt-3" id="audioFlags">Noise: off • Echo: off • AGC: off</div>
         </div>
 
-        <div class="mt-3 cardx p-3">
+        <div class="mt-3 card bg-dark p-3 p-3">
+            <div class="section-title">Codecs</div>
+            <div class="mini">Simulação de preferência (pra sua UI)</div>
+            <div class="divider"></div>
+
+            <div class="row g-2">
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04)">
+                        <div class="fw-bold">PCMA</div>
+                        <div class="mini">PT 8 • 8 kHz</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04)">
+                        <div class="fw-bold">PCMU</div>
+                        <div class="mini">PT 0 • 8 kHz</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04)">
+                        <div class="fw-bold">G.729</div>
+                        <div class="mini">8 kbps</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04)">
+                        <div class="fw-bold">Opus</div>
+                        <div class="mini">48 kHz • PT dinâmico</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="mt-3 card bg-dark p-3 p-3">
             <div class="section-title">Codecs</div>
             <div class="mini">Simulação de preferência (pra sua UI)</div>
             <div class="divider"></div>
@@ -153,7 +191,7 @@
 
     <!-- VIEW: CONFIG -->
     <section data-view="config">
-        <div class="cardx p-3">
+        <div class="card bg-dark p-3 p-3">
             <div class="section-title">Configurações</div>
             <div class="divider"></div>
 
@@ -180,8 +218,9 @@
             </div>
 
             <div class="d-flex gap-2">
-                <button class="btn btn-soft w-100" type="button" id="btnSave"><i
-                        class="fa-solid fa-floppy-disk me-1"></i><span>Salvar</span></button>
+                <button class="btn btn-soft w-100" type="button" onclick="saveConfig()">
+                    <i
+                            class="fa-solid fa-floppy-disk me-1"></i><span>Salvar</span></button>
                 <button class="btn btn-soft w-100" type="button" id="btnReset"><i
                         class="fa-solid fa-arrows-rotate me-1"></i><span>Reset</span></button>
             </div>
@@ -189,7 +228,7 @@
             <div class="mini mt-3" id="cfgState">Nenhuma alteração pendente.</div>
         </div>
 
-        <div class="mt-3 cardx p-3">
+        <div class="mt-3 card bg-dark p-3 p-3">
             <div class="section-title">Rede</div>
             <div class="mini">Só pra ficar bonito — igual app mesmo</div>
             <div class="divider"></div>
@@ -238,17 +277,43 @@
         <button class="call-modal-cancel" id="modalCancel" type="button">
             <i class="fa-solid fa-phone-slash"></i>
         </button>
+        <button class="call-modal-cancel" id="btnHangup" type="button">
+            <i class="fa-solid fa-phone-slash"></i>
+        </button>
     </div>
 </div>
 
 <script>
+    window.saveConfig = () => {
+        const sipServer = document.getElementById('sipServer').value;
+        const sipUser = document.getElementById('sipUser').value;
+        const sipDomain = document.getElementById('sipDomain').value;
+        const sipPass = document.getElementById('sipPass').value;
+        const transport = document.getElementById('transport').value;
+        const stunOn = document.getElementById('stunOn').checked;
+        const stunServer = document.getElementById('stunServer').value = stunOn ? "stun:stun.l.google.com:19302" : "";
+        const cfgState = document.getElementById('cfgState');
+        const data = {sipServer, sipUser, sipDomain, sipPass, transport, stunOn, stunServer};
 
 
+        sendRecByToken(data, 'saveConfig').then((res) => {
+             console.log(res)
+        });
+    }
 
 
     // ===== Tabs
     const tabBtns = document.querySelectorAll('.tabbtn');
     const views = document.querySelectorAll('[data-view]');
+    // ===== Fake call state (UI only)
+    window.btnCall = document.getElementById('btnCall');
+    window.btnHangup = document.getElementById('btnHangup');
+    window.callState = document.getElementById('callState');
+    window.callModal = document.getElementById('callModal');
+    window.modalNumber = document.getElementById('modalNumber');
+    window.modalStatus = document.getElementById('modalStatus');
+    window.modalCancel = document.getElementById('modalCancel');
+
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
             tabBtns.forEach(b => b.classList.remove('active'));
@@ -288,6 +353,19 @@
         const btn = e.target.closest('[data-key]');
         if (!btn) return;
         pushKey(btn.getAttribute('data-key'));
+        // remove rgba button after click
+        btn.style.background = "transparent";
+        console.log(`clicked ${btn.getAttribute('data-key')}`)
+    });
+
+    // Fix mobile active state persistence
+    document.querySelectorAll('.dial-btn').forEach(btn => {
+        btn.addEventListener('touchend', function () {
+            this.blur();
+        });
+        btn.addEventListener('mouseup', function () {
+            this.blur();
+        });
     });
 
     document.getElementById('btnBackspace').addEventListener('click', backspace);
@@ -303,14 +381,6 @@
 
     renderDigits();
 
-    // ===== Fake call state (UI only)
-    const btnCall = document.getElementById('btnCall');
-    const btnHangup = document.getElementById('btnHangup');
-    const callState = document.getElementById('callState');
-    const callModal = document.getElementById('callModal');
-    const modalNumber = document.getElementById('modalNumber');
-    const modalStatus = document.getElementById('modalStatus');
-    const modalCancel = document.getElementById('modalCancel');
 
     let inCall = false;
     let callConnectionTimeout = null; // Store timeout ID to prevent race conditions
@@ -322,14 +392,14 @@
         callModal.classList.add('show');
     }
 
-    function hideCallModal() {
+    window.hideCallModal = () => {
         callModal.classList.remove('show');
         // Clear any pending connection timeout
         if (callConnectionTimeout) {
             clearTimeout(callConnectionTimeout);
             callConnectionTimeout = null;
         }
-    }
+    };
 
     function updateModalForActiveCall() {
         modalStatus.textContent = 'Em chamada...';
@@ -391,10 +461,6 @@
         });
     }
 
-    toggleBtn('btnMute', '<i class="fa-solid fa-volume-xmark me-1"></i><span>Mudo (on)</span>', '<i class="fa-solid fa-volume-xmark me-1"></i><span>Mudo</span>');
-    toggleBtn('btnHold', '<i class="fa-solid fa-pause me-1"></i><span>Hold (on)</span>', '<i class="fa-solid fa-pause me-1"></i><span>Hold</span>');
-    toggleBtn('btnSpk', '<i class="fa-solid fa-volume-high me-1"></i><span>Áudio (on)</span>', '<i class="fa-solid fa-volume-high me-1"></i><span>Áudio</span>');
-
     // ===== Fake register status
     const regStatus = document.getElementById('regStatus');
 
@@ -432,7 +498,7 @@
 
     // ===== Config view
     const cfgState = document.getElementById('cfgState');
-    const btnSave = document.getElementById('btnSave');
+
     const btnReset = document.getElementById('btnReset');
 
     const cfgInputs = ['sipServer', 'sipUser', 'sipDomain', 'sipPass', 'transport', 'stunOn', 'stunServer']
@@ -450,10 +516,6 @@
         });
     });
 
-    btnSave.addEventListener('click', () => {
-        dirty = false;
-        cfgState.textContent = "Salvo (no front).";
-    });
 
     btnReset.addEventListener('click', () => {
         dirty = false;

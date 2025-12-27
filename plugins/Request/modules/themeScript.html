@@ -181,6 +181,7 @@
             .offcanvas-start, nav.navbar, .navbar.bg-dark,
             body > nav, #navbar-top {
                 background-color: ${theme.colors['--secondary-bg']} !important;
+                color: ${theme.colors['--text']} !important;
             }
 
             th {
@@ -220,6 +221,19 @@
                 color: ${theme.colors['--accent']} !important;
                 background-color: ${theme.colors['--card-bg']} !important;
             }
+
+            .border-theme {
+                border-color: ${theme.colors['--accent']} !important;
+                color: ${theme.colors['--accent']} !important;
+            }
+
+
+
+            .btn:active {
+                background-color: ${theme.colors['--accent']} !important;
+                color: ${theme.colors['--primary-bg']} !important;
+            }
+
 
             /* Tabs */
             .nav-tabs .nav-link.active, .nav-tabs .nav-item.show .nav-link {
@@ -501,7 +515,53 @@
 
                 themeContainer.appendChild(themeBtn);
 
-                // Botão X para deletar temas customizados
+                // Botão de editar (para todos os temas)
+                const editBtn = document.createElement('button');
+                editBtn.classList.add('edit-btn');
+                editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
+                editBtn.title = 'Editar tema';
+                Object.assign(editBtn.style, {
+                    position: 'absolute',
+                    top: '-5px',
+                    left: '-5px',
+                    width: '18px',
+                    height: '18px',
+                    borderRadius: '50%',
+                    background: '#3b82f6',
+                    color: '#fff',
+                    border: '2px solid #fff',
+                    cursor: 'pointer',
+                    fontSize: '9px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    padding: '0',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
+                    transition: 'all 0.2s ease',
+                    zIndex: '10'
+                });
+
+                editBtn.onmouseover = () => {
+                    editBtn.style.background = '#2563eb';
+                    editBtn.style.transform = 'scale(1.1)';
+                };
+
+                editBtn.onmouseout = () => {
+                    editBtn.style.background = '#3b82f6';
+                    editBtn.style.transform = 'scale(1)';
+                };
+
+                editBtn.onclick = (e) => {
+                    e.stopPropagation();
+                    openThemeEditor(key, theme);
+                    isMenuOpen = false;
+                    themeMenu.style.display = 'none';
+                    mainButton.style.transform = 'rotate(0deg)';
+                };
+
+                themeContainer.appendChild(editBtn);
+
+                // Botão de deletar (apenas temas customizados)
                 if (theme.custom) {
                     const deleteBtn = document.createElement('button');
                     deleteBtn.classList.add('delete-btn');
@@ -618,19 +678,52 @@
                                     <div class="row">
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Fundo Principal</label>
-                                            <input type="color" class="form-control" id="theme-primary-bg" value="#161d31">
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="theme-primary-bg" value="#161d31">
+                                                <input type="text" class="form-control" id="theme-primary-bg-text" value="#161d31" maxlength="7">
+                                            </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Fundo Secundário</label>
-                                            <input type="color" class="form-control" id="theme-secondary-bg" value="#283046">
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="theme-secondary-bg" value="#283046">
+                                                <input type="text" class="form-control" id="theme-secondary-bg-text" value="#283046" maxlength="7">
+                                            </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Cor de Destaque</label>
-                                            <input type="color" class="form-control" id="theme-accent" value="#00b1ff">
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="theme-accent" value="#00b1ff">
+                                                <input type="text" class="form-control" id="theme-accent-text" value="#00b1ff" maxlength="7">
+                                            </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Fundo dos Cards</label>
-                                            <input type="color" class="form-control" id="theme-card-bg" value="#27283c">
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="theme-card-bg" value="#27283c">
+                                                <input type="text" class="form-control" id="theme-card-bg-text" value="#27283c" maxlength="7">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Fundo do Menu</label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="theme-menu-bg" value="#283046">
+                                                <input type="text" class="form-control" id="theme-menu-bg-text" value="#283046" maxlength="7">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Fundo da Navbar</label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="theme-navbar-bg" value="#283046">
+                                                <input type="text" class="form-control" id="theme-navbar-bg-text" value="#283046" maxlength="7">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Cor do Texto</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="theme-text" value="rgb(225 222 245 / 90%)" placeholder="Ex: #ffffff ou rgb(255,255,255)">
+                                            </div>
+                                            <small class="text-muted">Aceita hex, rgb ou rgba</small>
                                         </div>
                                     </div>
                                 </div>
@@ -647,13 +740,39 @@
             const modal = new bootstrap.Modal(document.getElementById('themeCreatorModal'));
             modal.show();
 
+            // Sincroniza os inputs de cor com os de texto
+            const syncColorInputs = (colorId, textId) => {
+                const colorInput = document.getElementById(colorId);
+                const textInput = document.getElementById(textId);
+
+                colorInput.addEventListener('input', () => {
+                    textInput.value = colorInput.value;
+                });
+
+                textInput.addEventListener('input', () => {
+                    if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
+                        colorInput.value = textInput.value;
+                    }
+                });
+            };
+
+            syncColorInputs('theme-primary-bg', 'theme-primary-bg-text');
+            syncColorInputs('theme-secondary-bg', 'theme-secondary-bg-text');
+            syncColorInputs('theme-accent', 'theme-accent-text');
+            syncColorInputs('theme-card-bg', 'theme-card-bg-text');
+            syncColorInputs('theme-menu-bg', 'theme-menu-bg-text');
+            syncColorInputs('theme-navbar-bg', 'theme-navbar-bg-text');
+
             document.getElementById('save-theme-btn').onclick = () => {
                 const name = document.getElementById('theme-name').value.trim();
                 const icon = document.getElementById('theme-icon').value.trim();
-                const primaryBg = document.getElementById('theme-primary-bg').value;
-                const secondaryBg = document.getElementById('theme-secondary-bg').value;
-                const accent = document.getElementById('theme-accent').value;
-                const cardBg = document.getElementById('theme-card-bg').value;
+                const primaryBg = document.getElementById('theme-primary-bg-text').value;
+                const secondaryBg = document.getElementById('theme-secondary-bg-text').value;
+                const accent = document.getElementById('theme-accent-text').value;
+                const cardBg = document.getElementById('theme-card-bg-text').value;
+                const menuBg = document.getElementById('theme-menu-bg-text').value;
+                const navbarBg = document.getElementById('theme-navbar-bg-text').value;
+                const textColor = document.getElementById('theme-text').value.trim();
 
                 if (!name) {
                     alert('Digite um nome para o tema!');
@@ -669,9 +788,9 @@
                         '--primary-bg': primaryBg,
                         '--secondary-bg': secondaryBg,
                         '--accent': accent,
-                        '--menu-bg': secondaryBg,
-                        '--text': 'rgb(225 222 245 / 90%)',
-                        '--navbar-bg': secondaryBg,
+                        '--menu-bg': menuBg,
+                        '--text': textColor,
+                        '--navbar-bg': navbarBg,
                         '--card-bg': cardBg
                     }
                 };
@@ -690,6 +809,167 @@
 
             document.getElementById('themeCreatorModal').addEventListener('hidden.bs.modal', () => {
                 document.getElementById('themeCreatorModal').remove();
+            });
+        }
+
+        function openThemeEditor(themeKey, theme) {
+            const modalHTML = `
+                    <div class="modal fade" id="themeEditorModal" tabindex="-1">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content">
+                                <div class="modal-header">
+                                    <h5 class="modal-title text-white">Editar Tema</h5>
+                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                </div>
+                                <div class="modal-body">
+                                    <div class="mb-3">
+                                        <label class="form-label text-white">Nome do Tema</label>
+                                        <input type="text" class="form-control" id="edit-theme-name" value="${theme.name}">
+                                    </div>
+                                    <div class="mb-3">
+                                        <label class="form-label text-white">Ícone (FontAwesome)</label>
+                                        <input type="text" class="form-control" id="edit-theme-icon" value="${theme.icon}">
+                                        <small class="text-muted">Veja ícones em: fontawesome.com/icons</small>
+                                    </div>
+                                    <div class="row">
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Fundo Principal</label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="edit-theme-primary-bg" value="${theme.colors['--primary-bg']}">
+                                                <input type="text" class="form-control" id="edit-theme-primary-bg-text" value="${theme.colors['--primary-bg']}" maxlength="7">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Fundo Secundário</label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="edit-theme-secondary-bg" value="${theme.colors['--secondary-bg']}">
+                                                <input type="text" class="form-control" id="edit-theme-secondary-bg-text" value="${theme.colors['--secondary-bg']}" maxlength="7">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Cor de Destaque</label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="edit-theme-accent" value="${theme.colors['--accent']}">
+                                                <input type="text" class="form-control" id="edit-theme-accent-text" value="${theme.colors['--accent']}" maxlength="7">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Fundo dos Cards</label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="edit-theme-card-bg" value="${theme.colors['--card-bg']}">
+                                                <input type="text" class="form-control" id="edit-theme-card-bg-text" value="${theme.colors['--card-bg']}" maxlength="7">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Fundo do Menu</label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="edit-theme-menu-bg" value="${theme.colors['--menu-bg']}">
+                                                <input type="text" class="form-control" id="edit-theme-menu-bg-text" value="${theme.colors['--menu-bg']}" maxlength="7">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Fundo da Navbar</label>
+                                            <div class="input-group">
+                                                <input type="color" class="form-control form-control-color" id="edit-theme-navbar-bg" value="${theme.colors['--navbar-bg']}">
+                                                <input type="text" class="form-control" id="edit-theme-navbar-bg-text" value="${theme.colors['--navbar-bg']}" maxlength="7">
+                                            </div>
+                                        </div>
+                                        <div class="col-md-6 mb-3">
+                                            <label class="form-label text-white">Cor do Texto</label>
+                                            <div class="input-group">
+                                                <input type="text" class="form-control" id="edit-theme-text" value="${theme.colors['--text']}" placeholder="Ex: #ffffff ou rgb(255,255,255)">
+                                            </div>
+                                            <small class="text-muted">Aceita hex, rgb ou rgba</small>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="modal-footer">
+                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="button" class="btn btn-primary" id="update-theme-btn">Atualizar Tema</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            const modal = new bootstrap.Modal(document.getElementById('themeEditorModal'));
+            modal.show();
+
+            // Sincroniza os inputs de cor com os de texto no editor
+            const syncEditColorInputs = (colorId, textId) => {
+                const colorInput = document.getElementById(colorId);
+                const textInput = document.getElementById(textId);
+
+                colorInput.addEventListener('input', () => {
+                    textInput.value = colorInput.value;
+                });
+
+                textInput.addEventListener('input', () => {
+                    if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
+                        colorInput.value = textInput.value;
+                    }
+                });
+            };
+
+            syncEditColorInputs('edit-theme-primary-bg', 'edit-theme-primary-bg-text');
+            syncEditColorInputs('edit-theme-secondary-bg', 'edit-theme-secondary-bg-text');
+            syncEditColorInputs('edit-theme-accent', 'edit-theme-accent-text');
+            syncEditColorInputs('edit-theme-card-bg', 'edit-theme-card-bg-text');
+            syncEditColorInputs('edit-theme-menu-bg', 'edit-theme-menu-bg-text');
+            syncEditColorInputs('edit-theme-navbar-bg', 'edit-theme-navbar-bg-text');
+
+            document.getElementById('update-theme-btn').onclick = () => {
+                const name = document.getElementById('edit-theme-name').value.trim();
+                const icon = document.getElementById('edit-theme-icon').value.trim();
+                const primaryBg = document.getElementById('edit-theme-primary-bg-text').value;
+                const secondaryBg = document.getElementById('edit-theme-secondary-bg-text').value;
+                const accent = document.getElementById('edit-theme-accent-text').value;
+                const cardBg = document.getElementById('edit-theme-card-bg-text').value;
+                const menuBg = document.getElementById('edit-theme-menu-bg-text').value;
+                const navbarBg = document.getElementById('edit-theme-navbar-bg-text').value;
+                const textColor = document.getElementById('edit-theme-text').value.trim();
+
+                if (!name) {
+                    alert('Digite um nome para o tema!');
+                    return;
+                }
+
+                const updatedTheme = {
+                    name: name,
+                    icon: icon,
+                    custom: true,
+                    colors: {
+                        '--primary-bg': primaryBg,
+                        '--secondary-bg': secondaryBg,
+                        '--accent': accent,
+                        '--menu-bg': menuBg,
+                        '--text': textColor,
+                        '--navbar-bg': navbarBg,
+                        '--card-bg': cardBg
+                    }
+                };
+
+                // Se for um tema padrão sendo editado, cria uma cópia customizada
+                let newThemeKey = themeKey;
+                if (!theme.custom) {
+                    newThemeKey = 'custom_' + name.toLowerCase().replace(/\s+/g, '_');
+                }
+
+                saveCustomTheme(newThemeKey, updatedTheme);
+                modal.hide();
+                document.getElementById('themeEditorModal').remove();
+
+                // Recria o menu com o tema atualizado
+                document.getElementById('theme-switcher-container').remove();
+                createThemeButton();
+
+                // Aplica o novo tema
+                applyTheme(newThemeKey);
+            };
+
+            document.getElementById('themeEditorModal').addEventListener('hidden.bs.modal', () => {
+                document.getElementById('themeEditorModal').remove();
             });
         }
 

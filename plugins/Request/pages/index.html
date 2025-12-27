@@ -8,18 +8,27 @@
 
 @import(themeScript)
 <!-- NAVBAR -->
+
+
+
 <div class="navbar">
-    <div class="text-white fw-bold" id="branded">sip:username</div>
+    <!-- distancia pequena pro texto nao ficar colado no topo-->
+    <div class="p-2">
+        <div class="text-white fw-bold" id="branded">sip:username</div>
+        <div class="text-white-50 small" id="token-display"><b id="deviceId"></b></div>
+    </div>
+
 
 
     <div id="top-bar" style="transition: width 0.2s ease"></div>
 
 
     <!-- status de conexao  -->
-    <div class="me-3">
+    <div class="">
         <i id="connection-icon" class="fa-solid fa-circle text-success"></i>
         <span id="connection-status">...</span>
     </div>
+
 </div>
 
 <!-- Conteúdo Principal -->
@@ -131,7 +140,7 @@
 
 
         // Primeiro aguarda o root ficar visível para selecionar a tab
-        waitVisible('#app', 30000, 1000).then(async () => {
+        waitVisible('#app', 30000, 200).then(async () => {
             for (let tab of tabs) {
                 if (tab.dataset.tab === currentTab) {
                     tab.click();
@@ -149,6 +158,9 @@
             }
             const accept = document.getElementById('acceptWarningBtn');
             accept.addEventListener('click', () => {
+                if (document.getElementById('dontShowAgainCheck').checked) {
+                    localStorage.setItem('dontShowSecurityWarning', 'true');
+                }
                 securityModal.hide();
             });
         }).catch((error) => {

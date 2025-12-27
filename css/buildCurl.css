@@ -20,8 +20,8 @@ body {
 
 /* ===== NAVBAR ===== */
 .navbar {
-    height: 48px;
-    padding: 0 16px;
+    height: auto;
+    padding: 8px;
     display: flex;
     align-items: center;
     justify-content: space-between;
@@ -33,17 +33,28 @@ body {
 #root {
     overflow-y: auto;
     overflow-x: hidden;
-    padding: 16px;
+    /* 70px footer + 16px extra */
+    padding: 5px;
 }
 
 /* ===== FOOTER ===== */
 .footer {
     height: 56px;
-    display: flex;
+    display: block;
     align-items: center;
     justify-content: space-around;
     background: rgba(10, 15, 30, .9);
     border-top: 1px solid rgba(255, 255, 255, .08);
+}
+
+.tabbtn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 8px 16px;
+    transition: all 0.2s ease;
 }
 
 /* ===== EXTRAS VISUAIS ===== */
@@ -353,22 +364,25 @@ section {
     font-size: 28px;
     letter-spacing: 2px;
     font-weight: 700;
+    left: 25px;
     user-select: none;
     word-break: break-word;
-    min-height: 42px;
+    min-height: 45px;
+    margin-left: 25px;
 }
 
 .dial-pad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
     gap: 12px;
+    padding: 12px;
 }
 
 .dial-btn {
     aspect-ratio: 1/1;
     border-radius: 18px;
     border: 1px solid var(--border);
-    background: rgba(255, 255, 255, .05);
+    background: transparent !important;
     color: var(--text);
     display: flex;
     flex-direction: column;
@@ -382,6 +396,14 @@ section {
     transform: scale(.98);
     background: rgba(255, 255, 255, .08);
     border-color: rgba(42, 169, 255, .35);
+}
+.dial-btn:hover {
+    background: rgba(255, 255, 255, .08);
+}
+
+.dial-btn.active {
+    background: rgba(255, 255, 255, .08);
+    border-color: var(--accent);
 }
 
 .dial-btn .n {

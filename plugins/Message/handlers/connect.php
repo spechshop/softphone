@@ -16,8 +16,12 @@ class connect
 
         self::clearConnectionTimers($fd);
 
-        $data = $model['data'];
 
+        $data = $model['data'];
+        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        if (!$vault) {
+            return false;
+        }
 
 
 
@@ -42,6 +46,8 @@ class connect
                 'value' => '.'
             ]));
         }
+
+
 
 
         $socket->push($fd, json_encode([
