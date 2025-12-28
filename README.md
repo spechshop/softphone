@@ -1,186 +1,120 @@
 # SpechPhone 📞
 
-Uma aplicação **VoIP SIP moderna** com interface estilo **PortSIP**, construída em PHP com Swoole para comunicação em tempo real. Suporta chamadas de voz, codecs múltiplos e gerenciamento de configurações SIP.
+SpechPhone is a high-performance **VoIP SIP application** built with **PHP** and **Swoole**. It features a modern PortSIP-inspired interface and supports real-time voice communication, multiple audio codecs, and dynamic SIP management.
 
-## ✨ Características
+## ✨ Features
 
-### Chamadas & Áudio
-- ✅ **Discagem intuitiva** com teclado virtual (1-9, *, 0, #)
-- ✅ **Múltiplos codecs**: PCMA, PCMU, G.729, Opus
-- ✅ **Controles de áudio** em tempo real
-  - Silenciar (Mute)
-  - Colocar em espera (Hold)
-  - Alterna speaker/microfone
-- ✅ **Processamento de áudio**
-  - Supressão de ruído
-  - Cancelamento de eco
-  - Controle automático de ganho (AGC)
-  - Ajuste de volume independente
+### Calls & Audio
+- ✅ **Intuitive Dialer**: Virtual keypad with keyboard support.
+- ✅ **Multi-Codec Support**: PCMA, PCMU, G.729, and Opus.
+- ✅ **Real-time Audio Controls**: Mute, Hold, and Speaker/Microphone toggle.
+- ✅ **Advanced Audio Processing**: Noise suppression, echo cancellation, and AGC (via `libspech`).
 
-### Rede & SIP
- - **Transporte SIP**: UDP, TCP, TLS
- - **NAT Traversal**: Suporte a STUN (Google STUN ou servidor customizado)
- - **Autenticação SIP** com usuário/domínio/senha
- - **Registro dinâmico** no servidor SIP
- - **RTP raw** em UDP porta 9600
- - **WebSocket** para streaming de áudio
+### Network & SIP
+- **SIP Transport**: Support for UDP, TCP, and TLS.
+- **NAT Traversal**: Integrated STUN support.
+- **RTP Streaming**: Raw RTP over UDP and WebSocket audio streaming.
+- **Secure Communication**: SSL/TLS support for both HTTP and WebSocket.
 
 ### Interface
-- 🎨 **Dark mode** moderno com design PortSIP
-- 📱 **Responsivo** (otimizado para mobile)
-- 🎭 **3 abas principais**:
-  1. **Chamada** - Discagem e controles de call
-  2. **Áudio** - Ajustes de volume e processamento
-  3. **Config** - Configurações SIP e rede
+- 🎨 **Modern Interface**: Responsive dark mode design.
+- 🎭 **Modular Pages**: Dedicated sections for Call, Audio settings, and Configuration.
 
-## 🏗️ Arquitetura
+## 🛠 Tech Stack
 
-```
+- **Language**: PHP 7.4+
+- **Server Engine**: [Swoole](https://www.swoole.co.uk/) (HTTP, WebSocket, UDP)
+- **Frontend**: jQuery, Bootstrap, CSS/SASS/LESS
+- **Core Library**: `libspech` (Custom SIP/RTP stack)
+- **Data Storage**: Local cache and JSON-based configuration (SQLite support TODO).
+
+## 🏗 Project Structure
+
+```text
 spechphone/
-├── c.php                    # Servidor HTTP/UDP Swoole (RTP mixing & WAV stream)
-├── middleware.php           # WebSocket server (lógica principal)
-├── plugins/
-│   ├── Request/             # Roteamento HTTP
-│   │   └── pages/default.html   # Interface UI (dialer + config)
-│   ├── Database/            # SQLite + cache
-│   ├── Extension/           # Utilitários (curl, terminal, etc)
-│   ├── Message/             # Handler de mensagens
-│   └── Start/               # Inicialização & console
-├── libspech/                # Biblioteca SIP/RTP
-│   ├── plugins/             # Codecs (G.729, Opus)
-│   └── stubs/               # Channel handlers
-├── js/                      # Frontend (jQuery, toast, router)
-└── css/                     # Styling (dark mode, responsive)
+├── middleware.php           # Main entry point: WebSocket & HTTP Server
+├── audio.php                # Audio streaming & mixing server
+├── plugins/                 # Application logic & modular system
+│   ├── Extension/           # Utility plugins (cURL, terminal, etc.)
+│   ├── Message/             # WebSocket message handlers
+│   ├── OpenConnection/      # Connection management
+│   ├── Request/             # HTTP routing, pages, and templates
+│   ├── Start/               # Server initialization and CLI tools
+│   └── Utils/               # Cache and buffering logic
+├── libspech/                # Core SIP/RTP Library
+│   ├── plugins/             # Codecs and network utilities
+│   ├── extra/               # Examples and environment tools
+│   └── stubs/               # Channel stubs
+├── js/                      # Frontend JavaScript logic
+├── css/                     # Styling (SASS/LESS/CSS)
+└── plugins/configInterface.json # Main server configuration
 ```
 
-## 🚀 Instalação & Execução
+## 🚀 Getting Started
 
-### Pré-requisitos
-- **PHP** 7.4+ com Swoole
-- **libspech** (incluído em `/libspech/`)
-- **Node.js** (opcional, para build de assets)
+### Prerequisites
+- **PHP 7.4+**
+- **Swoole Extension**: `php -m | grep swoole`
+- **OpenSSL**: Required for SSL/TLS features.
 
-### Setup Rápido
+### Installation
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/your-repo/spechphone.git
+   cd spechphone
+   ```
+2. **Environment Setup**:
+   Copy the example environment file (if available) or create a `.env` file:
+   ```bash
+   echo "SPECH_VAULT_KEY_HEX=your_secret_key" > .env
+   ```
 
-```bash
-# Clonar projeto
-git clone https://github.com/seu-usuario/spechphone.git
-cd spechphone
+### Running the Application
 
-# Instalar dependências PHP (se houver composer.json)
-composer install
+The application consists of two main services that should be run:
 
-# Iniciar servidor WebSocket
-php middleware.php
-```
+1. **Main Server (SIP & UI)**:
+   ```bash
+   php middleware.php
+   ```
+   *Starts the WebSocket/HTTP server on the port defined in `plugins/configInterface.json`.*
 
-### Puertos Utilizados
-- **8080** - HTTP Interface (UI)
-- **4043** - WebSocket (SIP logic)
-- **9600** - UDP (RTP streaming)
+2. **Audio Server**:
+   ```bash
+   php audio.php
+   ```
+   *Handles real-time audio streaming and mixing.*
 
-### Configuração Inicial
+## ⚙ Configuration
 
-1. **Abrir interface**: http://localhost:8080
-2. **Aba "Config"**: Preencher credenciais SIP
-   - Servidor: `sip.seu-dominio.com:5060`
-   - Usuário: `1001`
-   - Domínio: `seu-dominio.com`
-   - Senha: [sua senha]
-3. **Salvar** → Status "Registrado"
-4. **Aba "Chamada"**: Discar número e clicar em **LIGAR**
+### Configuration File
+Main settings are located in `plugins/configInterface.json`:
+- `port`: Server port (default 443).
+- `ssl`: Enable/disable SSL.
+- `serverSettings`: Swoole-specific tuning (workers, coroutines, SSL certs).
 
-## 📡 Como Funciona
+### Environment Variables
+Managed via the `.env` file:
+- `SPECH_VAULT_KEY_HEX`: Key used for internal security and encryption.
 
-### Fluxo RTP/Audio
-1. **UDP Port 9600** recebe pacotes RTP brutos
-2. **Decoder**: Extrai PCM de múltiplos codecs (G.729, Opus, etc)
-3. **Mixer**: Normaliza e mistura streams de áudio
-4. **WAV Stream**: Converte para WAV infinito (8kHz, 16-bit mono)
-5. **HTTP Streaming**: Entrega via `c.php` para o player
+## 🛠 Scripts & Tools
 
-### Fluxo SIP
-1. **Registro**: Envia REGISTER ao servidor SIP
-2. **INVITE**: Cria chamada com SDP offer
-3. **RTP**: Inicia stream de áudio UDP
-4. **BYE**: Encerra chamada
+- **Interactive CLI**: `plugins/Start/console/cli.php` (contains a management menu).
+- **Environment Check**: `php libspech/extra/tools/00_env_check.php` - Validates if your system meets the requirements for audio processing.
 
-## 🎮 Controles de Teclado
+## 🧪 Testing
 
-| Tecla | Ação |
-|-------|------|
-| `0-9`, `*`, `#` | Discar |
-| `Backspace` | Deletar último dígito |
-| `Escape` | Limpar todos dígitos |
-| `Enter` | Fazer chamada |
+- **Automated Tests**: TODO (Add PHPUnit/Pest coverage).
+- **Manual Verification**: Use examples in `libspech/extra/` to test codecs and streaming:
+  ```bash
+  php libspech/extra/codecs/01_pcma_pcmu_roundtrip.php
+  ```
 
-## 🔧 Configuração Avançada
+## 📜 License & Copyright
 
-### Alterar Codec Padrão
-Editar `c.php` linha ~85:
-```php
-$targetRate = 8000;  // Taxa de amostragem
-$codecName = 'PCMA'; // Codec padrão
-```
-
-### STUN Server Customizado
-Na aba **Config**, seção **Rede**, ativar STUN e inserir:
-```
-stun:seu-stun-server:porta
-```
-
-### Memory Limit
-Em `c.php`:
-```php
-ini_set('memory_limit', '1024M');  // Aumentar se necessário
-```
-
-## Bibliotecas Utilizadas
-
-- **Swoole** - Server HTTP/WebSocket/UDP
-- **libspech** - Stack SIP/RTP
-- **jQuery** - Frontend interativo
-- **Bootstrap Icons** - FontAwesome
-- **Prism.js** - Syntax highlighting (opcional)
-
-## Segurança
-
-- Suporte a **TLS** para SIP
-- Validação de entrada no dialer
-- CORS adequado
-- **Nota**: Senhas em localStorage (não usar em produção sem HTTPS)
-
-## Troubleshooting
-
-### Conexão RTP não estabelecida
-- Verificar firewall (UDP 9600)
-- Validar STUN server em Config
-- Conferir logs WebSocket
-
-### Sem áudio em chamada
-- Verificar volumes em Aba Áudio
-- Testar microfone do navegador
-- Confirmar codec compatível (PCMU/PCMA default)
-
-### Servidor não inicia
-```bash
-# Verificar permissões Swoole
-php -m | grep swoole
-
-# Testar porta ocupada
-lsof -i :8080
-```
-
-## 📄 Licença
-
-Incluído em `/libspech/LICENSE`
-
-## 🤝 Contribuições
-
-Issues e PRs bem-vindos! Consulte `CODE_OF_CONDUCT.md`
+- **License**: See `libspech/LICENSE.txt`.
+- **Copyright**: Refer to `libspech/COPYRIGHT_HEADER.txt`.
 
 ---
-
-Desenvolvido por Spech Team  
-*Última atualização: Dezembro 2025*
-
+*Developed by Spech Team*  
+*Last updated: December 2025*

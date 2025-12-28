@@ -13,7 +13,6 @@
     "OpenConnection/websocket",
     "Message/server",
     "Message/handlers",
-    "Database/SQLite",
     "Request/apps",
     "Utils/cache"
   ],
