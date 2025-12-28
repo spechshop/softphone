@@ -6,7 +6,7 @@ declare(strict_types=1);
  * similar to `Swoole\Table`. Data is encrypted on disk using `libsodium`
  * and accesses are optionally synchronized using `Swoole\Lock`.
  */
- class spechphoneVault
+class spechphoneVault
 {
     private string $path;
     private string $key; // 32 bytes binário
@@ -18,6 +18,11 @@ declare(strict_types=1);
 
     /** @var \Swoole\Lock|null */
     private $lock = null;
+
+    public function count(): int
+    {
+        return count($this->data);
+    }
 
     public function __construct(string $path, string $hexKey32, int $debounceMs = 2000)
     {
@@ -218,8 +223,11 @@ declare(strict_types=1);
     {
         if ($this->lock instanceof \Swoole\Lock) {
             $this->lock->lock();
-            try { $fn(); }
-            finally { $this->lock->unlock(); }
+            try {
+                $fn();
+            } finally {
+                $this->lock->unlock();
+            }
         } else {
             $fn();
         }

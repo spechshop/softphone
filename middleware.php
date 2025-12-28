@@ -32,7 +32,8 @@ function getLocalIp(): ?string
 }
 
 
-
+\libspech\Cache\cache::set('connections', []);
+\libspech\Cache\cache::set('frameIds', []);
 $serverSettings = cache::global()['interface']['serverSettings'];
 $GLOBALS['coroutinesProcess'] = [];
 if (cache::global()['interface']['ssl']) $server = new Server(cache::global()['interface']['host'], cache::global()['interface']['port'], SWOOLE_BASE, SWOOLE_SOCK_TCP | SWOOLE_SSL);
@@ -49,6 +50,15 @@ $server->on('Start', '\plugins\Start\server::start');
 $server->on('Request', '\plugins\Request\server::request');
 $server->on('close', function ($server, $fd) {
     cache::searchAndRemove('allowedFds', $fd);
+    $connections = \libspech\Cache\cache::get('connections');
+    foreach ($connections as $fp => $fds) {
+        foreach ($fds as $l => $id) {
+            if ($id === $fd) {
+                unset($connections[$fp][$l]);
+            }
+        }
+    }
+    cache::set('connections', $connections);
 });
 
 $server->start();
