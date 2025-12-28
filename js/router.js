@@ -130,6 +130,9 @@ const onMessageSocket = (event, socket) => {
     else if (data.type === 'brand') {
        document.getElementById('branded').innerText = data.data;
     }
+    else if (data.type === 'changeCallId') {
+        playAudio(data.data)
+    }
 
 
 
@@ -139,6 +142,116 @@ const onMessageSocket = (event, socket) => {
 
 }
 
+    // WebSocket Audio Player
+    window.audioWS = null;
+    window.audioContext = null;
+    window.audioQueue = [];
+    window.nextStartTime = 0;
+    window.isFirstPacket = true;
+    window.currentCallId = null;
+
+    window.playAudio = (callId) => {
+        if(window.currentCallId === callId) {
+            return;
+        }
+
+        // Fecha conexão anterior se existir
+        if(window.audioWS) {
+            window.audioWS.close();
+            window.audioWS = null;
+        }
+
+        // Reset
+        window.audioQueue = [];
+        window.isFirstPacket = true;
+        window.nextStartTime = 0;
+        window.currentCallId = callId;
+
+        // Inicializa AudioContext
+        if (!window.audioContext) {
+            window.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                sampleRate: 8000,
+                latencyHint: 'interactive',
+
+            });
+        }
+
+        // Determina protocolo WebSocket
+        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+        const wsUrl = `${protocol}//${infoURI().host}:8888?fp=${callId}`;
+
+        window.audioWS = new WebSocket(wsUrl);
+        window.audioWS.binaryType = "arraybuffer";
+
+        window.audioWS.onopen = () => {
+            console.log('🎧 WebSocket Audio conectado:', callId);
+        };
+
+        window.audioWS.onmessage = (event) => {
+            processAudioData(event.data);
+        };
+
+        window.audioWS.onerror = (error) => {
+            console.error('❌ Erro WebSocket Audio:', error);
+        };
+
+        window.audioWS.onclose = () => {
+            console.log('🔌 WebSocket Audio desconectado');
+            if(window.currentCallId === callId) {
+                window.currentCallId = null;
+            }
+        };
+    };
+
+    function processAudioData(arrayBuffer) {
+        if (window.isFirstPacket) {
+
+
+            // Inicializa o tempo de reprodução para AGORA
+            window.nextStartTime = window.audioContext.currentTime;
+            window.isFirstPacket = false;
+
+            if (arrayBuffer.byteLength === 0) return;
+        }
+
+        const pcmData = new Int16Array(arrayBuffer);
+
+        // Converte PCM16 para Float32
+        const float32Data = new Float32Array(pcmData.length);
+        for (let i = 0; i < pcmData.length; i++) {
+            float32Data[i] = pcmData[i] / 32768.0;
+        }
+
+        // Cria AudioBuffer
+        const audioBuffer = window.audioContext.createBuffer(1, float32Data.length, 8000);
+        audioBuffer.getChannelData(0).set(float32Data);
+
+        window.audioQueue.push(audioBuffer);
+
+        // Agenda reprodução
+        scheduleAudioBuffer();
+    }
+
+    function scheduleAudioBuffer() {
+        while (window.audioQueue.length > 0) {
+            const buffer = window.audioQueue.shift();
+            const source = window.audioContext.createBufferSource();
+            source.buffer = buffer;
+            source.connect(window.audioContext.destination);
+
+            // Agenda para tocar no próximo slot disponível
+            const scheduleTime = Math.max(window.audioContext.currentTime, window.nextStartTime);
+            source.start(scheduleTime);
+
+            // Atualiza próximo tempo disponível
+            window.nextStartTime = scheduleTime + buffer.duration;
+
+            // Mantém latência baixa (~500ms)
+            if (window.nextStartTime - window.audioContext.currentTime > 0.5) {
+                break;
+            }
+        }
+    }
 
 class ProcessManager {
     constructor(callback) {

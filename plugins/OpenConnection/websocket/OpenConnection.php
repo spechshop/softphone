@@ -14,6 +14,7 @@ class OpenConnection
     public static function open(Server $server, Request $request)
     {
 
+
         try {
             var_dump(cache::get('breakAllLoops'));
         } catch (\Throwable $e) {

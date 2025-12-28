@@ -379,7 +379,7 @@ section {
 }
 
 .dial-btn {
-    aspect-ratio: 1/1;
+
     border-radius: 18px;
     border: 1px solid var(--border);
     background: transparent !important;

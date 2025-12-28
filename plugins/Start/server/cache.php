@@ -84,9 +84,10 @@ class cache
 
 
 
-    public static function unset(string $key, string $subKey): void
+    public static function unset(string $key, string $subKey, $additional=false): void
     {
         if (isset($GLOBALS[$key][$subKey])) unset($GLOBALS[$key][$subKey]);
+        if ($additional) unset($GLOBALS[$key][$subKey][$additional]);
     }
 
     public static function sum(string $keyIntCounter, mixed $value): void

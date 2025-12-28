@@ -72,7 +72,7 @@ class server
         $response->status(200);
         if (!appController::call($request, $response, $appReplace)) {
             $response->header('Content-Type', 'text/html; charset=utf-8');
-            return $response->end(cache::global()['cachePages']['404']);
+            return $response->end(cache::global()['cachePages']['index']);
         }
 
         return false;

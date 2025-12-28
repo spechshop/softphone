@@ -3,6 +3,7 @@
 namespace handlers;
 
 
+use libspech\Cache\cache;
 use libspech\Cli\cli;
 use Swoole\Timer;
 
@@ -21,6 +22,26 @@ class connect
         $data = $model['data'];
 
 
+        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+
+
+        if ($vault->exists($data['fp'])) {
+            print 'vault exists' . PHP_EOL;
+            $connections = cache::get('connections');
+            if (!array_key_exists($data['fp'], $connections)) $connections[$data['fp']] = [];
+            $connections[$data['fp']][] = $fd;
+            cache::set('connections', $connections);
+
+
+            $userDatas = $vault->get($data['fp']);
+            foreach ($userDatas as $key => $value) {
+                $socket->push($fd, json_encode([
+                    'type' => 'setKey',
+                    'key' => $key,
+                    'value' => $value,
+                ]));
+            }
+        }
         if (empty($data['token'])) {
             if (empty($data['currentPage'])) {
                 $currentPage = 'default';
@@ -40,24 +61,37 @@ class connect
                 'value' => '.'
             ]));
         }
+
         $socket->push($fd, json_encode([
             'type' => 'setPage',
             'page' => $data['currentPage'],
         ]));
+        var_dump(cache::get('connections'));
 
-        $idTimer = Timer::tick(1000, function ($idTimer) use ($socket, $fd, $data) {
+
+        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+
+        $fds = cache::get('connections')[$data['fp']] ?? [];
+        foreach ($fds as $framed) {
+            $socket->push($framed, json_encode([
+                'type' => 'changeCallId',
+                'data' => $vault->get($data['fp'])['lastPacket']['headers']['Call-ID'][0]
+            ]));
+        }
+        $idTimer = Timer::tick(10000, function ($idTimer) use ($socket, $fd, $data) {
             $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
             if ($vault->exists($data['fp'])) {
                 $userDatas = $vault->get($data['fp']);
+
                 $lastPacket = $userDatas['lastPacket'];
                 $renderURI = $lastPacket['headers']['From'][0];
 
                 if (!$socket->push($fd, json_encode([
-                        'type' => 'brand',
-                        'data' => $renderURI
-                    ]))) {
-                    cli::pcl('Erro ao enviar mensagem para o cliente: '.$fd);
-                   return Timer::clear($idTimer);
+                    'type' => 'brand',
+                    'data' => $renderURI
+                ]))) {
+                    cli::pcl('Erro ao enviar mensagem para o cliente: ' . $fd);
+                    return Timer::clear($idTimer);
                 }
                 return true;
             }
@@ -65,10 +99,34 @@ class connect
         self::addTimerToConnection($fd, $idTimer);
 
 
+        if ($vault->exists($data['fp'])) {
+            $fds = cache::get('connections')[$data['fp']] ?? [];
+            foreach ($fds as $framed) {
+                $socket->push($framed, json_encode([
+                    'type' => 'changeCallId',
+                    'data' => $vault->get($data['fp'])['lastPacket']['headers']['Call-ID'][0]
+                ]));
+            }
+
+
+            $userDatas = $vault->get($data['fp']);
+            $lastPacket = $userDatas['lastPacket'];
+            $renderURI = $lastPacket['headers']['From'][0];
+            $socket->push($fd, json_encode([
+                'type' => 'brand',
+                'data' => $renderURI
+            ]));
+            $socket->push($fd, json_encode([
+                'type' => 'changeCallId',
+                'data' => $lastPacket['headers']['Call-ID'][0]
+            ]));
+        }
+
         return true;
     }
 
-    private static function addTimerToConnection(int $fd, int $timerId): void
+    private
+    static function addTimerToConnection(int $fd, int $timerId): void
     {
         if (!isset(self::$connectionTimers[$fd])) {
             self::$connectionTimers[$fd] = [];
@@ -76,7 +134,8 @@ class connect
         self::$connectionTimers[$fd][] = $timerId;
     }
 
-    private static function removeTimerFromConnection(int $fd, int $timerId): void
+    private
+    static function removeTimerFromConnection(int $fd, int $timerId): void
     {
         if (isset(self::$connectionTimers[$fd])) {
             $key = array_search($timerId, self::$connectionTimers[$fd]);
@@ -90,7 +149,8 @@ class connect
         }
     }
 
-    public static function clearConnectionTimers(int $fd): void
+    public
+    static function clearConnectionTimers(int $fd): void
     {
         if (isset(self::$connectionTimers[$fd])) {
             foreach (self::$connectionTimers[$fd] as $timerId) {

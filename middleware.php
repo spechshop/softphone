@@ -19,7 +19,6 @@ print "Thread started..." . PHP_EOL;
 cache::define('breakAllLoops', false);
 
 
-
 function getLocalIp(): ?string
 {
     $localAddress = '0.0.0.0';
@@ -40,8 +39,9 @@ if (cache::global()['interface']['ssl']) $server = new Server(cache::global()['i
 else $server = new Server(cache::global()['interface']['host'], 8080, SWOOLE_BASE, SWOOLE_SOCK_TCP);
 
 
-$server->listen(cache::global()['interface']['host'], 4043, SWOOLE_SOCK_TCP);
+//$server->listen(cache::global()['interface']['host'], 4043, SWOOLE_SOCK_TCP);
 cache::define('server', $server);
+
 $server->set($serverSettings);
 $server->on('open', '\plugins\server::open');
 $server->on('message', '\plugins\server::message');
