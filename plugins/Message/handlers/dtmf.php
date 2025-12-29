@@ -48,7 +48,7 @@ class dtmf
             var_dump($dtmf);
 
 
-            $phone->send2833($dtmf, 320);
+            $phone->send2833($dtmf, 160);
 
 
             return $socket->push($fd, json_encode([
