@@ -4,7 +4,14 @@
     <section data-view="call" class="show">
 
 
-        <div class="digits" id="digits"></div>
+        <div class="mt-3" style="display: flex; align-items: center; gap: 8px;">
+            <div class="digits" id="digits" style="flex: 1;"></div>
+
+
+            <button class="btn" id="btnBackspace" style="padding: 8px 12px; background: transparent">
+                <i class="fa-duotone fa-thin fa-delete-left fa-2xl border-theme"></i>
+            </button>
+        </div>
 
         <span style="display: none" id="callState"></span>
         <div class=" card bg-dark p-3  ">
@@ -61,45 +68,102 @@
 
             </div>
 
-            <div class="gap-2 dial-pad">
-                <button class="btn border-theme dial-btn" style="border-color: transparent !important;"
-                        onclick="pushKey(user.getValue('lastDigits'));startCall()">
-                    <i class="fa-duotone fa-regular fa-square-r fa-xl"></i>
-                </button>
-                <button class="btn border-theme dial-btn" style="
-border-radius: 100% !important;
-background: rgba(0,0,0,0.1) !important;
-   aspect-ratio: 1/1;
-" id="btnCall">
-                    <i class="fa-duotone fa-light fa-phone fa-2xl"></i>
-                </button>
 
-                <button class="btn border-theme dial-btn" id="btnBackspace"
-                        style="border-color: transparent !important;">
-                    <i class="fa-duotone fa-light fa-delete-left fa-xl"></i>
-                </button>
+            <style>
+                .call-controls {
+                    display: flex;
+                    gap: 12px;
+                    align-items: center;
+                    justify-content: space-between;
+                }
+
+                .ctrl-btn {
+                    height: 56px;
+                    min-width: 56px;
+                    padding: 0;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    border-radius: 6px;
+                    border: 1px solid rgba(255, 255, 255, .08);
+                    transition: all 0.2s ease;
+                }
+
+                .ctrl-btn-expand {
+                    flex: 1; /* 🔥 A MÁGICA */
+                    border-radius: 8px;
+                }
+
+                .ctrl-btn:disabled {
+                    opacity: 0.5;
+                    cursor: not-allowed;
+                }
+            </style>
+            <div style="display: none">
+                <button id="btnMicPause"></button>
             </div>
 
-            <!-- Botão de microfone com dropdown -->
-            <div class="gap-2 text-right" style="position: relative;">
-                <button class="btn border-theme" id="btnMic">
-                    <i class="fa-duotone fa-light fa-microphone fa-xl"></i>
-                </button>
-                <button class="btn border-theme" id="btnMicMenu" style="display: none; padding: 0.5rem 0.7rem;">
-                    <i class="fa-solid fa-chevron-down"></i>
-                </button>
-                <div id="micDropdown"
-                     style="display: none; position: absolute; top: 100%; right: 0; background: var(--bg-secondary, #1a1a1a); border: 1px solid rgba(42, 169, 255, 0.45); border-radius: 0.5rem; margin-top: 0.5rem; min-width: 150px; z-index: 1000; box-shadow: 0 4px 12px rgba(0,0,0,0.3);">
-                    <button id="micMute" class="dropdown-item"
-                            style="display: block; width: 100%; padding: 0.75rem 1rem; background: none; border: none; color: inherit; text-align: left; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.1);">
-                        <i class="fa-solid fa-volume-xmark" style="width: 20px;"></i> Mutar
-                    </button>
-                    <button id="micStop" class="dropdown-item"
-                            style="display: block; width: 100%; padding: 0.75rem 1rem; background: none; border: none; color: inherit; text-align: left; cursor: pointer;">
-                        <i class="fa-solid fa-power-off" style="width: 20px;"></i> Desligar
-                    </button>
+            <!-- Call Timer -->
+            <div id="callTimerContainer"
+                 style="display: none; text-align: center; margin-top: 16px; margin-bottom: 8px;">
+                <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">TEMPO DE CHAMADA</div>
+                <div id="callTimer"
+                     style="font-size: 32px; font-weight: 700; color: var(--accent); font-family: 'Courier New', monospace; letter-spacing: 3px;">00:00</div>
+            </div>
+
+            <!-- Volume Controls -->
+            <div class="px-3 mb-2">
+                <div class="mb-3">
+                    <label class="mini mb-1" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span>Volume da Chamada</span>
+                        <span id="callVolTxt" style="margin-left: auto; opacity: 0.6;">100%</span>
+                    </label>
+                    <div style="position: relative;">
+                        <input class="form-range" id="callVol" max="100" min="0" style="position: relative; z-index: 2;" type="range"
+                               value="100">
+                        <div id="callVolMeter"
+                             style="position: absolute; bottom: 8px; left: 0; height: 4px; background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000); border-radius: 2px; width: 0%; transition: width 0.05s; pointer-events: none; z-index: 1;"></div>
+                    </div>
+                </div>
+
+                <div class="mb-2">
+                    <label class="mini mb-1" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span>Volume do Microfone</span>
+                        <span id="micVolCallTxt" style="margin-left: auto; opacity: 0.6;">100%</span>
+                    </label>
+                    <div style="position: relative;">
+                        <input class="form-range" id="micVolCall" max="100" min="0" style="position: relative; z-index: 2;" type="range"
+                               value="100">
+                        <div id="micVolMeter"
+                             style="position: absolute; bottom: 8px; left: 0; height: 4px; background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000); border-radius: 2px; width: 0%; transition: width 0.05s; pointer-events: none; z-index: 1;"></div>
+                    </div>
                 </div>
             </div>
+
+            <div class="call-controls mt-2 p-2">
+                <button class="btn border-theme p-3" id="btnMic" style="border-color: transparent !important;">
+                    <i class="fa-duotone fa-solid fa-microphone-slash fa-xl" id="iconMic"></i>
+                </button>
+
+                <button class="btn ctrl-btn-expand btn-soft p-3" id="btnCall">
+                    <b class="text-blue">Chamar</b>
+                </button>
+                <button class="btn ctrl-btn-expand p-3 btn-danger" id="btnHangup" onclick="hangUpCall()"
+                        style="display: none">
+                    <b class="text-red">Desligar</b>
+                </button>
+
+                <button class="btn border-theme p-3" id="btnSpeaker" style="border-color: transparent !important;">
+                    <i class="fa-sharp-duotone fa-solid fa-volume-high fa-xl" id="speakerIcon"></i>
+                </button>
+            </div>
+            <div class="gap-2 dial-pad">
+
+
+            </div>
+
 
         </div>
 
@@ -289,25 +353,8 @@ background: rgba(0,0,0,0.1) !important;
 
 </div>
 
-<!-- Call Modal -->
-<div class="call-modal" id="callModal">
-    <div class="call-modal-content">
-        <div class="call-modal-avatar">
-            <i class="fa-solid fa-phone"></i>
-        </div>
-        <div class="call-modal-number" id="modalNumber"></div>
-        <div class="call-modal-status" id="modalStatus">Conectando...</div>
-        <button class="call-modal-cancel" id="modalCancel" type="button">
-            <i class="fa-solid fa-phone-slash"></i>
-        </button>
-        <button class="call-modal-cancel" id="btnHangup" type="button">
-            <i class="fa-solid fa-phone-slash"></i>
-        </button>
-    </div>
-</div>
 
 <script>
-
 
     window.saveConfig = () => {
         const sipServer = document.getElementById('sipServer').value;
@@ -325,15 +372,45 @@ background: rgba(0,0,0,0.1) !important;
             console.log(res)
         });
     }
+    window.digits = "";
 
 
     // Cria o elemento de áudio
 
 
     window.startCall = () => {
-        const digits = document.getElementById('digits').textContent;
-        sendRecByToken({digits}, 'StartCall').then((res) => {
+
+        if (!digits) {
+            digits = user.getValue('lastDigits') || null;
+            if (!digits) {
+                return bootstrap.showToast({
+                    header: 'Atenção',
+                    body: 'Digite um número antes de ligar, e tenha mais atenção!',
+                    toastClass: 'bg-warning',
+                    colorHeader: 'text-white',
+                });
+            } else {
+                document.getElementById('digits').textContent = digits;
+            }
+        }
+        user.updateUserData('lastDigits', digits);
+        user.updateUserData('lastCallTime', new Date().getTime());
+        const digitsCall = digits;
+
+        sendRecByToken({
+            digits: digitsCall,
+        }, 'StartCall').then((res) => {
+            clearDigits();
+            btnCall.style.display = 'none';
+            btnHangup.style.display = '';
+            console.log(res)
         });
+
+
+    }
+    window.clearDigits = async () => {
+        window.digits = "";
+        renderDigits();
     }
 
 
@@ -344,10 +421,6 @@ background: rgba(0,0,0,0.1) !important;
     window.btnCall = document.getElementById('btnCall');
     window.btnHangup = document.getElementById('btnHangup');
     window.callState = document.getElementById('callState');
-    window.callModal = document.getElementById('callModal');
-    window.modalNumber = document.getElementById('modalNumber');
-    window.modalStatus = document.getElementById('modalStatus');
-    window.modalCancel = document.getElementById('modalCancel');
 
     tabBtns.forEach(btn => {
         btn.addEventListener('click', () => {
@@ -361,26 +434,34 @@ background: rgba(0,0,0,0.1) !important;
     // ===== Dialer
     const digitsEl = document.getElementById('digits');
     document.getElementById('hint');
-    let digits = "";
 
-    function renderDigits() {
-        digitsEl.textContent = digits || " ";
 
+    window.renderDigits = () => {
+        digitsEl.textContent = digits;
     }
 
-    window.pushKey = (k) => {
+    window.pushKey = async (k) => {
+        if (btnHangup.style.display !== 'none') {
+            document.getElementById('digits').textContent += k;
+            return sendRecByToken({dtmf: k}, 'dtmf');
+        }
+
+
+
         if (digits.length > 32) return;
-        digits += k;
+        window.digits += k;
+
         renderDigits();
     }
 
-    function backspace() {
-        digits = digits.slice(0, -1);
+    window.backspace = () => {
+
+        window.digits = digits.slice(0, -1);
         renderDigits();
     }
 
-    function clearAll() {
-        digits = "";
+    window.clearAll = () => {
+        window.digits = "";
         renderDigits();
     }
 
@@ -403,6 +484,7 @@ background: rgba(0,0,0,0.1) !important;
         });
     });
 
+
     document.getElementById('btnBackspace').addEventListener('click', backspace);
 
     // teclado
@@ -411,81 +493,44 @@ background: rgba(0,0,0,0.1) !important;
         if (/^[0-9]$/.test(k) || k === '*' || k === '#' || k === '+') pushKey(k);
         if (k === 'Backspace') backspace();
         if (k === 'Escape') clearAll();
-        if (k === 'Enter') document.getElementById('btnCall').click();
+        if (k === 'Enter') startCall();
     });
 
     renderDigits();
 
+    btnCall.addEventListener('click', () => startCall());
 
-    let inCall = false;
-    let callConnectionTimeout = null; // Store timeout ID to prevent race conditions
-    const CALL_CONNECTION_DELAY_MS = 2000; // Time to simulate call connection
+    // ===== Check call status periodically =====
+    setInterval(() => {
+        sendRecByToken({}, 'checkCall').then((res) => {
+            console.log('checkCall:', res);
+            if (res && res.success === true) {
+                // Restaura o estado da chamada ativa
+                if (btnHangup.style.display === 'none') {
+                    btnCall.style.display = 'none';
+                    btnHangup.style.display = '';
+                }
 
-    function showCallModal(number) {
-        modalNumber.textContent = number;
-        modalStatus.textContent = 'Conectando...';
-        callModal.classList.add('show');
-    }
+                // Inicia o timer se não estiver rodando
+                if (!callTimerInterval && typeof window.startCallTimer === 'function') {
+                    window.startCallTimer();
+                }
+            } else {
+                // Chamada não está ativa, garante que está no estado correto
+                if (btnCall.style.display === 'none') {
+                    btnCall.style.display = '';
+                    btnHangup.style.display = 'none';
+                }
 
-    window.hideCallModal = () => {
-        callModal.classList.remove('show');
-        // Clear any pending connection timeout
-        if (callConnectionTimeout) {
-            clearTimeout(callConnectionTimeout);
-            callConnectionTimeout = null;
-        }
-    };
-
-    function updateModalForActiveCall() {
-        modalStatus.textContent = 'Em chamada...';
-    }
-
-    function setCall(on) {
-        inCall = on;
-        btnHangup.classList.toggle('d-none', !on);
-        btnCall.classList.toggle('d-none', on);
-        callState.textContent = on
-            ? `Em chamada com ${digits || '(sem número?)'}…`
-            : 'Pronto.';
-
-        if (!on) {
-            hideCallModal();
-        }
-    }
-
-    btnCall.addEventListener('click', () => {
-        if (!digits) {
-            callState.innerHTML = '<i class="fa-solid fa-face-smile me-1"></i>Digite um número antes de ligar, campeão.';
-            return;
-        }
-        user.updateUserData('lastDigits', digits);
-        return sendRecByToken({digits}, 'StartCall').then((res) => {
+                // Para o timer se estiver rodando
+                if (callTimerInterval && typeof window.stopCallTimer === 'function') {
+                    window.stopCallTimer();
+                }
+            }
+        }).catch(err => {
+            console.error('Erro ao verificar status da chamada:', err);
         });
-
-        // Show modal first
-        showCallModal(digits);
-
-        // Simulate connection
-        callConnectionTimeout = setTimeout(() => {
-            callConnectionTimeout = null;
-            updateModalForActiveCall();
-            setCall(true);
-        }, CALL_CONNECTION_DELAY_MS);
-    });
-
-    btnHangup.addEventListener('click', () => setCall(false));
-
-    // Cancel button in modal
-    modalCancel.addEventListener('click', () => {
-        if (inCall) {
-            // If in call, act as hangup button
-            setCall(false);
-        } else {
-            // If connecting, cancel the call
-            hideCallModal();
-            callState.textContent = 'Chamada cancelada.';
-        }
-    });
+    }, 1000);
 
     // ===== Toggle buttons (UI)
     function toggleBtn(id, onText, offText) {
@@ -510,6 +555,90 @@ background: rgba(0,0,0,0.1) !important;
     const spkVolTxt = document.getElementById('spkVolTxt');
     micVol.addEventListener('input', () => micVolTxt.textContent = micVol.value + "%");
     spkVol.addEventListener('input', () => spkVolTxt.textContent = spkVol.value + "%");
+
+    // ===== Volume controls na sessão de chamadas
+    const callVol = document.getElementById('callVol');
+    const callVolTxt = document.getElementById('callVolTxt');
+    const micVolCall = document.getElementById('micVolCall');
+    const micVolCallTxt = document.getElementById('micVolCallTxt');
+
+    callVol.addEventListener('input', () => {
+        callVolTxt.textContent = callVol.value + "%";
+        // Aplicar volume ao áudio da chamada
+        const volume = callVol.value / 100;
+        if (window.remoteAudio) {
+            window.remoteAudio.volume = volume;
+        }
+    });
+
+    micVolCall.addEventListener('input', () => {
+        micVolCallTxt.textContent = micVolCall.value + "%";
+        // Aplicar ganho ao microfone via AudioContext
+        if (audioContext && audioWorkletNode) {
+            const gain = micVolCall.value / 100;
+            // Implementar ajuste de ganho no worklet ou criar GainNode
+            if (!window.micGainNode) {
+                window.micGainNode = audioContext.createGain();
+            }
+            window.micGainNode.gain.value = gain;
+        }
+    });
+
+    // ===== Medidores de energia de áudio
+    const callVolMeter = document.getElementById('callVolMeter');
+    const micVolMeter = document.getElementById('micVolMeter');
+
+    // Função para calcular RMS (energia) de um buffer PCM
+    function calculateRMS(pcmData) {
+        if (!pcmData || pcmData.length === 0) return 0;
+
+        let sum = 0;
+        for (let i = 0; i < pcmData.length; i++) {
+            const normalized = pcmData[i] / 32768.0; // Normaliza Int16 para -1.0 a 1.0
+            sum += normalized * normalized;
+        }
+
+        const rms = Math.sqrt(sum / pcmData.length);
+        // Converte para dB e normaliza para 0-100%
+        const db = 20 * Math.log10(rms + 0.0001); // +0.0001 para evitar log(0)
+        const normalized = Math.max(0, Math.min(100, ((db + 60) / 60) * 100)); // -60dB a 0dB = 0% a 100%
+
+        return normalized;
+    }
+
+    // Atualiza medidor do microfone
+    let lastMicLevel = 0;
+    window.updateMicMeter = (pcmData) => {
+        const level = calculateRMS(pcmData);
+        // Suavização (decay)
+        lastMicLevel = Math.max(level, lastMicLevel * 0.85);
+        micVolMeter.style.width = lastMicLevel + '%';
+
+        // Reduz gradualmente se não houver áudio
+        if (level < lastMicLevel) {
+            setTimeout(() => {
+                lastMicLevel *= 0.95;
+                micVolMeter.style.width = lastMicLevel + '%';
+            }, 50);
+        }
+    };
+
+    // Atualiza medidor da chamada (speaker)
+    let lastCallLevel = 0;
+    window.updateCallMeter = (pcmData) => {
+        const level = calculateRMS(pcmData);
+        // Suavização (decay)
+        lastCallLevel = Math.max(level, lastCallLevel * 0.85);
+        callVolMeter.style.width = lastCallLevel + '%';
+
+        // Reduz gradualmente se não houver áudio
+        if (level < lastCallLevel) {
+            setTimeout(() => {
+                lastCallLevel *= 0.95;
+                callVolMeter.style.width = lastCallLevel + '%';
+            }, 50);
+        }
+    };
 
     const flags = {noise: false, echo: false, agc: false};
     const audioFlags = document.getElementById('audioFlags');
@@ -587,10 +716,7 @@ background: rgba(0,0,0,0.1) !important;
     let streamStartTime = 0;
 
     const btnMic = document.getElementById('btnMic');
-    const btnMicMenu = document.getElementById('btnMicMenu');
-    const micDropdown = document.getElementById('micDropdown');
-    const micMute = document.getElementById('micMute');
-    const micStop = document.getElementById('micStop');
+    const btnMicPause = document.getElementById('btnMicPause');
 
     let lastCallId = null; // Armazena o último callId conectado
     let callIdMonitorInterval = null; // Intervalo de monitoramento
@@ -699,6 +825,11 @@ background: rgba(0,0,0,0.1) !important;
                 // Novos dados
                 const inputPCM = new Int16Array(e.data);
 
+                // Atualiza medidor do microfone
+                if (typeof window.updateMicMeter === 'function') {
+                    window.updateMicMeter(inputPCM);
+                }
+
                 // Junta ao buffer pendente
                 if (pendingBuffer.length === 0) {
                     pendingBuffer = inputPCM;
@@ -729,7 +860,7 @@ background: rgba(0,0,0,0.1) !important;
             await audioContext.resume();
 
             isRecording = true;
-            updateMicButtonState();
+
 
             console.log('🎧 Microfone ativo, enviando PCM para WS…');
 
@@ -743,6 +874,7 @@ background: rgba(0,0,0,0.1) !important;
     function stopAudioCapture() {
         isRecording = false;
         isMuted = false;
+
 
         // Para o monitoramento de callId
         if (callIdMonitorInterval) {
@@ -777,100 +909,75 @@ background: rgba(0,0,0,0.1) !important;
         // Reseta lastCallId
         lastCallId = null;
 
-        updateMicButtonState();
+
+        btnMic.style.background = 'transparent';
+        iconMic.classList.remove('fa-microphone-lines');
+        iconMic.classList.remove('fa-microphone-lines-slash');
+        iconMic.classList.add('fa-microphone-lines');
         console.log('🛑 Microfone e WS encerrados');
     }
 
-    function updateMicButtonState() {
-        if (isRecording) {
-            // Mostra botão de menu
-            btnMicMenu.style.display = "inline-block";
 
-            if (isStopped) {
-                // Estado: parado (amarelo)
-                btnMic.style.borderColor = "rgba(255, 193, 7, 0.45)";
-                btnMic.style.background = "rgba(255, 193, 7, 0.14)";
-                btnMic.querySelector('i').classList.remove('fa-microphone', 'fa-microphone-slash');
-                btnMic.querySelector('i').classList.add('fa-pause');
-            } else if (isMuted) {
-                // Estado: mutado (vermelho)
-                btnMic.style.borderColor = "rgba(255, 42, 42, 0.45)";
-                btnMic.style.background = "rgba(255, 42, 42, 0.14)";
-                btnMic.querySelector('i').classList.remove('fa-microphone', 'fa-pause');
-                btnMic.querySelector('i').classList.add('fa-microphone-slash');
-            } else {
-                // Estado: gravando e ativo (azul)
-                btnMic.style.borderColor = "rgba(42, 169, 255, 0.45)";
-                btnMic.style.background = "rgba(42, 169, 255, 0.14)";
-                btnMic.querySelector('i').classList.remove('fa-microphone-slash', 'fa-pause');
-                btnMic.querySelector('i').classList.add('fa-microphone');
-            }
-        } else {
-            // Estado: desligado (padrão)
-            btnMicMenu.style.display = "none";
-            btnMic.style.borderColor = "";
-            btnMic.style.background = "";
-            btnMic.querySelector('i').classList.remove('fa-microphone-slash', 'fa-pause');
-            btnMic.querySelector('i').classList.add('fa-microphone');
-        }
-    }
+    // Event listener para o botão de pausa (Pausa/Resume)
 
-    // Event listener para o botão principal do microfone
+
+    let isMicStop = true;
+    let iconMic = document.getElementById('iconMic');
     btnMic.addEventListener('click', () => {
         if (isRecording) {
-            // Se já está gravando, volta ao estado normal (desfaz mute/stop)
-            isMuted = false;
-            isStopped = false;
-            updateMicButtonState();
-            console.log('🔊 Microfone ativo');
+            isRecording = false;
+            stopAudioCapture();
+            isMicStop = true;
+            btnMic.style.background = 'transparent';
+            iconMic.classList.remove('fa-microphone-lines');
+            iconMic.classList.remove('fa-microphone-lines-slash');
+            iconMic.classList.add('fa-microphone-lines-slash');
         } else {
+            // Liga o microfone
+            isRecording = true;
             startAudioCapture();
+            isMicStop = false;
+            btnMic.style.background = "transparent";
+            iconMic.classList.remove('fa-microphone-lines-slash');
+            iconMic.classList.add('fa-microphone-lines');
         }
     });
-
-    // Event listener para o botão de menu dropdown
-    btnMicMenu.addEventListener('click', (e) => {
-        e.stopPropagation();
-        micDropdown.style.display = micDropdown.style.display === 'none' ? 'block' : 'none';
-    });
-
-    // Event listener para opção "Mutar"
-    micMute.addEventListener('click', () => {
-        if (!isRecording) return;
-        isMuted = true;
-        isStopped = false;
-        updateMicButtonState();
-        micDropdown.style.display = 'none';
-        console.log('🔇 Microfone mutado (enviando silêncio)');
-    });
-
-    // Event listener para opção "Desligar"
-    micStop.addEventListener('click', () => {
-        console.log('⏹️ Microfone parado');
-        stopAudioCapture();
-        if (!isRecording) return;
+    window.hangUpCall = () => {
+        if (isStopped) return;
         isStopped = true;
-        isMuted = false;
-        updateMicButtonState();
-        micDropdown.style.display = 'none';
-        console.log('⏸️ Microfone parado (não enviando nada)');
-    });
+        btnHangup.style.background = 'transparent';
+        sendRecByToken({hangup: true}, 'HangUpCall').then((res) => {
+            console.log(res)
+        });
+    }
 
-    // Fechar dropdown ao clicar fora
-    document.addEventListener('click', (e) => {
-        if (!micDropdown.contains(e.target) && !btnMicMenu.contains(e.target)) {
-            micDropdown.style.display = 'none';
+    btnHangup.addEventListener('click', () => hangUpCall);
+
+
+    // ===== Botão de Alto-falante (Speaker) =====
+    const btnSpeaker = document.getElementById('btnSpeaker');
+
+
+    btnSpeaker.addEventListener('click', () => {
+        isSpeakerMuted = !isSpeakerMuted;
+
+        const speakerIcon = btnSpeaker.querySelector('i');
+
+        if (isSpeakerMuted) {
+            btnSpeaker.classList.add('muted');
+            speakerIcon.classList.remove('fa-volume-high');
+            speakerIcon.classList.add('fa-volume-slash');
+
+
+            btnSpeaker.style.background = 'transparent';
+        } else {
+            // Estado normal
+            btnSpeaker.classList.remove('muted');
+            speakerIcon.classList.remove('fa-volume-slash');
+            speakerIcon.classList.add('fa-volume-high');
+            btnSpeaker.style.background = 'transparent'
+            console.log('🔊 Alto-falante ativo');
         }
-    });
-
-    // Hover effect para itens do dropdown
-    document.querySelectorAll('.dropdown-item').forEach(item => {
-        item.addEventListener('mouseenter', function () {
-            this.style.background = 'rgba(42, 169, 255, 0.2)';
-        });
-        item.addEventListener('mouseleave', function () {
-            this.style.background = 'none';
-        });
     });
 
     // Expor função global para parar (debug)
@@ -882,5 +989,6 @@ background: rgba(0,0,0,0.1) !important;
             stopAudioCapture();
         }
     });
+
 
 </script>

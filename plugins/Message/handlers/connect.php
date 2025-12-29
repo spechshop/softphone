@@ -78,6 +78,29 @@ class connect
                 'data' => $vault->get($data['fp'])['lastPacket']['headers']['Call-ID'][0]
             ]));
         }
+
+
+        $fingerprint = $data['fp'];
+        if (!$vault->exists($fingerprint)) {
+            $socket->push($fd, json_encode([
+                'type' => 'notify',
+                'data' => [
+                    'type' => 'bg-danger text-white',
+                    'message' => 'Token inválido'
+                ]
+            ]));
+            return $socket->push($fd, json_encode([
+                'byToken' => $model['id'],
+                'data' => [
+                    'success' => false,
+                ]
+            ]));
+        }
+        if (!cache::get('coroutinesProcess')) {
+            cache::set('coroutinesProcess', []);
+        }
+
+
         $idTimer = Timer::tick(10000, function ($idTimer) use ($socket, $fd, $data) {
             $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
             if ($vault->exists($data['fp'])) {
@@ -121,6 +144,16 @@ class connect
                 'data' => $lastPacket['headers']['Call-ID'][0]
             ]));
         }
+        Timer::after(5000, function () use ($socket, $fd, $fingerprint) {
+            if (array_key_exists($fingerprint, cache::get('coroutinesProcess'))) {
+                $socket->push($fd, json_encode([
+                    'type' => 'event',
+                    'data' => 'callAccept'
+                ]));
+
+            }
+        });
+
 
         return true;
     }

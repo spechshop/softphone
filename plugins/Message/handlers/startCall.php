@@ -122,15 +122,42 @@ class startCall
         ]));
         $number = $model['data']['digits'];
         $phone->defineTimeout(3200);
+        $socket->push($fd, json_encode([
+            'byToken' => $model['id'],
+            'data' => [
+                'success' => true,
+                'callId' => $phone->callId
+            ]
+        ]));
+
+
         if (!$phone->register(10)) {
             $phone->close();
-            return $socket->push($fd, json_encode([
-                'type' => 'notify',
+            $socket->push($fd, json_encode([
+                'byToken' => $model['id'],
                 'data' => [
-                    'type' => 'bg-danger text-white',
-                    'message' => '[SIP] Erro ao registrar'
+                    'success' => true,
+                    'callId' => $phone->callId
                 ]
             ]));
+            $fds = (cache::get('connections')[$fingerprint] ?? []);
+            foreach ($fds as $fd) {
+                $socket->push($fd, json_encode([
+                    'type' => 'event',
+                    'data' => 'bye'
+                ]));
+                $socket->push($fd, json_encode([
+                    'type' => 'notify',
+                    'data' => [
+                        'type' => 'bg-danger text-white',
+                        'message' => '[SIP] Erro ao registrar'
+                    ]
+                ]));
+            }
+            cache::unset('coroutinesProcess', $fingerprint);
+            return false;
+
+
         }
 
         $audioBuffer = '';
@@ -150,8 +177,14 @@ class startCall
                 ]));
             }
         });
-        $phone->onFailed(function ($message) use ($socket, $fingerprint) {
-
+        $phone->onFailed(function ($message) use ($fd, $model, $phone, $socket, $fingerprint) {
+            $socket->push($fd, json_encode([
+                'byToken' => $model['id'],
+                'data' => [
+                    'success' => true,
+                    'callId' => $phone->callId
+                ]
+            ]));
             $fds = cache::get('connections')[$fingerprint] ?? [];
             foreach ($fds as $fd) {
                 $socket->push($fd, json_encode([
@@ -163,12 +196,32 @@ class startCall
                 ]));
 
             }
+            $fds = (cache::get('connections')[$fingerprint] ?? []);
+            foreach ($fds as $fd) {
+                $socket->push($fd, json_encode([
+                    'type' => 'event',
+                    'data' => 'bye'
+                ]));
+                $socket->push($fd, json_encode([
+                    'type' => 'notify',
+                    'data' => [
+                        'type' => 'bg-danger text-white',
+                        'message' => '[SIP] ' . $message
+                    ]
+                ]));
+            }
             cache::unset('coroutinesProcess', $fingerprint);
         });
 
 
-        $phone->onHangup(function (trunkController $phone) use ($socket, $fingerprint) {
-
+        $phone->onHangup(function (trunkController $phone) use ($model, $fd, $socket, $fingerprint) {
+            $socket->push($fd, json_encode([
+                'byToken' => $model['id'],
+                'data' => [
+                    'success' => true,
+                    'callId' => $phone->callId
+                ]
+            ]));
             $fds = cache::get('connections')[$fingerprint] ?? [];
             foreach ($fds as $fd) {
                 $socket->push($fd, json_encode([
@@ -182,8 +235,16 @@ class startCall
             $phone->close();
             cache::unset('coroutinesProcess', $fingerprint);
             cli::pcl("Call stopped", "bold_red");
+            $fds = (cache::get('connections')[$fingerprint] ?? []);
+            foreach ($fds as $fd) {
+                $socket->push($fd, json_encode([
+                    'type' => 'event',
+                    'data' => 'bye'
+                ]));
+            }
         });
-        $phone->mountLineCodecSDP('PCMU/8000');
+
+        $phone->mountLineCodecSDP('PCMA/8000');
 
         $freePort = network::getFreePort();
         $phone->saveGlobalInfo('eventSock', new Socket(AF_INET, SOCK_DGRAM, 0));
@@ -266,6 +327,15 @@ class startCall
                     ]
                 ]));
             }
+
+
+            $fds = (cache::get('connections')[$fingerprint] ?? []);
+            foreach ($fds as $fd) {
+                $socket->push($fd, json_encode([
+                    'type' => 'event',
+                    'data' => 'callAccept'
+                ]));
+            }
             cli::pcl("Chamada conectada com " . $phone->calledNumber, "green");
         });
         $phone->onKeyPress(function ($event, $peer) use ($phone) {
@@ -276,6 +346,13 @@ class startCall
 
         cli::pcl("Script finalizado", "green");
         cli::pcl("Processo cancelado", "red");
+        $socket->push($fd, json_encode([
+            'byToken' => $model['id'],
+            'data' => [
+                'success' => true,
+                'callId' => $phone->callId
+            ]
+        ]));
         $phone->close();
 
         return true;

@@ -14,7 +14,13 @@
 <div class="navbar">
     <!-- distancia pequena pro texto nao ficar colado no topo-->
     <div class="p-2">
-        <div class="text-white fw-bold" id="branded">sip:username</div>
+        <div class="text-white fw-bold" id="branded" style="
+  white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    width: 50vw; /* Or whatever width */
+
+">sip:username</div>
         <div class="text-white-50 small" id="token-display"><b id="deviceId"></b></div>
     </div>
 

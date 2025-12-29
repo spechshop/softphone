@@ -1,9 +1,10 @@
 let socketGlobal;
 let stops = {};
-let waitTokens = [];
+
 let ctx;
 let sipStatsChart;
 let waveSurfer;
+window.waitTokens = {}
 
 async function sleep(ms) {
     return new Promise(resolve => setTimeout(resolve, ms));
@@ -49,7 +50,7 @@ const autoSocket = () => {
         console.error('Erro no socket', event);
         socket.close();
     }
-    socket.onmessage = (event) => onMessageSocket(event, socket);
+    socket.onmessage = async (event) => onMessageSocket(event, socket);
     socket.onclose = () => {
         socket.closed = true;
         console.error('Socket fechado');
@@ -80,7 +81,8 @@ window.sendRecByToken = async (params, type) => {
     const id = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
     // checar status do socket
     if (socketGlobal.closed) {
-        return await sleep(1000);
+        console.log('socket closed, trying to reconnect');
+        return sleep(1000).then(() => sendRecByToken(params, type));
     }
 
 
@@ -92,7 +94,7 @@ window.sendRecByToken = async (params, type) => {
     let time = new Date().getTime();
     let end = time + wait;
     while (new Date().getTime() < end) {
-        await sleep(100);
+        await sleep(250);
         if (waitTokens[id]) {
             break;
         }
@@ -106,11 +108,68 @@ window.sendRecByToken = async (params, type) => {
     }
 };
 
+// ===== Call Timer =====
+let callTimerInterval = null;
+let callStartTime = null;
+
+window.startCallTimer = function () {
+    callStartTime = Date.now();
+    const timerContainer = document.getElementById('callTimerContainer');
+    const timerEl = document.getElementById('callTimer');
+
+    if (timerContainer) {
+        timerContainer.style.display = 'block';
+    }
+
+    callTimerInterval = setInterval(() => {
+        const elapsed = Math.floor((Date.now() - callStartTime) / 1000);
+        const minutes = Math.floor(elapsed / 60);
+        const seconds = elapsed % 60;
+        if (timerEl) {
+            timerEl.textContent = `${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+    }, 1000);
+}
+
+window.stopCallTimer = function () {
+    if (callTimerInterval) {
+        clearInterval(callTimerInterval);
+        callTimerInterval = null;
+    }
+    callStartTime = null;
+    const timerContainer = document.getElementById('callTimerContainer');
+    const timerEl = document.getElementById('callTimer');
+
+    if (timerContainer) {
+        timerContainer.style.display = 'none';
+    }
+    if (timerEl) {
+        timerEl.textContent = '00:00';
+    }
+}
+
 const onMessageSocket = (event, socket) => {
     const data = JSON.parse(event.data);
     const user = new UserManager();
     if (Object.keys(data).includes('byToken')) {
-        waitTokens[data['byToken']] = {data: data.data}
+        window.waitTokens[data['byToken']] = {data: data.data}
+    }
+
+
+    if (data.type === 'event') {
+        if (data.data === 'bye') {
+            $('#btnHangup').css('display', 'none');
+            $('#btnCall').css('display', '');
+            if (typeof window.stopCallTimer === 'function') {
+                window.stopCallTimer();
+            }
+        }
+        if (data.data === 'callAccept') {
+            $('#btnHangup').css('display', '');
+            $('#btnCall').css('display', 'none');
+            console.log(data)
+            if (typeof window.startCallTimer === 'function') window.startCallTimer();
+        }
     }
 
     if (data.type === 'setPage') {
@@ -118,140 +177,146 @@ const onMessageSocket = (event, socket) => {
         template.setPage(data.page);
     } else if (data.type === 'setKey') {
         user.updateUserData(data.key, data.value);
-    }
-    else if (data.type === 'notify') {
+    } else if (data.type === 'notify') {
         bootstrap.showToast({
             header: 'Notificação',
             body: data.data.message,
             toastClass: data.data.type,
             colorHeader: 'text-white',
         });
-    }
-    else if (data.type === 'brand') {
-       document.getElementById('branded').innerText = data.data;
-    }
-    else if (data.type === 'changeCallId') {
+    } else if (data.type === 'brand') {
+        document.getElementById('branded').innerText = data.data;
+    } else if (data.type === 'changeCallId') {
         playAudio(data.data)
     }
 
 
-
-
-
-
-
 }
 
-    // WebSocket Audio Player
-    window.audioWS = null;
-    window.audioContext = null;
+// WebSocket Audio Player
+window.audioWS = null;
+window.audioContext = null;
+window.audioQueue = [];
+window.nextStartTime = 0;
+window.isFirstPacket = true;
+window.currentCallId = null;
+
+window.playAudio = (callId) => {
+    if (window.currentCallId === callId) {
+        return;
+    }
+
+    // Fecha conexão anterior se existir
+    if (window.audioWS) {
+        window.audioWS.close();
+        window.audioWS = null;
+    }
+
+    // Reset
     window.audioQueue = [];
-    window.nextStartTime = 0;
     window.isFirstPacket = true;
-    window.currentCallId = null;
+    window.nextStartTime = 0;
+    window.currentCallId = callId;
 
-    window.playAudio = (callId) => {
-        if(window.currentCallId === callId) {
-            return;
-        }
+    // Inicializa AudioContext
+    if (!window.audioContext) {
+        window.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+            sampleRate: 8000,
+            latencyHint: 'interactive',
 
-        // Fecha conexão anterior se existir
-        if(window.audioWS) {
-            window.audioWS.close();
-            window.audioWS = null;
-        }
+        });
+    }
 
-        // Reset
-        window.audioQueue = [];
-        window.isFirstPacket = true;
-        window.nextStartTime = 0;
-        window.currentCallId = callId;
+    // Determina protocolo WebSocket
+    const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
+    const wsUrl = `${protocol}//${infoURI().host}:8888?fp=${callId}`;
 
-        // Inicializa AudioContext
-        if (!window.audioContext) {
-            window.audioContext = new (window.AudioContext || window.webkitAudioContext)({
-                sampleRate: 8000,
-                latencyHint: 'interactive',
+    window.audioWS = new WebSocket(wsUrl);
+    window.audioWS.binaryType = "arraybuffer";
 
-            });
-        }
-
-        // Determina protocolo WebSocket
-        const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
-        const wsUrl = `${protocol}//${infoURI().host}:8888?fp=${callId}`;
-
-        window.audioWS = new WebSocket(wsUrl);
-        window.audioWS.binaryType = "arraybuffer";
-
-        window.audioWS.onopen = () => {
-            console.log('🎧 WebSocket Audio conectado:', callId);
-        };
-
-        window.audioWS.onmessage = (event) => {
-            processAudioData(event.data);
-        };
-
-        window.audioWS.onerror = (error) => {
-            console.error('❌ Erro WebSocket Audio:', error);
-        };
-
-        window.audioWS.onclose = () => {
-            console.log('🔌 WebSocket Audio desconectado');
-            if(window.currentCallId === callId) {
-                window.currentCallId = null;
-            }
-        };
+    window.audioWS.onopen = () => {
+        console.log('🎧 WebSocket Audio conectado:', callId);
     };
 
-    function processAudioData(arrayBuffer) {
-        if (window.isFirstPacket) {
+    window.audioWS.onmessage = (event) => {
+        processAudioData(event.data);
+    };
 
+    window.audioWS.onerror = (error) => {
+        console.error('❌ Erro WebSocket Audio:', error);
+    };
 
-            // Inicializa o tempo de reprodução para AGORA
-            window.nextStartTime = window.audioContext.currentTime;
-            window.isFirstPacket = false;
-
-            if (arrayBuffer.byteLength === 0) return;
+    window.audioWS.onclose = () => {
+        console.log('🔌 WebSocket Audio desconectado');
+        if (window.currentCallId === callId) {
+            window.currentCallId = null;
         }
+    };
+};
+window.isSpeakerMuted = false;
 
-        const pcmData = new Int16Array(arrayBuffer);
-
-        // Converte PCM16 para Float32
-        const float32Data = new Float32Array(pcmData.length);
-        for (let i = 0; i < pcmData.length; i++) {
-            float32Data[i] = pcmData[i] / 32768.0;
-        }
-
-        // Cria AudioBuffer
-        const audioBuffer = window.audioContext.createBuffer(1, float32Data.length, 8000);
-        audioBuffer.getChannelData(0).set(float32Data);
-
-        window.audioQueue.push(audioBuffer);
-
-        // Agenda reprodução
-        scheduleAudioBuffer();
+function processAudioData(arrayBuffer) {
+    // Descarta pacotes se o speaker estiver mutado
+    if (window.isSpeakerMuted) {
+        return;
     }
 
-    function scheduleAudioBuffer() {
-        while (window.audioQueue.length > 0) {
-            const buffer = window.audioQueue.shift();
-            const source = window.audioContext.createBufferSource();
-            source.buffer = buffer;
-            source.connect(window.audioContext.destination);
+    if (window.isFirstPacket) {
 
-            // Agenda para tocar no próximo slot disponível
-            const scheduleTime = Math.max(window.audioContext.currentTime, window.nextStartTime);
-            source.start(scheduleTime);
 
-            // Atualiza próximo tempo disponível
-            window.nextStartTime = scheduleTime + buffer.duration;
+        // Inicializa o tempo de reprodução para AGORA
+        window.nextStartTime = window.audioContext.currentTime;
+        window.isFirstPacket = false;
 
-            // Mantém latência baixa (~500ms)
-            if (window.nextStartTime - window.audioContext.currentTime > 0.5) {
-                break;
-            }
+        if (arrayBuffer.byteLength === 0) return;
+    }
+
+    const pcmData = new Int16Array(arrayBuffer);
+
+    // Atualiza medidor do speaker (chamada recebida)
+    if (typeof window.updateCallMeter === 'function') {
+        window.updateCallMeter(pcmData);
+    }
+
+    // Converte PCM16 para Float32
+    const float32Data = new Float32Array(pcmData.length);
+    for (let i = 0; i < pcmData.length; i++) {
+        float32Data[i] = pcmData[i] / 32768.0;
+    }
+
+    // Cria AudioBuffer
+    const audioBuffer = window.audioContext.createBuffer(1, float32Data.length, 8000);
+    audioBuffer.getChannelData(0).set(float32Data);
+
+    window.audioQueue.push(audioBuffer);
+
+    // Agenda reprodução
+    scheduleAudioBuffer();
+}
+
+
+function scheduleAudioBuffer() {
+    if (window.audioQueue.length === 0) return;
+    if (window.isSpeakerMuted) return;
+    while (window.audioQueue.length > 0) {
+        const buffer = window.audioQueue.shift();
+        const source = window.audioContext.createBufferSource();
+        source.buffer = buffer;
+        source.connect(window.audioContext.destination);
+
+        // Agenda para tocar no próximo slot disponível
+        const scheduleTime = Math.max(window.audioContext.currentTime, window.nextStartTime);
+        source.start(scheduleTime);
+
+        // Atualiza próximo tempo disponível
+        window.nextStartTime = scheduleTime + buffer.duration;
+
+        // Mantém latência baixa (~500ms)
+        if (window.nextStartTime - window.audioContext.currentTime > 0.5) {
+            break;
         }
     }
+}
 
 class ProcessManager {
     constructor(callback) {
@@ -280,10 +345,10 @@ class ProcessManager {
 class UserManager {
     constructor(storageKey) {
         this.storageKey = storageKey || 'user_data';
-        let fp=false;
+        let fp = false;
         fp = localStorage.fp || false;
-        if(!fp)fp = document.getElementById('fp')?.innerText;
-        this.updateUserData( 'fp', fp)
+        if (!fp) fp = document.getElementById('fp')?.innerText;
+        this.updateUserData('fp', fp)
     }
 
     setUserData(data) {
