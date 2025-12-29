@@ -82,6 +82,8 @@ class connect
 
         $fingerprint = $data['fp'];
         if (!$vault->exists($fingerprint)) {
+
+
             $socket->push($fd, json_encode([
                 'type' => 'notify',
                 'data' => [
@@ -90,7 +92,7 @@ class connect
                 ]
             ]));
             return $socket->push($fd, json_encode([
-                'byToken' => $model['id'],
+                'byToken' => $model['id'] ?? null,
                 'data' => [
                     'success' => false,
                 ]

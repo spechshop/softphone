@@ -14,7 +14,7 @@
         </div>
 
         <span style="display: none" id="callState"></span>
-        <div class=" card bg-dark p-3  ">
+        <div class=" card bg-dark p-3" style="position: relative;">
             <div class="dial-pad" id="pad">
                 <!-- 1..9 -->
                 <div class="btn border-theme dial-btn" data-key="1">
@@ -103,44 +103,118 @@
                 <button id="btnMicPause"></button>
             </div>
 
-            <!-- Call Timer -->
-            <div id="callTimerContainer"
-                 style="display: none; text-align: center; margin-top: 16px; margin-bottom: 8px;">
-                <div style="font-size: 11px; color: var(--muted); margin-bottom: 4px;">TEMPO DE CHAMADA</div>
-                <div id="callTimer"
-                     style="font-size: 32px; font-weight: 700; color: var(--accent); font-family: 'Courier New', monospace; letter-spacing: 3px;">00:00</div>
-            </div>
 
             <!-- Volume Controls -->
-            <div class="px-3 mb-2">
-                <div class="mb-3">
-                    <label class="mini mb-1" style="display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-volume-high"></i>
-                        <span>Volume da Chamada</span>
-                        <span id="callVolTxt" style="margin-left: auto; opacity: 0.6;">100%</span>
-                    </label>
-                    <div style="position: relative;">
-                        <input class="form-range" id="callVol" max="100" min="0" style="position: relative; z-index: 2;" type="range"
-                               value="100">
-                        <div id="callVolMeter"
-                             style="position: absolute; bottom: 8px; left: 0; height: 4px; background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000); border-radius: 2px; width: 0%; transition: width 0.05s; pointer-events: none; z-index: 1;"></div>
-                    </div>
-                </div>
+            <style>
+                .volume-slider-container {
+                    position: relative;
+                    --meter-width: 0%;
+                    height: 14px;
+                    background: rgba(0, 0, 0, 0.2);
+                    border-radius: 3px;
+                    border: 1px solid rgba(255, 255, 255, 0.08);
+                    overflow: hidden;
+                    display: flex;
+                    align-items: center;
+                    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.3);
+                }
 
-                <div class="mb-2">
-                    <label class="mini mb-1" style="display: flex; align-items: center; gap: 8px;">
-                        <i class="fa-solid fa-microphone"></i>
-                        <span>Volume do Microfone</span>
-                        <span id="micVolCallTxt" style="margin-left: auto; opacity: 0.6;">100%</span>
-                    </label>
-                    <div style="position: relative;">
-                        <input class="form-range" id="micVolCall" max="100" min="0" style="position: relative; z-index: 2;" type="range"
-                               value="100">
-                        <div id="micVolMeter"
-                             style="position: absolute; bottom: 8px; left: 0; height: 4px; background: linear-gradient(90deg, #00ff00, #ffff00, #ff0000); border-radius: 2px; width: 0%; transition: width 0.05s; pointer-events: none; z-index: 1;"></div>
-                    </div>
-                </div>
-            </div>
+                /* Fundo das barras (vazias/desconectadas) */
+                .volume-slider-container::after {
+                    content: '';
+                    position: absolute;
+                    inset: 0;
+                    background: repeating-linear-gradient(90deg,
+                    rgba(255, 255, 255, 0.03) 0,
+                    rgba(255, 255, 255, 0.03) 4px,
+                    transparent 4px,
+                    transparent 6px);
+                    z-index: 0;
+                }
+
+                .volume-slider {
+                    position: absolute;
+                    inset: 0;
+                    width: 100%;
+                    height: 100%;
+                    -webkit-appearance: none;
+                    appearance: none;
+                    background: transparent;
+                    outline: none;
+                    z-index: 3;
+                    margin: 0;
+                    cursor: pointer;
+                }
+
+                /* Trilha do slider (invisível, usamos o container) */
+                .volume-slider::-webkit-slider-runnable-track {
+                    width: 100%;
+                    height: 100%;
+                    background: transparent;
+                }
+
+                .volume-slider::-moz-range-track {
+                    width: 100%;
+                    height: 100%;
+                    background: transparent;
+                }
+
+                /* Medidor de energia (Barras "LED" Reais) */
+                .volume-slider-container::before {
+                    content: '';
+                    position: absolute;
+                    left: 0;
+                    top: 0;
+                    bottom: 0;
+                    width: var(--meter-width);
+                    background: linear-gradient(90deg,
+                    #00ff88 0%,
+                    #ffcc00 60%,
+                    #ff4444 100%);
+                    pointer-events: none;
+                    z-index: 1;
+                    transition: width 0.06s ease-out;
+                    -webkit-mask-image: repeating-linear-gradient(90deg, black 0, black 4px, transparent 4px, transparent 6px);
+                    mask-image: repeating-linear-gradient(90deg, black 0, black 4px, transparent 4px, transparent 6px);
+                }
+
+                /* Thumb do slider (Indicador de Volume) */
+                .volume-slider::-webkit-slider-thumb {
+                    -webkit-appearance: none;
+                    appearance: none;
+                    width: 4px;
+                    height: 14px;
+                    background: #fff;
+                    cursor: pointer;
+                    position: relative;
+                    z-index: 4;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 2px rgba(0, 0, 0, 0.8);
+                    border-radius: 1px;
+                }
+
+                .volume-slider::-moz-range-thumb {
+                    width: 4px;
+                    height: 14px;
+                    background: #fff;
+                    cursor: pointer;
+                    border: none;
+                    position: relative;
+                    z-index: 4;
+                    box-shadow: 0 0 8px rgba(255, 255, 255, 0.6), 0 0 2px rgba(0, 0, 0, 0.8);
+                    border-radius: 1px;
+                }
+
+                .volume-slider::-webkit-slider-thumb:hover {
+                    background: #aaccff;
+                    box-shadow: 0 0 12px rgba(170, 204, 255, 0.8);
+                }
+
+                .volume-slider::-moz-range-thumb:hover {
+                    background: #aaccff;
+                    box-shadow: 0 0 12px rgba(170, 204, 255, 0.8);
+                }
+            </style>
+
 
             <div class="call-controls mt-2 p-2">
                 <button class="btn border-theme p-3" id="btnMic" style="border-color: transparent !important;">
@@ -159,9 +233,46 @@
                     <i class="fa-sharp-duotone fa-solid fa-volume-high fa-xl" id="speakerIcon"></i>
                 </button>
             </div>
-            <div class="gap-2 dial-pad">
+            <div class="px-3 mb-2">
+                <div class="mb-3">
+                    <label class="mini mb-1" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-volume-high"></i>
+                        <span>Volume da Chamada</span>
+                        <span id="callVolTxt" style="margin-left: auto; opacity: 0.6;">100%</span>
+                    </label>
+                    <div class="volume-slider-container" id="callVolContainer">
+                        <input class="volume-slider" id="callVol" max="100" min="0" type="range" value="100">
+                    </div>
+                </div>
 
+                <div class="mb-4">
+                    <label class="mini mb-1" style="display: flex; align-items: center; gap: 8px;">
+                        <i class="fa-solid fa-microphone"></i>
+                        <span>Volume do Microfone</span>
+                        <span id="micVolCallTxt" style="margin-left: auto; opacity: 0.6;">100%</span>
+                    </label>
+                    <div class="volume-slider-container" id="micVolContainer">
+                        <input class="volume-slider" id="micVolCall" max="100" min="0" type="range" value="100">
+                    </div>
+                </div>
+            </div>
 
+            <!-- Call Timer Re-positioned -->
+            <div
+                    class="mt-2"
+                    id="callTimerContainer"
+                    style="display: none;
+                  position: absolute;
+                  bottom: 8px;
+                  right: 12px;
+                   text-align: right;
+                   pointer-events: none;
+                   z-index: 10;
+
+"
+            >
+                <div id="callTimer"
+                     style="font-size: 13px; font-weight: 700; color: var(--accent); font-family: 'Courier New', monospace;">00:00</div>
             </div>
 
 
@@ -447,7 +558,6 @@
         }
 
 
-
         if (digits.length > 32) return;
         window.digits += k;
 
@@ -553,8 +663,24 @@
     const spkVol = document.getElementById('spkVol');
     const micVolTxt = document.getElementById('micVolTxt');
     const spkVolTxt = document.getElementById('spkVolTxt');
-    micVol.addEventListener('input', () => micVolTxt.textContent = micVol.value + "%");
-    spkVol.addEventListener('input', () => spkVolTxt.textContent = spkVol.value + "%");
+
+    // Recuperar volumes da aba Áudio
+    const savedMicVol = user.getValue('micVol') || 75;
+    const savedSpkVol = user.getValue('spkVol') || 80;
+
+    micVol.value = savedMicVol;
+    micVolTxt.textContent = savedMicVol + "%";
+    spkVol.value = savedSpkVol;
+    spkVolTxt.textContent = savedSpkVol + "%";
+
+    micVol.addEventListener('input', () => {
+        micVolTxt.textContent = micVol.value + "%";
+        user.updateUserData('micVol', micVol.value);
+    });
+    spkVol.addEventListener('input', () => {
+        spkVolTxt.textContent = spkVol.value + "%";
+        user.updateUserData('spkVol', spkVol.value);
+    });
 
     // ===== Volume controls na sessão de chamadas
     const callVol = document.getElementById('callVol');
@@ -562,31 +688,40 @@
     const micVolCall = document.getElementById('micVolCall');
     const micVolCallTxt = document.getElementById('micVolCallTxt');
 
+    // Recuperar volumes salvos
+    const savedCallVol = user.getValue('callVol') || 100;
+    const savedMicVolCall = user.getValue('micVolCall') || 100;
+
+    callVol.value = savedCallVol;
+    callVolTxt.textContent = savedCallVol + "%";
+    micVolCall.value = savedMicVolCall;
+    micVolCallTxt.textContent = savedMicVolCall + "%";
+
     callVol.addEventListener('input', () => {
         callVolTxt.textContent = callVol.value + "%";
-        // Aplicar volume ao áudio da chamada
+        // Salvar volume no localStorage
+        user.updateUserData('callVol', callVol.value);
+        // Aplicar volume ao áudio da chamada (via GainNode global definido no router.js)
         const volume = callVol.value / 100;
-        if (window.remoteAudio) {
-            window.remoteAudio.volume = volume;
+        if (window.speakerGainNode) {
+            window.speakerGainNode.gain.value = volume;
         }
     });
 
     micVolCall.addEventListener('input', () => {
         micVolCallTxt.textContent = micVolCall.value + "%";
+        // Salvar volume no localStorage
+        user.updateUserData('micVolCall', micVolCall.value);
         // Aplicar ganho ao microfone via AudioContext
-        if (audioContext && audioWorkletNode) {
-            const gain = micVolCall.value / 100;
-            // Implementar ajuste de ganho no worklet ou criar GainNode
-            if (!window.micGainNode) {
-                window.micGainNode = audioContext.createGain();
-            }
+        const gain = micVolCall.value / 100;
+        if (window.micGainNode) {
             window.micGainNode.gain.value = gain;
         }
     });
 
     // ===== Medidores de energia de áudio
-    const callVolMeter = document.getElementById('callVolMeter');
-    const micVolMeter = document.getElementById('micVolMeter');
+    const callVolContainer = document.getElementById('callVolContainer');
+    const micVolContainer = document.getElementById('micVolContainer');
 
     // Função para calcular RMS (energia) de um buffer PCM
     function calculateRMS(pcmData) {
@@ -612,13 +747,13 @@
         const level = calculateRMS(pcmData);
         // Suavização (decay)
         lastMicLevel = Math.max(level, lastMicLevel * 0.85);
-        micVolMeter.style.width = lastMicLevel + '%';
+        micVolContainer.style.setProperty('--meter-width', lastMicLevel + '%');
 
         // Reduz gradualmente se não houver áudio
         if (level < lastMicLevel) {
             setTimeout(() => {
                 lastMicLevel *= 0.95;
-                micVolMeter.style.width = lastMicLevel + '%';
+                micVolContainer.style.setProperty('--meter-width', lastMicLevel + '%');
             }, 50);
         }
     };
@@ -629,13 +764,13 @@
         const level = calculateRMS(pcmData);
         // Suavização (decay)
         lastCallLevel = Math.max(level, lastCallLevel * 0.85);
-        callVolMeter.style.width = lastCallLevel + '%';
+        callVolContainer.style.setProperty('--meter-width', lastCallLevel + '%');
 
         // Reduz gradualmente se não houver áudio
         if (level < lastCallLevel) {
             setTimeout(() => {
                 lastCallLevel *= 0.95;
-                callVolMeter.style.width = lastCallLevel + '%';
+                callVolContainer.style.setProperty('--meter-width', lastCallLevel + '%');
             }, 50);
         }
     };
@@ -757,6 +892,13 @@
             mediaStream = await navigator.mediaDevices.getUserMedia({audio: true});
 
             const mic = audioContext.createMediaStreamSource(mediaStream);
+
+            // GainNode para o microfone
+            window.micGainNode = audioContext.createGain();
+            const savedMicVolCall = user.getValue('micVolCall') || 100;
+            const initialMicGain = (micVolCall ? micVolCall.value : savedMicVolCall) / 100;
+            window.micGainNode.gain.value = initialMicGain;
+
             audioWorkletNode = new AudioWorkletNode(audioContext, "recorder");
 
             // Reset contadores
@@ -856,7 +998,8 @@
 
 
             // Conectar nós de áudio
-            mic.connect(audioWorkletNode);
+            mic.connect(window.micGainNode);
+            window.micGainNode.connect(audioWorkletNode);
             await audioContext.resume();
 
             isRecording = true;
@@ -900,6 +1043,8 @@
             audioContext = null;
         }
 
+        window.micGainNode = null;
+
         // Fechar WebSocket
         if (websocket) {
             websocket.close();
@@ -921,13 +1066,26 @@
     // Event listener para o botão de pausa (Pausa/Resume)
 
 
-    let isMicStop = true;
+    let isMicStop = (user.getValue('isMicStop') !== null) ? user.getValue('isMicStop') : true;
     let iconMic = document.getElementById('iconMic');
+
+    // Inicializar UI do microfone baseada no estado salvo
+    if (!isMicStop) {
+        iconMic.classList.remove('fa-microphone-lines-slash');
+        iconMic.classList.add('fa-microphone-lines');
+        // Iniciar captura se não estiver parado
+        startAudioCapture();
+    } else {
+        iconMic.classList.remove('fa-microphone-lines');
+        iconMic.classList.add('fa-microphone-lines-slash');
+    }
+
     btnMic.addEventListener('click', () => {
         if (isRecording) {
             isRecording = false;
             stopAudioCapture();
             isMicStop = true;
+            user.updateUserData('isMicStop', true);
             btnMic.style.background = 'transparent';
             iconMic.classList.remove('fa-microphone-lines');
             iconMic.classList.remove('fa-microphone-lines-slash');
@@ -937,6 +1095,7 @@
             isRecording = true;
             startAudioCapture();
             isMicStop = false;
+            user.updateUserData('isMicStop', false);
             btnMic.style.background = "transparent";
             iconMic.classList.remove('fa-microphone-lines-slash');
             iconMic.classList.add('fa-microphone-lines');
@@ -957,25 +1116,31 @@
     // ===== Botão de Alto-falante (Speaker) =====
     const btnSpeaker = document.getElementById('btnSpeaker');
 
+    // Inicializar estado do speaker
+    window.isSpeakerMuted = (user.getValue('isSpeakerMuted') !== null) ? user.getValue('isSpeakerMuted') : false;
 
-    btnSpeaker.addEventListener('click', () => {
-        isSpeakerMuted = !isSpeakerMuted;
-
+    const updateSpeakerUI = () => {
         const speakerIcon = btnSpeaker.querySelector('i');
-
-        if (isSpeakerMuted) {
+        if (window.isSpeakerMuted) {
             btnSpeaker.classList.add('muted');
             speakerIcon.classList.remove('fa-volume-high');
             speakerIcon.classList.add('fa-volume-slash');
-
-
             btnSpeaker.style.background = 'transparent';
         } else {
-            // Estado normal
             btnSpeaker.classList.remove('muted');
             speakerIcon.classList.remove('fa-volume-slash');
             speakerIcon.classList.add('fa-volume-high');
-            btnSpeaker.style.background = 'transparent'
+            btnSpeaker.style.background = 'transparent';
+        }
+    };
+
+    updateSpeakerUI();
+
+    btnSpeaker.addEventListener('click', () => {
+        window.isSpeakerMuted = !window.isSpeakerMuted;
+        user.updateUserData('isSpeakerMuted', window.isSpeakerMuted);
+        updateSpeakerUI();
+        if (!window.isSpeakerMuted) {
             console.log('🔊 Alto-falante ativo');
         }
     });

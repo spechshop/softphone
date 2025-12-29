@@ -223,8 +223,20 @@ window.playAudio = (callId) => {
         window.audioContext = new (window.AudioContext || window.webkitAudioContext)({
             sampleRate: 8000,
             latencyHint: 'interactive',
-
         });
+    }
+
+    if (!window.speakerGainNode) {
+        window.speakerGainNode = window.audioContext.createGain();
+        window.speakerGainNode.connect(window.audioContext.destination);
+        // Tenta pegar o valor inicial do slider se ele existir na página, senão usa o localStorage
+        const callVol = document.getElementById('callVol');
+        if (callVol) {
+            window.speakerGainNode.gain.value = callVol.value / 100;
+        } else {
+            const savedCallVol = (new UserManager()).getValue('callVol') || 100;
+            window.speakerGainNode.gain.value = savedCallVol / 100;
+        }
     }
 
     // Determina protocolo WebSocket
@@ -302,7 +314,12 @@ function scheduleAudioBuffer() {
         const buffer = window.audioQueue.shift();
         const source = window.audioContext.createBufferSource();
         source.buffer = buffer;
-        source.connect(window.audioContext.destination);
+
+        if (window.speakerGainNode) {
+            source.connect(window.speakerGainNode);
+        } else {
+            source.connect(window.audioContext.destination);
+        }
 
         // Agenda para tocar no próximo slot disponível
         const scheduleTime = Math.max(window.audioContext.currentTime, window.nextStartTime);
