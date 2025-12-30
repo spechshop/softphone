@@ -258,6 +258,11 @@ class startCall
         $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone) use ($fingerprint, $portHandler) {
             if (strlen($pcmData) < 12) return;
             $id = implode(':', array_values($peer));
+            // resample
+
+
+
+
             /** @var Socket $eventSock */
             $phone->globalInfo['eventSock']
                 ->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}");
@@ -284,6 +289,7 @@ class startCall
                     $frequencyMember = 8000;
                     [$pcmChunk, $callId, $ssrc] = explode('__::__', $data);
 
+
                     switch (strtoupper($phone->codecName)) {
                         case 'PCMU':
                             $encode = encodePcmToPcmu($pcmChunk);
@@ -293,8 +299,7 @@ class startCall
                             break;
 
                         case 'G729':
-                            $encode = $phone->mediaChannel->rtpChans[$ssrc]
-                                ->bcg729Channel->encode($pcmChunk);
+                            $encode = $phone->bcgChannel->encode($pcmChunk);
                             break;
                         case 'OPUS':
                             $pcm48 = resampler($pcmChunk, $frequencyPacket, 48000);
