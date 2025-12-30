@@ -99,7 +99,9 @@ class saveConfig
             ]));
         }
         $trunkController->expires = 1800;
+
         if (!$trunkController->register(5)) {
+            var_dump($trunkController->isRegistered, $trunkController->register(5));
             return $socket->push($fd, json_encode([
                 'type' => 'notify',
                 'data' => [

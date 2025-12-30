@@ -75,7 +75,7 @@ class connect
         foreach ($fds as $framed) {
             $socket->push($framed, json_encode([
                 'type' => 'changeCallId',
-                'data' => $vault->get($data['fp'])['lastPacket']['headers']['Call-ID'][0]
+                'data' => $vault->get($data['fp'])['lastPacket']['headers']['Call-ID'][0] ?? ''
             ]));
         }
 
@@ -109,7 +109,8 @@ class connect
                 $userDatas = $vault->get($data['fp']);
 
                 $lastPacket = $userDatas['lastPacket'];
-                $renderURI = $lastPacket['headers']['From'][0];
+                $renderURI = $lastPacket['headers']['From'][0] ?? '';
+
 
                 if (!$socket->push($fd, json_encode([
                     'type' => 'brand',
@@ -129,21 +130,21 @@ class connect
             foreach ($fds as $framed) {
                 $socket->push($framed, json_encode([
                     'type' => 'changeCallId',
-                    'data' => $vault->get($data['fp'])['lastPacket']['headers']['Call-ID'][0]
+                    'data' => $vault->get($data['fp'])['lastPacket']['headers']['Call-ID'][0] ?? ''
                 ]));
             }
 
 
             $userDatas = $vault->get($data['fp']);
-            $lastPacket = $userDatas['lastPacket'];
-            $renderURI = $lastPacket['headers']['From'][0];
+            $lastPacket = $userDatas['lastPacket'] ?? [];
+            $renderURI = $lastPacket['headers']['From'][0] ?? '';
             $socket->push($fd, json_encode([
                 'type' => 'brand',
                 'data' => $renderURI
             ]));
             $socket->push($fd, json_encode([
                 'type' => 'changeCallId',
-                'data' => $lastPacket['headers']['Call-ID'][0]
+                'data' => $lastPacket['headers']['Call-ID'][0] ?? ''
             ]));
         }
         Timer::after(5000, function () use ($socket, $fd, $fingerprint) {

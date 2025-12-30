@@ -123,7 +123,7 @@
 
 <script>
 
-    window.currentTab = localStorage.getItem("currentTab") || "call";
+    window.currentTab = localStorage.getItem("currentTab") || "config";
 
 
     // Restaura a tab salva ao carregar
@@ -163,7 +163,7 @@
 
 
             const securityModal = new bootstrap.Modal(document.getElementById('securityWarningModal'));
-            const dontShowWarning = 'true';
+            const dontShowWarning = localStorage.getItem('dontShowSecurityWarning');
             if (dontShowWarning !== 'true') {
                 securityModal.show();
             }
