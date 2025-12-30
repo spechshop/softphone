@@ -121,7 +121,7 @@ class startCall
             ]
         ]));
         $number = $model['data']['digits'];
-        $phone->defineTimeout(3200);
+
         $socket->push($fd, json_encode([
             'byToken' => $model['id'],
             'data' => [
