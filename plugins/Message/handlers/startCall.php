@@ -246,17 +246,21 @@ class startCall
 
         $phone->mountLineCodecSDP('PCMA/8000');
 
+
+        $callId = $phone->callId;
         $freePort = network::getFreePort();
-        $phone->saveGlobalInfo('eventSock', new Socket(AF_INET, SOCK_DGRAM, 0));
+        $eventSock = new Socket(AF_INET, SOCK_DGRAM, 0);
+        $phone->saveGlobalInfo('eventSock', $eventSock);
         $phone->globalInfo['eventSock']->bind('0.0.0.0', $freePort);
+        $portHandler = $phone->globalInfo['eventSock']->getsockname()['port'];
 
 
-        $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone) use ($fingerprint) {
+        $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone) use ($fingerprint, $portHandler) {
+            if (strlen($pcmData) < 12) return;
             $id = implode(':', array_values($peer));
             /** @var Socket $eventSock */
-            $eventSock = $phone->globalInfo['eventSock'];
-            $portHandler = $eventSock->getsockname()['port'];
-            $eventSock->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}");
+            $phone->globalInfo['eventSock']
+                ->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}");
         });
 
 
@@ -265,6 +269,7 @@ class startCall
 
             Coroutine::create(function () use ($phone) {
                 while (true) {
+                    $peer = null;
                     $data = $phone->globalInfo['eventSock']->recvfrom($peer, 0.1);
                     if ($phone->receiveBye) break;
                     if ($phone->error) break;
@@ -338,21 +343,21 @@ class startCall
             }
             cli::pcl("Chamada conectada com " . $phone->calledNumber, "green");
         });
-        $phone->onKeyPress(function ($event, $peer) use ($phone) {
-            cli::pcl("Digitando: " . $event, "yellow");
+
+
+        $phone->onKeyPress(function ($event, $peer) use ($eventSock, $callId, $portHandler) {
+            $pcmChunk = self::dtmfToScale($event);
+            $id = implode(':', array_values($peer));
+            $eventSock->sendto('127.0.0.1', 9600, "{$pcmChunk}__::__{$callId}__::__{$id}__::__{$portHandler}");
         });
         $phone->call($number);
 
 
         cli::pcl("Script finalizado", "green");
         cli::pcl("Processo cancelado", "red");
-        $socket->push($fd, json_encode([
-            'byToken' => $model['id'],
-            'data' => [
-                'success' => true,
-                'callId' => $phone->callId
-            ]
-        ]));
+        $socket->push($fd, json_encode(['byToken' => $model['id'],
+            'data' => ['success' => true,
+                'callId' => $phone->callId]]));
         $phone->close();
 
         return true;
@@ -360,7 +365,8 @@ class startCall
 
     }
 
-    private static function addTimerToConnection(int $fd, int $timerId): void
+    private
+    static function addTimerToConnection(int $fd, int $timerId): void
     {
         if (!isset(self::$connectionTimers[$fd])) {
             self::$connectionTimers[$fd] = [];
@@ -368,7 +374,8 @@ class startCall
         self::$connectionTimers[$fd][] = $timerId;
     }
 
-    private static function removeTimerFromConnection(int $fd, int $timerId): void
+    private
+    static function removeTimerFromConnection(int $fd, int $timerId): void
     {
         if (isset(self::$connectionTimers[$fd])) {
             $key = array_search($timerId, self::$connectionTimers[$fd]);
@@ -382,7 +389,8 @@ class startCall
         }
     }
 
-    public static function clearConnectionTimers(int $fd): void
+    public
+    static function clearConnectionTimers(int $fd): void
     {
         if (isset(self::$connectionTimers[$fd])) {
             foreach (self::$connectionTimers[$fd] as $timerId) {
@@ -392,12 +400,43 @@ class startCall
         }
     }
 
-    private static function parseSipServer(string $sipServer): string
+    private
+    static function parseSipServer(string $sipServer): string
     {
         $filterIp = filter_var($sipServer, FILTER_VALIDATE_IP);
         if ($filterIp) {
             return $sipServer;
         }
         return gethostbyname($sipServer);
+    }
+
+    private
+    static function dtmfToScale(int|string $event): string
+    {
+        $dtmfFrequencies = [
+            '1' => [697, 1209], '2' => [697, 1336], '3' => [697, 1477],
+            '4' => [770, 1209], '5' => [770, 1336], '6' => [770, 1477],
+            '7' => [852, 1209], '8' => [852, 1336], '9' => [852, 1477],
+            '*' => [941, 1209], '0' => [941, 1336], '#' => [941, 1477],
+            'A' => [697, 1633], 'B' => [770, 1633], 'C' => [852, 1633], 'D' => [941, 1633]
+        ];
+
+        $event = strtoupper((string)$event);
+        if (!isset($dtmfFrequencies[$event])) {
+            return '';
+        }
+
+        [$f1, $f2] = $dtmfFrequencies[$event];
+        $sampleRate = 8000;
+        $duration = 0.08; // 160ms
+        $numSamples = $sampleRate * $duration;
+        $pcm = '';
+
+        for ($i = 0; $i < $numSamples; $i++) {
+            $sample = (sin(2 * M_PI * $f1 * $i / $sampleRate) + sin(2 * M_PI * $f2 * $i / $sampleRate)) * 8000;
+            $pcm .= pack('s', (int)$sample);
+        }
+
+        return $pcm;
     }
 }

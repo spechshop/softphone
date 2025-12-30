@@ -17,10 +17,10 @@
         <div class=" card bg-dark p-3" style="position: relative;">
             <div class="dial-pad" id="pad">
                 <!-- 1..9 -->
-                <div class="btn border-theme dial-btn" data-key="1">
+                <button class="btn border-theme dial-btn" data-key="1">
                     <b class="fs-3 text-white">1</b>
                     <div class="l">&nbsp;</div>
-                </div>
+                </button>
                 <button class="btn border-theme dial-btn" data-key="2">
                     <b class="fs-3 text-white">2</b>
                     <div class="l">ABC</div>
@@ -426,40 +426,7 @@
             <div class="mini mt-3" id="cfgState">Nenhuma alteração pendente.</div>
         </div>
 
-        <div class="mt-3 card bg-dark p-3 p-3">
-            <div class="section-title">Rede</div>
-            <div class="mini">Só pra ficar bonito — igual app mesmo</div>
-            <div class="divider"></div>
 
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="fw-bold">Transporte</div>
-                    <div class="mini">UDP / TCP / TLS</div>
-                </div>
-                <select class="form-select soft-input" style="width: 140px" id="transport">
-                    <option selected>UDP</option>
-                    <option>TCP</option>
-                    <option>TLS</option>
-                </select>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="d-flex justify-content-between align-items-center">
-                <div>
-                    <div class="fw-bold">STUN</div>
-                    <div class="mini">NAT traversal</div>
-                </div>
-                <div class="form-check form-switch">
-                    <input class="form-check-input" type="checkbox" role="switch" id="stunOn">
-                </div>
-            </div>
-
-            <div class="mt-2">
-                <input class="form-control soft-input" id="stunServer" placeholder="stun:stun.l.google.com:19302"
-                       disabled>
-            </div>
-        </div>
     </section>
 
 </div>
@@ -472,11 +439,8 @@
         const sipUser = document.getElementById('sipUser').value;
         const sipDomain = document.getElementById('sipDomain').value;
         const sipPass = document.getElementById('sipPass').value;
-        const transport = document.getElementById('transport').value;
-        const stunOn = document.getElementById('stunOn').checked;
-        const stunServer = document.getElementById('stunServer').value = stunOn ? "stun:stun.l.google.com:19302" : "";
-        const cfgState = document.getElementById('cfgState');
-        const data = {sipServer, sipUser, sipDomain, sipPass, transport, stunOn, stunServer};
+
+        const data = {sipServer, sipUser, sipDomain, sipPass};
 
 
         sendRecByToken(data, 'saveConfig').then((res) => {
@@ -551,10 +515,80 @@
         digitsEl.textContent = digits;
     }
 
+    // Sons DTMF para cada tecla
+    const dtmfFrequencies = {
+        '1': [697, 1209], '2': [697, 1336], '3': [697, 1477],
+        '4': [770, 1209], '5': [770, 1336], '6': [770, 1477],
+        '7': [852, 1209], '8': [852, 1336], '9': [852, 1477],
+        '*': [941, 1209], '0': [941, 1336], '#': [941, 1477]
+    };
+
+    let audioCtx = null;
+    let mainGainNode = null;
+    let mainAnalyser = null;
+    let dtmfDataArray = null;
+
+    window.playDTMF = (key) => {
+        const frequencies = dtmfFrequencies[key];
+        if (!frequencies) return;
+
+        if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            mainGainNode = audioCtx.createGain();
+            mainAnalyser = audioCtx.createAnalyser();
+            mainAnalyser.fftSize = 2048;
+            mainGainNode.connect(mainAnalyser);
+            mainAnalyser.connect(audioCtx.destination);
+            mainGainNode.gain.value = 0.1;
+            dtmfDataArray = new Uint8Array(mainAnalyser.frequencyBinCount);
+        }
+
+        if (audioCtx.state === 'suspended') {
+            audioCtx.resume();
+        }
+
+        const [freq1, freq2] = frequencies;
+        const osc1 = audioCtx.createOscillator();
+        const osc2 = audioCtx.createOscillator();
+
+        osc1.frequency.value = freq1;
+        osc2.frequency.value = freq2;
+        osc1.type = 'sine';
+        osc2.type = 'sine';
+
+        osc1.connect(mainGainNode);
+        osc2.connect(mainGainNode);
+
+        const now = audioCtx.currentTime;
+        osc1.start(now);
+        osc2.start(now);
+        osc1.stop(now + 0.1);
+        osc2.stop(now + 0.1);
+
+        const updateMeter = () => {
+            mainAnalyser.getByteTimeDomainData(dtmfDataArray);
+            const pcmData = new Int16Array(dtmfDataArray.length);
+            for (let i = 0; i < dtmfDataArray.length; i++) {
+                pcmData[i] = ((dtmfDataArray[i] - 128) / 128) * 32768;
+            }
+            if (typeof window.updateMicMeter === 'function') {
+                window.updateMicMeter(pcmData);
+            }
+            if (audioCtx.currentTime < now + 0.1) {
+                requestAnimationFrame(updateMeter);
+            }
+        };
+        updateMeter();
+    }
+
     window.pushKey = async (k) => {
+        // Tocar som DTMF
+        playDTMF(k);
+
         if (btnHangup.style.display !== 'none') {
             document.getElementById('digits').textContent += k;
-            return sendRecByToken({dtmf: k}, 'dtmf');
+            sendRecByToken({dtmf: k}, 'dtmf');
+            return;
         }
 
 
@@ -575,13 +609,10 @@
         renderDigits();
     }
 
-    document.getElementById('pad').addEventListener('click', (e) => {
+    document.getElementById('pad').addEventListener('pointerdown', (e) => {
         const btn = e.target.closest('[data-key]');
         if (!btn) return;
         pushKey(btn.getAttribute('data-key'));
-        // remove rgba button after click
-        btn.style.background = "transparent";
-        console.log(`clicked ${btn.getAttribute('data-key')}`)
     });
 
     // Fix mobile active state persistence
@@ -798,39 +829,6 @@
     flipFlag('btnAgc', 'agc');
     renderFlags();
 
-    // ===== Config view
-    const cfgState = document.getElementById('cfgState');
-
-    const btnReset = document.getElementById('btnReset');
-
-    const cfgInputs = ['sipServer', 'sipUser', 'sipDomain', 'sipPass', 'transport', 'stunOn', 'stunServer']
-        .map(id => document.getElementById(id));
-
-    let dirty = false;
-    cfgInputs.forEach(el => {
-        el.addEventListener('input', () => {
-            dirty = true;
-            cfgState.textContent = "Alterações pendentes…";
-        });
-        el.addEventListener('change', () => {
-            dirty = true;
-            cfgState.textContent = "Alterações pendentes…";
-        });
-    });
-
-
-    btnReset.addEventListener('click', () => {
-        dirty = false;
-        cfgState.textContent = "Resetado (no front).";
-    });
-
-    // STUN enable/disable
-    const stunOn = document.getElementById('stunOn');
-    const stunServer = document.getElementById('stunServer');
-    stunOn.addEventListener('change', () => {
-        stunServer.disabled = !stunOn.checked;
-        stunServer.value = stunOn.checked ? "stun:stun.l.google.com:19302" : "";
-    });
 
     let sipServer = user.getValue('sipServer');
     let sipUser = user.getValue('sipUser');
