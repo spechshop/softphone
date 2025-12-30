@@ -141,6 +141,11 @@
                 localStorage.setItem("currentTab", tabName);
                 console.log(`Salvando tab ${tabName} no localStorage`);
                 window.currentTab = tabName;
+
+                // Mostrar/esconder seções baseado na tab
+                document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+                const content = document.getElementById('tab-' + tabName);
+                if (content) content.style.display = 'block';
             });
         }
 

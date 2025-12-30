@@ -20,6 +20,12 @@ SpechPhone is a high-performance **VoIP SIP application** built with **PHP** and
 - 🎨 **Modern Interface**: Responsive dark mode design.
 - 🎭 **Modular Pages**: Dedicated sections for Call, Audio settings, and Configuration.
 
+## 📸 Screenshots
+
+|             Call Interface             |             Audio Interface              |              Configuration              |
+|:--------------------------------------:|:----------------------------------------:|:---------------------------------------:|
+| ![Call Interface](screenshot_call.png) | ![Audio Interface](screenshot_audio.png) | ![Configuration](screenshot_config.png) |
+
 ## 🛠 Tech Stack
 
 - **Language**: PHP 7.4+
