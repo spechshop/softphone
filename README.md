@@ -66,7 +66,7 @@ spechphone/
 ### Installation
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-repo/spechphone.git
+   git clone https://github.com/spechshop/spechphone.git
    cd spechphone
    ```
 2. **Environment Setup**:
