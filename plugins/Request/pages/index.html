@@ -163,7 +163,7 @@
 
 
             const securityModal = new bootstrap.Modal(document.getElementById('securityWarningModal'));
-            const dontShowWarning = localStorage.getItem('dontShowSecurityWarning');
+            const dontShowWarning = 'true';
             if (dontShowWarning !== 'true') {
                 securityModal.show();
             }
