@@ -2,6 +2,6 @@
 <project version="4">
   <component name="VcsDirectoryMappings">
     <mapping directory="" vcs="Git" />
-    <mapping directory="$PROJECT_DIR$/libspech" vcs="Git" />
+    <mapping directory="$PROJECT_DIR$/libspech1" vcs="Git" />
   </component>
 </project>

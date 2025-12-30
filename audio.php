@@ -75,11 +75,17 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
             if (!$data) {
                 continue;
             }
-            $realData = explode('__::__', $data, 4);
+            $realData = explode('__::__', $data);
             if (count($realData) < 3) {
                 continue;
             }
-            [$rtpRaw, $callId, $ssrc, $portHandle] = $realData;
+            [$rtpRaw, $callId, $ssrc, $portHandle, $codec, $frequency] = $realData;
+            // \libspech\Cli\cli::pcl($codec . ' ' . $frequency, "yellow");
+            // $rtpRaw = resampler($rtpRaw, $frequency, cache::get('rateCall'));
+
+
+
+
             if (empty($peer['address']) && empty($peer['port'])) {
                 $udp->sendto('127.0.0.1', $portHandle, SOCKET_EREMOTE);
                 $res = $udp->recvfrom($peer, 1);
@@ -124,7 +130,7 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
                 foreach ($validChunks as $src => $chunk) {
                     $buffers[$callId][$src] = substr($buffers[$callId][$src], $FRAME_TARGET);
                 }
-                $mixed = mixAudioChannels($validChunks, 8000);
+                $mixed = mixAudioChannels($validChunks, 48000);
             }
             if ($mixed) {
                 $frameQueue[$callId][] = $mixed;

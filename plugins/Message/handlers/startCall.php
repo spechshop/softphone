@@ -255,9 +255,10 @@ class startCall
         $portHandler = $phone->globalInfo['eventSock']->getsockname()['port'];
 
 
-        $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone) use ($fingerprint, $portHandler) {
+        $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone, $codec, $frequency) use ($fingerprint, $portHandler) {
             if (strlen($pcmData) < 12) return;
             $id = implode(':', array_values($peer));
+            //cli::pcl($codec . ' ' . $frequency, "yellow");
             // resample
 
 
@@ -265,7 +266,7 @@ class startCall
 
             /** @var Socket $eventSock */
             $phone->globalInfo['eventSock']
-                ->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}");
+                ->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}__::__{$codec}__::__{$frequency}");
         });
 
 
@@ -303,8 +304,10 @@ class startCall
                             break;
                         case 'OPUS':
                             $pcm48 = resampler($pcmChunk, $frequencyPacket, 48000);
-                            $encode = $phone->mediaChannel->opusChannel
-                                ->encode($pcm48);
+                            $encode = $phone->mediaChannel->members
+                            [array_keys($phone->mediaChannel->members, $ssrc, true)[0] ?? array_key_first($phone->mediaChannel->members)]
+                            ['opus']
+                                ->encode($pcm48, $phone->frequencyCall);
                             break;
                         case 'L16':
                             $encode = resampler($pcmChunk, $frequencyPacket, $frequencyMember, true);
