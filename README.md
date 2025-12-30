@@ -1,155 +1,166 @@
-# SpechPhone 📞
+# SpechPhone
 
-SpechPhone is a high-performance **VoIP SIP application** built with **PHP** and **Swoole**. It features a modern PortSIP-inspired interface and supports real-time voice communication, multiple audio codecs, and dynamic SIP management.
+SpechPhone é um **aplicativo SIP/VoIP de alto desempenho** em **PHP** com **Swoole**, inspirado na experiência do
+PortSIP. Ele oferece chamadas em tempo real, múltiplos codecs de áudio nativos e uma interface moderna pronta para
+produção.
 
-## 🚀 Key Differentials
+## Por que escolher o SpechPhone
 
-- **🎯 Zero External Dependencies**: No FFmpeg, SoX, or other media tools required - all audio processing is done
-  natively in PHP
-- **⚡ Pure PHP Audio Stack**: Native implementations of PCMA, PCMU, G.729, Opus, and L16 codecs via `libspech`
-- **🎛️ Built-in Audio Processing**: Native resampling, mixing, noise suppression, echo cancellation, and AGC
-- **🔊 Real-time Audio Enhancement**: Voice clarity enhancement and spatial stereo processing using Opus DSP
-- **🌐 Fully Async Architecture**: Leverages Swoole coroutines for non-blocking I/O and concurrent connections
-- **🔒 Self-contained**: All codec encoding/decoding, RTP handling, and SIP stack implemented in PHP
+- **Sem dependências externas**: não precisa de FFmpeg, SoX ou outras ferramentas de mídia – todo o processamento é
+  feito em PHP.
+- **Pilha de áudio 100% PHP**: codecs PCMA, PCMU, G.729, Opus e L16 via `libspech`.
+- **Processamento embutido**: reamostragem, mixagem, supressão de ruído, cancelamento de eco e AGC nativos.
+- **Realce de voz em tempo real**: melhoria de clareza e espacialização estéreo com DSP do Opus.
+- **Arquitetura assíncrona**: corrotinas Swoole para I/O não bloqueante e conexões concorrentes.
+- **Stack autocontida**: codecs, RTP e SIP implementados no próprio projeto.
 
-## ✨ Features
+## O que você pode fazer
 
-### Calls & Audio
+- Construir um softphone corporativo com discador web e teclas de atalho.
+- Integrar rapidamente com proxies/SBCs SIP usando UDP, TCP ou TLS.
+- Publicar streaming de áudio via RTP cru ou WebSocket para browsers e serviços.
+- Habilitar monitoramento, gravação ou análise de áudio com os utilitários nativos do `libspech`.
 
-- ✅ **Intuitive Dialer**: Virtual keypad with keyboard support
-- ✅ **Multi-Codec Support**: PCMA, PCMU, G.729, Opus, and L16 - all implemented natively in PHP
-- ✅ **Real-time Audio Controls**: Mute, Hold, Speaker/Microphone toggle, and dynamic volume control
-- ✅ **Advanced Audio Processing**: Noise suppression, echo cancellation, AGC, resampling, and mixing - all done natively
-  without external tools
-- ✅ **Audio Enhancement**: Voice clarity enhancement and spatial stereo processing via Opus DSP
+## Recursos principais
 
-### Network & SIP
-- **SIP Transport**: Support for UDP, TCP, and TLS.
-- **NAT Traversal**: Integrated STUN support.
-- **RTP Streaming**: Raw RTP over UDP and WebSocket audio streaming.
-- **Secure Communication**: SSL/TLS support for both HTTP and WebSocket.
+### Chamadas e áudio
+
+- Discador intuitivo com suporte a teclado.
+- Suporte nativo a PCMA, PCMU, G.729, Opus e L16.
+- Controles em tempo real: mudo, hold, viva-voz/microfone e volume dinâmico.
+- Processamento avançado: supressão de ruído, cancelamento de eco, AGC, reamostragem e mixagem sem ferramentas externas.
+- Realce de clareza e espacialização estéreo via DSP do Opus.
+
+### Rede e SIP
+
+- Transporte SIP via UDP, TCP e TLS.
+- STUN integrado para atravessamento de NAT.
+- Streaming RTP cru por UDP e áudio via WebSocket.
+- Suporte a SSL/TLS para HTTP e WebSocket.
 
 ### Interface
-- 🎨 **Modern Interface**: Responsive dark mode design.
-- 🎭 **Modular Pages**: Dedicated sections for Call, Audio settings, and Configuration.
 
-## 📸 Screenshots
+- Design moderno responsivo com modo escuro.
+- Páginas modulares para Chamadas, Áudio e Configurações.
 
-|             Call Interface             |             Audio Interface              |              Configuration              |
+## Capturas de tela
+
+|          Interface de Chamada          |            Interface de Áudio            |              Configuração               |
 |:--------------------------------------:|:----------------------------------------:|:---------------------------------------:|
 | ![Call Interface](screenshot_call.png) | ![Audio Interface](screenshot_audio.png) | ![Configuration](screenshot_config.png) |
 
-## 🛠 Tech Stack
+## Stack técnica
 
-- **Language**: PHP 7.4+
-- **Server Engine**: [Swoole](https://www.swoole.co.uk/) (HTTP, WebSocket, UDP)
+- **Linguagem**: PHP 7.4+
+- **Engine**: [Swoole](https://www.swoole.co.uk/) (HTTP, WebSocket, UDP)
 - **Frontend**: jQuery, Bootstrap, CSS/SASS/LESS
-- **Core Library**: `libspech` (Custom SIP/RTP stack with native audio processing)
-- **Data Storage**: Local cache and JSON-based configuration (SQLite support TODO)
-- **Audio Processing**: Native PHP implementations (no FFmpeg/SoX dependencies)
+- **Biblioteca core**: `libspech` (SIP/RTP nativo com processamento de áudio)
+- **Armazenamento**: cache local e configuração em JSON (suporte a SQLite planejado)
+- **Processamento de áudio**: implementações PHP puras (sem FFmpeg/SoX)
 - **Codecs**: PCMA, PCMU, G.729 (via bcg729), Opus, L16
 
-## 🏗 Project Structure
+## Estrutura do projeto
 
 ```text
 spechphone/
-├── middleware.php           # Main entry point: WebSocket & HTTP Server
-├── audio.php                # Audio streaming & mixing server
-├── plugins/                 # Application logic & modular system
-│   ├── Extension/           # Utility plugins (cURL, terminal, etc.)
-│   ├── Message/             # WebSocket message handlers
-│   ├── OpenConnection/      # Connection management
-│   ├── Request/             # HTTP routing, pages, and templates
-│   ├── Start/               # Server initialization and CLI tools
-│   └── Utils/               # Cache and buffering logic
-├── libspech/                # Core SIP/RTP Library
-│   ├── plugins/             # Codecs and network utilities
-│   ├── extra/               # Examples and environment tools
-│   └── stubs/               # Channel stubs
-├── js/                      # Frontend JavaScript logic
-├── css/                     # Styling (SASS/LESS/CSS)
-└── plugins/configInterface.json # Main server configuration
+├── middleware.php           # Entrada principal: servidor WebSocket/HTTP
+├── audio.php                # Servidor de áudio para streaming e mixagem
+├── plugins/                 # Lógica de aplicação e sistema modular
+│   ├── Extension/           # Plugins utilitários (cURL, terminal etc.)
+│   ├── Message/             # Handlers de mensagens WebSocket
+│   ├── OpenConnection/      # Gerenciamento de conexões
+│   ├── Request/             # Rotas HTTP, páginas e templates
+│   ├── Start/               # Inicialização do servidor e CLI
+│   └── Utils/               # Cache e lógica de buffers
+├── libspech/                # Biblioteca core de SIP/RTP
+│   ├── plugins/             # Codecs e utilitários de rede
+│   ├── extra/               # Exemplos e ferramentas de ambiente
+│   └── stubs/               # Stubs de canais
+├── js/                      # Lógica JavaScript de frontend
+├── css/                     # Estilos (SASS/LESS/CSS)
+└── plugins/configInterface.json # Configuração principal do servidor
 ```
 
-## 🚀 Getting Started
+## Primeiros passos
 
-### Prerequisites
-- **PHP 7.4+**
-- **Swoole Extension**: `php -m | grep swoole`
-- **OpenSSL**: Required for SSL/TLS features
-- **That's it!** No FFmpeg, SoX, or external audio tools required
+### Pré-requisitos
 
-### Installation
-1. **Clone the repository**:
+- PHP 7.4 ou superior
+- Extensão Swoole (`php -m | grep swoole`)
+- OpenSSL para recursos SSL/TLS
+- Nenhuma ferramenta externa de áudio é necessária
+
+### Instalação
+
+1. Clone o repositório:
    ```bash
    git clone https://github.com/spechshop/spechphone.git
    cd spechphone
    ```
-2. **Environment Setup**:
-   Copy the example environment file (if available) or create a `.env` file:
+2. Configure o ambiente criando um `.env` (ou copie o exemplo, se houver):
    ```bash
-   echo "SPECH_VAULT_KEY_HEX=your_secret_key" > .env
+   echo "SPECH_VAULT_KEY_HEX=seu_segredo" > .env
    ```
 
-### Running the Application
+### Execução
 
-The application consists of two main services that should be run:
+São dois serviços principais:
 
-1. **Main Server (SIP & UI)**:
+1. **Servidor principal (SIP e UI)**
    ```bash
    php middleware.php
    ```
-   *Starts the WebSocket/HTTP server on the port defined in `plugins/configInterface.json`.*
+   Inicia o servidor WebSocket/HTTP na porta definida em `plugins/configInterface.json`.
 
-2. **Audio Server**:
+2. **Servidor de áudio**
    ```bash
    php audio.php
    ```
-   *Handles real-time audio streaming and mixing.*
+   Trata o streaming e a mixagem de áudio em tempo real.
 
-## ⚙ Configuration
+## Configuração
 
-### Configuration File
-Main settings are located in `plugins/configInterface.json`:
-- `port`: Server port (default 443).
-- `ssl`: Enable/disable SSL.
-- `serverSettings`: Swoole-specific tuning (workers, coroutines, SSL certs).
+### Arquivo `plugins/configInterface.json`
 
-### Environment Variables
-Managed via the `.env` file:
-- `SPECH_VAULT_KEY_HEX`: Key used for internal security and encryption.
+- `port`: porta do servidor (padrão 443)
+- `ssl`: habilita/desabilita SSL
+- `serverSettings`: ajustes Swoole (workers, corrotinas, certificados SSL)
 
-## 🛠 Scripts & Tools
+### Variáveis de ambiente
 
-- **Interactive CLI**: `plugins/Start/console/cli.php` (contains a management menu).
-- **Environment Check**: `php libspech/extra/tools/00_env_check.php` - Validates if your system meets the requirements for audio processing.
+- `SPECH_VAULT_KEY_HEX`: chave usada para segurança e criptografia interna
 
-## 🧪 Testing
+## Scripts e ferramentas
 
-- **Environment Check**: Verify your system meets requirements:
+- **CLI interativo**: `plugins/Start/console/cli.php` (menu de gerenciamento).
+- **Verificação de ambiente**: `php libspech/extra/tools/00_env_check.php` confirma requisitos de áudio.
+
+## Testes rápidos
+
+- Verificar ambiente:
   ```bash
   php libspech/extra/tools/00_env_check.php
   ```
-- **Codec Testing**: Test native codec implementations:
+- Testar codecs nativos:
   ```bash
   php libspech/extra/codecs/01_pcma_pcmu_roundtrip.php
   ```
-- **Audio Processing**: Test mixing, resampling, and enhancement:
+- Testar mixagem/reamostragem/realce:
   ```bash
   php libspech/extra/mixing/02_offsets_mix_3ways.php
   ```
-- **Audio Quality**: SNR analysis and quality reports:
+- Relatórios de qualidade (SNR):
   ```bash
   php libspech/extra/quality/01_snr_report.php
   ```
 
-See `libspech/EXTRA_AUDIO_TOOLS.md` for detailed examples of audio processing capabilities.
+Consulte `libspech/EXTRA_AUDIO_TOOLS.md` para exemplos detalhados de processamento de áudio.
 
-## 📜 License & Copyright
+## Licença
 
-- **License**: See `libspech/LICENSE.txt`.
-- **Copyright**: Refer to `libspech/COPYRIGHT_HEADER.txt`.
+- Consulte `libspech/LICENSE.txt`.
+- Copyright conforme `libspech/COPYRIGHT_HEADER.txt`.
 
 ---
-*Developed by Spech Team*  
-*Last updated: December 2025*
+*Desenvolvido pela equipe Spech*  
+*Última atualização: dezembro de 2025*
