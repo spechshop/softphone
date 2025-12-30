@@ -70,14 +70,23 @@ com corrotinas para I/O assíncrono.
 ## Instalação e execução
 
 1. **Clone o repositório:**
-   ```bash git clone https://github.com/spechshop/spechphone.git cd spechphone ```
+   ```bash
+   git clone https://github.com/spechshop/spechphone.git
+   cd spechphone
+   ```
 
-2. **Configure as variáveis de ambiente:**
+2. **Baixe a biblioteca `libspech`:**
+   Caso o diretório `libspech/` não esteja presente ou atualizado, faça o download do repositório oficial:
+   ```bash
+   git clone https://github.com/spechshop/libspech.git libspech
+   ```
+
+3. **Configure as variáveis de ambiente:**
    O serviço utiliza uma chave secreta (`SPECH_VAULT_KEY_HEX`) para criptografia. Crie um arquivo `.env` com sua chave
    ou copie um exemplo se houver:
    ```bash echo "SPECH_VAULT_KEY_HEX=000102030405060708090a0b0c0d0e0f" > .env ```
 
-3. **Execute os serviços:**
+4. **Execute os serviços:**
 
 - **Servidor principal (HTTP/SIP/UI)**      ```bash   php middleware.php   ```   O servidor HTTP/WS será iniciado na
   porta definida em   `plugins/configInterface.json`.
