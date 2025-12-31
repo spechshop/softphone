@@ -1,5 +1,9 @@
-[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.txt) [![PHP Runtime](https://img.shields.io/badge/Runtime-pcg729-orange.svg)](https://github.com/spechshop/pcg729) [![Swoole](https://img.shields.io/badge/Swoole-enabled-brightgreen.svg)](https://www.swoole.co.uk/)
-[![GitHub Repo Size](https://img.shields.io/github/repo-size/spechshop/spechphone)](https://github.com/spechshop/spechphone) [![GitHub Last Commit](https://img.shields.io/github/last-commit/spechshop/spechphone)](https://github.com/spechshop/spechphone/commits) [![GitHub Issues](https://img.shields.io/github/issues/spechshop/spechphone)](https://github.com/spechshop/spechphone/issues) [![GitHub Pull Requests](https://img.shields.io/github/issues-pr/spechshop/spechphone)](https://github.com/spechshop/spechphone/pulls) [![GitHub stars](https://img.shields.io/github/stars/spechshop/spechphone)](https://github.com/spechshop/spechphone/stargazers) [![GitHub forks](https://img.shields.io/github/forks/spechshop/spechphone)](https://github.com/spechshop/spechphone/network/members)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.txt)
+[![PHP Runtime](https://img.shields.io/badge/Runtime-pcg729-orange.svg)](https://github.com/spechshop/pcg729)
+[![Swoole](https://img.shields.io/badge/Swoole-enabled-brightgreen.svg)](https://www.swoole.co.uk/)
+[![GitHub Repo Size](https://img.shields.io/github/repo-size/spechshop/spechphone)](https://github.com/spechshop/spechphone)
+
+# SpechPhone
 
 > **⚠️ IMPORTANTE:** O projeto ainda está em fase **beta** e em desenvolvimento. Algumas funcionalidades, como o *
 *recebimento de chamadas**, ainda serão implementadas.
