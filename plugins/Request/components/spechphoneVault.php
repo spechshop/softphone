@@ -76,8 +76,9 @@ class spechphoneVault
         return true;
     }
 
-    public function exists(string $key): bool
+    public function exists(string $key = ''): bool
     {
+        if (empty($key)) return false;
         return array_key_exists($key, $this->data);
     }
 
