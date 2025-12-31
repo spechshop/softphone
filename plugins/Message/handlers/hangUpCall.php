@@ -45,7 +45,7 @@ class hangUpCall
         $phone = cache::get('coroutinesProcess')[$fingerprint];
         $phone->receiveBye = true;
         $phone->callActive = false;
-        $phone->socket->close();
+
         $phone->bye();
         $phone->close();
         unset($phone);
