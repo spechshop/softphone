@@ -4,6 +4,7 @@
 \Swoole\Runtime::enableCoroutine(SWOOLE_HOOK_ALL);
 
 
+use libspech\Cache\cache as cacheLibSpech;
 use plugins\Start\cache;
 use Swoole\WebSocket\Server;
 
@@ -15,21 +16,53 @@ include 'libspech/plugins/autoloader.php';
 include 'plugins/autoload.php';
 
 
+$serverSettings = cacheLibSpech::get('interface');
+$interfacetr = cacheLibSpech::get('interface');
+
+if (cacheLibSpech::get('interface')['ssl']) {
+    if (array_key_exists('ssl_cert_file', $serverSettings['serverSettings'])) {
+        if (!file_exists(cacheLibSpech::get('interface')['serverSettings']['ssl_cert_file'])) {
+            $keyFile = $interfacetr['serverSettings']['ssl_key_file'];
+            $certFile = $interfacetr['serverSettings']['ssl_cert_file'];
+            \libspech\Cli\cli::pcl("Generating SSL certificates...");
+            \libspech\Cli\cli::pcl("Arquivos: $keyFile, $certFile");
+
+            // Gerar chave privada e certificado em arquivos separados
+            shell_exec('openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ' . escapeshellarg($keyFile) . ' -out ' . escapeshellarg($certFile) . ' -subj "/C=BR/ST=State/L=City/O=Organization/OU=Unit/CN=localhost" 2>&1');
+            sleep(4);
+            // Aguardar a criação dos arquivos
+            $maxWait = 10;
+            $waited = 0;
+            while ($waited < $maxWait) {
+                if (file_exists($certFile) && file_exists($keyFile)) {
+                    break;
+                }
+                sleep(1);
+                $waited++;
+            }
+
+
+            if (!file_exists($certFile) || !file_exists($keyFile)) {
+                throw new Error("Falha ao gerar certificados SSL. Verifique se o OpenSSL está instalado.");
+            } else {
+                $serverSettings = cacheLibSpech::get('interface')['serverSettings'];
+                $serverSettings['ssl_cert_file'] = $certFile;
+                $serverSettings['ssl_key_file'] = $keyFile;
+            }
+        }
+
+
+    } else {
+        throw new Error("INVALID SSL CONFIGURATION: ssl_cert_file and ssl_key_file must be set in interface.json");
+    }
+}
+
+
+
+
+
 print "Thread started..." . PHP_EOL;
 cache::define('breakAllLoops', false);
-
-
-function getLocalIp(): ?string
-{
-    $localAddress = '0.0.0.0';
-    if (!empty(cache::get('myIpAddress'))) return cache::get('myIpAddress');
-    foreach (swoole_get_local_ip() as $localAddress) {
-        if (!empty(filter_var($localAddress, FILTER_VALIDATE_IP))) {
-            break;
-        }
-    }
-    return $localAddress;
-}
 
 
 \libspech\Cache\cache::set('connections', []);
