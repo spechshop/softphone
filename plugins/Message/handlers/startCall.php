@@ -232,6 +232,7 @@ class startCall
                     ]
                 ]));
             }
+
             $phone->close();
             cache::unset('coroutinesProcess', $fingerprint);
             cli::pcl("Call stopped", "bold_red");
