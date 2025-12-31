@@ -365,7 +365,7 @@ class startCall
         $socket->push($fd, json_encode(['byToken' => $model['id'],
             'data' => ['success' => true,
                 'callId' => $phone->callId]]));
-        $phone->close();
+        $phone->bye();
         cache::unset('coroutinesProcess', $fingerprint);
         unset($phone);
         $fds = (cache::get('connections')[$fingerprint] ?? []);
