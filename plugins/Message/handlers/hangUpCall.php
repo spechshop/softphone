@@ -48,6 +48,8 @@ class hangUpCall
         $phone->socket->close();
         $phone->bye();
         $phone->close();
+        unset($phone);
+        cache::unset('coroutinesProcess', $fingerprint);
 
         return $socket->push($fd, json_encode([
             'byToken' => $model['id'],
