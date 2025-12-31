@@ -375,6 +375,14 @@ class startCall
                 'data' => 'bye'
             ]));
         }
+        $x = function () {
+            throw new \Exception('Processo cancelado');
+        };
+        try {
+            $x();
+        } catch (\Exception $e) {
+            //
+        }
 
         return true;
 
