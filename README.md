@@ -40,6 +40,14 @@ To speed up local development, SpechPhone features an **automatic SSL key genera
 - This allows immediate use of HTTPS and WSS (Secure WebSockets), which are essential requirements for media operation
   in the browser (microphone) in secure contexts.
 
+#### Security Model
+
+- **No WebRTC:** SpechPhone does not use WebRTC (no SRTP / ICE / DTLS).
+- **Backend Media:** Audio is transported via raw RTP (UDP) in the backend.
+- **Thin Client:** The browser acts as a thin client via WebSocket (PCM delivery).
+- **Production Requirements:** HTTPS and WSS are mandatory for production environments.
+- **Firewall:** RTP ports should not be exposed to the public internet without a proper firewall.
+
 ## Requirements
 
 - **Optimized PHP Runtime (pcg729)** – A static PHP CLI that includes native support for G.729, Opus, L16, C resampling
@@ -123,6 +131,8 @@ The implementation is entirely in PHP and follows high-performance principles wi
 - SIP transport support via UDP.
 - Raw RTP streaming over UDP and audio transport via WebSocket.
 - HTTPS and WSS using OpenSSL.
+- **NAT Traversal:** Optional support for **STUN** when configured.
+- **TURN:** Not used or implemented.
 
 ### User Interface
 
@@ -151,7 +161,9 @@ Example fields:
 
 ### Environment Variables
 
-- `SPECH_VAULT_KEY_HEX`: hexadecimal key used to encrypt sensitive configurations.
+- **No Hardcoded Credentials:** There are no hardcoded credentials, tokens, or secrets in this repository.
+- `SPECH_VAULT_KEY_HEX`: hexadecimal key used to encrypt sensitive configurations. It must be provided by the operator
+  via the environment.
 
 ### Directory Structure
 
