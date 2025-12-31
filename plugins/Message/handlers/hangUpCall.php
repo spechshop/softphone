@@ -47,6 +47,7 @@ class hangUpCall
         $phone->callActive = false;
         $phone->socket->close();
         $phone->bye();
+        $phone->close();
 
         return $socket->push($fd, json_encode([
             'byToken' => $model['id'],
