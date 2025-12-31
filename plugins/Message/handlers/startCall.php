@@ -374,15 +374,15 @@ class startCall
                 'type' => 'event',
                 'data' => 'bye'
             ]));
+            $socket->push($fd, json_encode([
+                'type' => 'notify',
+                'data' => [
+                    'type' => 'bg-danger text-white',
+                    'message' => 'Chamada finalizada'
+                ]
+            ]));
         }
-        $x = function () {
-            throw new \Exception('Processo cancelado');
-        };
-        try {
-            $x();
-        } catch (\Exception $e) {
-            cli::pcl($e->getMessage(), "bold_red");
-        }
+
 
         return true;
 
