@@ -263,8 +263,6 @@ class startCall
             // resample
 
 
-
-
             /** @var Socket $eventSock */
             $phone->globalInfo['eventSock']
                 ->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}__::__{$codec}__::__{$frequency}");
@@ -368,6 +366,15 @@ class startCall
             'data' => ['success' => true,
                 'callId' => $phone->callId]]));
         $phone->close();
+        cache::unset('coroutinesProcess', $fingerprint);
+        unset($phone);
+        $fds = (cache::get('connections')[$fingerprint] ?? []);
+        foreach ($fds as $fd) {
+            $socket->push($fd, json_encode([
+                'type' => 'event',
+                'data' => 'bye'
+            ]));
+        }
 
         return true;
 
