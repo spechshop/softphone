@@ -381,7 +381,7 @@ class startCall
         try {
             $x();
         } catch (\Exception $e) {
-            //
+            cli::pcl($e->getMessage(), "bold_red");
         }
 
         return true;
