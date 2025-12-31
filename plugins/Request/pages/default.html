@@ -1064,13 +1064,17 @@
             iconMic.classList.add('fa-microphone-lines');
         }
     });
-    window.hangUpCall = () => {
+    window.hangUpCall = async () => {
         if (isStopped) return;
         isStopped = true;
         btnHangup.style.background = 'transparent';
-        sendRecByToken({hangup: true}, 'HangUpCall').then((res) => {
-            console.log(res)
-        });
+        try {
+            await sendRecByToken({hangup: true}, 'HangUpCall');
+        } catch (error) {
+            console.error('Error hanging up call:', error);
+        }
+        isStopped = false;
+
     }
 
     btnHangup.addEventListener('click', () => hangUpCall);
