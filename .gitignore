@@ -1,5 +1,4 @@
 .idea
 .git
-/libspech/.git
 /fullchain.pem
 /privkey.pem
