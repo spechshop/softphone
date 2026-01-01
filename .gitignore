@@ -2,3 +2,4 @@
 .git
 /fullchain.pem
 /privkey.pem
+libspech
