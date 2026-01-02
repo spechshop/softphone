@@ -1,0 +1,3 @@
+[submodule "libspech"]
+	path = libspech
+	url = https://github.com/spechshop/libspech.git
