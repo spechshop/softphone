@@ -2,9 +2,267 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Title</title>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport">
+    <title>SpechPhone - Modern SIP/VoIP Softphone</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: #f5f5f5;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            background: white;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            padding: 40px 0;
+            border-bottom: 3px solid #0066cc;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            color: #0066cc;
+            margin-bottom: 10px;
+        }
+
+        .badges {
+            margin: 20px 0;
+        }
+
+        .badges img {
+            margin: 3px;
+        }
+
+        .warning {
+            background: #fff3cd;
+            border-left: 4px solid #ffc107;
+            padding: 15px;
+            margin: 20px 0;
+        }
+
+        h2 {
+            color: #0066cc;
+            margin-top: 30px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #e0e0e0;
+        }
+
+        h3 {
+            color: #555;
+            margin-top: 20px;
+            margin-bottom: 10px;
+        }
+
+        ul, ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+
+        li {
+            margin-bottom: 8px;
+        }
+
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        pre {
+            background: #2d2d2d;
+            color: #f8f8f2;
+            padding: 15px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin: 15px 0;
+        }
+
+        pre code {
+            background: none;
+            padding: 0;
+            color: #f8f8f2;
+        }
+
+        .features {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .feature-box {
+            background: #f9f9f9;
+            padding: 15px;
+            border-left: 4px solid #0066cc;
+            border-radius: 4px;
+        }
+
+        .feature-box h4 {
+            color: #0066cc;
+            margin-bottom: 8px;
+        }
+
+        footer {
+            text-align: center;
+            padding: 30px 0;
+            margin-top: 40px;
+            border-top: 2px solid #e0e0e0;
+            color: #666;
+        }
+
+        a {
+            color: #0066cc;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+    </style>
 </head>
 <body>
+<div class="container">
+    <header>
+        <h1>SpechPhone</h1>
+        <p>Modern SIP/VoIP Softphone written in PHP with Swoole</p>
+        <div class="badges">
+            <img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg">
+            <img alt="PHP Runtime" src="https://img.shields.io/badge/Runtime-pcg729-orange.svg">
+            <img alt="Swoole" src="https://img.shields.io/badge/Swoole-enabled-brightgreen.svg">
+            <img alt="Repo Size" src="https://img.shields.io/github/repo-size/spechshop/spechphone">
+            <img alt="Stars" src="https://img.shields.io/github/stars/spechshop/spechphone">
+        </div>
+    </header>
 
+    <div class="warning">
+        <strong>⚠️ IMPORTANT:</strong> The project is still in <strong>beta</strong> and under development. Some
+        features, such as <strong>receiving calls</strong>, are yet to be implemented.
+    </div>
+
+    <section>
+        <h2>What is SpechPhone?</h2>
+        <p>SpechPhone is a modern <strong>SIP/VoIP softphone</strong> written in <strong>PHP</strong> and optimized with
+            <strong>Swoole</strong>. It allows establishing real-time voice calls, controlling codecs, and integrating
+            with backend tools without depending on external media libraries.</p>
+    </section>
+
+    <section>
+        <h2>Key Features</h2>
+        <div class="features">
+            <div class="feature-box">
+                <h4>Self-sufficient</h4>
+                <p>No FFmpeg or SoX required - all audio processing built-in</p>
+            </div>
+            <div class="feature-box">
+                <h4>Multiple Codecs</h4>
+                <p>Support for PCMA, PCMU, G.729, Opus, and L16</p>
+            </div>
+            <div class="feature-box">
+                <h4>Audio Processing</h4>
+                <p>Built-in resampling, mixing, noise suppression, and echo cancellation</p>
+            </div>
+            <div class="feature-box">
+                <h4>Asynchronous I/O</h4>
+                <p>Swoole coroutines for hundreds of simultaneous sessions</p>
+            </div>
+            <div class="feature-box">
+                <h4>Full PHP Stack</h4>
+                <p>SIP, RTP, and media control entirely in PHP</p>
+            </div>
+            <div class="feature-box">
+                <h4>Browser Ready</h4>
+                <p>Responsive HTML/JS interface with WebSocket support</p>
+            </div>
+        </div>
+    </section>
+
+    <section>
+        <h2>Requirements</h2>
+        <ul>
+            <li><strong>Optimized PHP Runtime (pcg729)</strong> - Static PHP CLI with native G.729, Opus, and audio
+                processing support
+            </li>
+            <li><strong>OpenSSL</strong> for TLS/SSL features</li>
+            <li>Linux or macOS system (recommended)</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Installation</h2>
+        <pre><code># Install system dependencies
+sudo apt update && sudo apt install -y openssl
+
+# Clone the repository
+git clone https://github.com/spechshop/spechphone && cd spechphone
+git clone https://github.com/spechshop/libspech
+
+# Download pcg729 runtime
+curl -L https://github.com/spechshop/pcg729/releases/download/current/php -o php
+
+# Configure runtime
+chmod +x ./php
+sudo cp php /usr/local/bin/php
+
+# Start services
+php middleware.php
+php audio.php</code></pre>
+    </section>
+
+    <section>
+        <h2>Architecture</h2>
+        <h3>Audio Processing</h3>
+        <p>Through <strong>Swoole</strong>, the application opens a dedicated coroutine instance for each SIP trunk
+            manager. This allows hundreds of calls to occur simultaneously without blocking the main process.</p>
+
+        <h3>Security Model</h3>
+        <ul>
+            <li><strong>No WebRTC:</strong> SpechPhone doesn't use WebRTC (no SRTP / ICE / DTLS)</li>
+            <li><strong>Backend Media:</strong> Audio is transported via raw RTP (UDP)</li>
+            <li><strong>Thin Client:</strong> Browser acts as thin client via WebSocket (PCM delivery)</li>
+            <li><strong>Production:</strong> HTTPS and WSS are mandatory</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>What Can You Build?</h2>
+        <ul>
+            <li><strong>Enterprise Softphone</strong> with dialer and browser integration</li>
+            <li><strong>Proxy/SBC Client</strong> for SIP servers via UDP</li>
+            <li><strong>Audio Streaming</strong> via WebSocket or RTP</li>
+            <li><strong>Monitoring and Recording Services</strong> with native audio utilities</li>
+        </ul>
+    </section>
+
+    <section>
+        <h2>Links</h2>
+        <ul>
+            <li><a href="https://github.com/spechshop/spechphone">GitHub Repository</a></li>
+            <li><a href="https://github.com/spechshop/libspech">libspech Library</a></li>
+            <li><a href="https://github.com/spechshop/pcg729">pcg729 Runtime</a></li>
+            <li><a href="https://spechshop.com">Official Website</a></li>
+        </ul>
+    </section>
+
+    <footer>
+        <p>&copy; 2025 Lotus / berzersks</p>
+        <p>Licensed under <a href="https://github.com/spechshop/spechphone/blob/main/LICENSE.txt">Apache License 2.0</a>
+        </p>
+    </footer>
+</div>
 </body>
 </html>
