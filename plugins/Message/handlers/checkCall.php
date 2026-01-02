@@ -42,6 +42,17 @@ class checkCall
             cache::set('coroutinesProcess', []);
         }
         if (!array_key_exists($fingerprint, cache::get('coroutinesProcess'))) {
+            $userDatas = $vault->get($data['fp']);
+            $lastPacket = $userDatas['lastPacket'] ?? [];
+            $renderURI = $lastPacket['headers']['From'][0] ?? 'invalid';
+            $socket->push($fd, json_encode([
+                'type' => 'brand',
+                'data' => $renderURI
+            ]));
+            $socket->push($fd, json_encode([
+                'type' => 'changeCallId',
+                'data' => $lastPacket['headers']['Call-ID'][0] ?? ''
+            ]));
             return $socket->push($fd, json_encode([
                 'byToken' => $model['id'],
                 'data' => [
@@ -49,6 +60,10 @@ class checkCall
                 ]
             ]));
         } else {
+            $socket->push($fd, json_encode([
+                'type' => 'changeCallId',
+                'data' => cache::get('coroutinesProcess')[$fingerprint]->callId
+            ]));
             return $socket->push($fd, json_encode([
                 'byToken' => $model['id'],
                 'data' => [

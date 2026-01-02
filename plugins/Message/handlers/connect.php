@@ -152,7 +152,7 @@ class connect
                 'data' => $lastPacket['headers']['Call-ID'][0] ?? ''
             ]));
         }
-        Timer::after(5000, function () use ($socket, $fd, $fingerprint) {
+        Timer::after(1000, function () use ($socket, $fd, $fingerprint) {
             if (array_key_exists($fingerprint, cache::get('coroutinesProcess'))) {
                 $socket->push($fd, json_encode([
                     'type' => 'event',

@@ -498,7 +498,11 @@
             clearDigits();
             btnCall.style.display = 'none';
             btnHangup.style.display = '';
-            console.log(res)
+
+            startAudioCapture();
+            startCallTimer();
+            playAudio(window.currentCallId)
+
         });
 
 
@@ -664,7 +668,8 @@
     // ===== Check call status periodically =====
     setInterval(() => {
         sendRecByToken({}, 'checkCall').then((res) => {
-            console.log('checkCall:', res);
+            console.log(window.currentCallId)
+            console.log('callid:', window.currentCallId, 'status:', res.success ? 'ativo' : 'inativo')
             if (res && res.success === true) {
                 // Restaura o estado da chamada ativa
                 if (btnHangup.style.display === 'none') {
@@ -831,7 +836,42 @@
     let callIdMonitorInterval = null; // Intervalo de monitoramento
     let isStopped = false; // Nova flag para indicar se está parado (não envia nada)
 
-    async function startAudioCapture() {
+    window.connectWebSocket = () => {
+        const proto = location.protocol === "https:" ? "wss:" : "ws:";
+        const fp = window.currentCallId;
+
+        if (!fp) {
+            console.warn('⚠️ currentCallId não definido, aguardando...');
+            return;
+        }
+
+        const wsUrl = `${proto}//${location.host}:8888?fp=${fp}&ssrc=mic-user`;
+
+        // Fecha conexão anterior se existir
+        if (websocket && websocket.readyState === WebSocket.OPEN) {
+            console.log('🔄 Trocando de chamada, fechando WS anterior');
+            websocket.close();
+        }
+
+        // Conectar WebSocket
+        websocket = new WebSocket(wsUrl);
+        websocket.binaryType = 'arraybuffer';
+        lastCallId = window.currentCallId;
+
+        websocket.onopen = () => {
+            console.log('✅ WS conectado:', wsUrl);
+        };
+
+        websocket.onerror = (error) => {
+            console.error('❌ Erro WS:', error);
+        };
+
+        websocket.onclose = () => {
+            console.log('🛑 WS fechado');
+        };
+    };
+
+    window.startAudioCapture = async () => {
         try {
             console.log('🎤 Iniciando microfone → WS /audioInput');
 
@@ -884,40 +924,7 @@
             streamStartTime = performance.now();
 
             // Função para conectar/reconectar WebSocket
-            function connectWebSocket() {
-                const proto = location.protocol === "https:" ? "wss:" : "ws:";
-                const fp = window.currentCallId;
 
-                if (!fp) {
-                    console.warn('⚠️ currentCallId não definido, aguardando...');
-                    return;
-                }
-
-                const wsUrl = `${proto}//${location.host}:8888?fp=${fp}&ssrc=mic-user`;
-
-                // Fecha conexão anterior se existir
-                if (websocket && websocket.readyState === WebSocket.OPEN) {
-                    console.log('🔄 Trocando de chamada, fechando WS anterior');
-                    websocket.close();
-                }
-
-                // Conectar WebSocket
-                websocket = new WebSocket(wsUrl);
-                websocket.binaryType = 'arraybuffer';
-                lastCallId = fp;
-
-                websocket.onopen = () => {
-                    console.log('✅ WS conectado:', wsUrl);
-                };
-
-                websocket.onerror = (error) => {
-                    console.error('❌ Erro WS:', error);
-                };
-
-                websocket.onclose = () => {
-                    console.log('🛑 WS fechado');
-                };
-            }
 
             // Conecta inicialmente
             connectWebSocket();
@@ -937,6 +944,7 @@
             const VOIP_SAMPLES = Math.floor(audioContext.sampleRate * (VOIP_MS / 1000)); // 8000 * 0.02 = 160, / 150
 
             let pendingBuffer = new Int16Array(0);
+            let firstPacketSent = false; // Flag para detectar primeiro pacote
 
 // -----------------------------------------
 // no recorder.port.onmessage:
@@ -966,6 +974,12 @@
                     // Envia chunk *certinho* pro WS/backend
                     if (websocket && websocket.readyState === WebSocket.OPEN) {
                         websocket.send(chunk.buffer);
+
+                        // Log do primeiro pacote enviado
+                        if (!firstPacketSent) {
+                            console.log('🎤 Primeiro pacote do microfone enviado! Tamanho:', chunk.length, 'samples (', chunk.buffer.byteLength, 'bytes)');
+                            firstPacketSent = true;
+                        }
                     }
 
                     // Remove do buffer pendente
@@ -989,7 +1003,7 @@
             alert('Erro ao acessar o microfone. Verifique as permissões.');
             stopAudioCapture();
         }
-    }
+    };
 
     function stopAudioCapture() {
         isRecording = false;

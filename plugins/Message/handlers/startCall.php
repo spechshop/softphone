@@ -260,10 +260,12 @@ class startCall
         $portHandler = $phone->globalInfo['eventSock']->getsockname()['port'];
 
 
+
         $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone, $codec, $frequency) use ($fingerprint, $portHandler) {
             if (strlen($pcmData) < 12) return;
             $id = implode(':', array_values($peer));
-            //cli::pcl($codec . ' ' . $frequency, "yellow");
+
+
             // resample
 
 
@@ -275,60 +277,116 @@ class startCall
 
         $phone->onAnswer(function (trunkController $phone) use ($socket, $vault, $fingerprint) {
             $phone->receiveMedia();
+            cli::pcl("Recebendo audio", "green");
 
             Coroutine::create(function () use ($phone) {
+
+                cli::pcl("Iniciando socket (Browser Mic → RTP)", "green");
+
+                // handshake inicial (mantido)
+                $phone->globalInfo['eventSock']->sendto(
+                    '127.0.0.1',
+                    9600,
+                    str_repeat('0', 12)
+                );
+
+                // buffer persistente de PCM vindo do browser
+                $pcmBuffer = '';
+
+                // parâmetros VoIP
+                $FRAME_MS = 20;
+                $SRC_RATE = $phone->frequencyCall; // ex: 8000
+                $SAMPLES_PER_FRAME = (int)($SRC_RATE * ($FRAME_MS / 1000)); // 160
+                $PCM_FRAME_BYTES = $SAMPLES_PER_FRAME * 2; // PCM16 = 320 bytes
+
+                cli::pcl(
+                    "Frame VoIP: {$FRAME_MS}ms | {$SAMPLES_PER_FRAME} samples | {$PCM_FRAME_BYTES} bytes",
+                    "cyan"
+                );
+
                 while (true) {
+
                     $peer = null;
                     $data = $phone->globalInfo['eventSock']->recvfrom($peer, 0.1);
 
+                    // condições de saída
                     if ($phone->receiveBye) break;
                     if ($phone->error) break;
                     if (!$phone->callActive) break;
+
                     if (empty($data)) {
-                        Coroutine::sleep(0.1);
+                        Coroutine::sleep(0.01);
                         continue;
                     }
 
+                    // separa payload
+                    [$pcmIn, $callId, $ssrc] = explode('__::__', $data, 3);
 
-                    $frequencyPacket = $phone->frequencyCall;
-                    $frequencyMember = $phone->frequencyCall;
-                    [$pcmChunk, $callId, $ssrc] = explode('__::__', $data);
+                    // acumula PCM do browser (NUNCA confiar no tamanho recebido)
+                    $pcmBuffer .= $pcmIn;
+
+                    // enquanto houver frame VoIP completo…
+                    while (strlen($pcmBuffer) >= $PCM_FRAME_BYTES) {
+
+                        // corta exatamente 20ms
+                        $pcmChunk = substr($pcmBuffer, 0, $PCM_FRAME_BYTES);
+                        $pcmBuffer = substr($pcmBuffer, $PCM_FRAME_BYTES);
+
+                        $encode = null;
+
+                        switch (strtoupper($phone->codecName)) {
+
+                            case 'PCMU':
+                                $encode = encodePcmToPcmu($pcmChunk);
+                                break;
+
+                            case 'PCMA':
+                                $encode = encodePcmToPcma($pcmChunk);
+                                break;
+
+                            case 'G729':
+                                $encode = $phone->bcgChannel->encode($pcmChunk);
+                                break;
+
+                            case 'OPUS':
+                                // browser → 8k → 48k → opus
+                                $pcm48 = resampler($pcmChunk, $SRC_RATE, 48000);
+
+                                $memberKey =
+                                    array_keys($phone->mediaChannel->members, $ssrc, true)[0]
+                                    ?? array_key_first($phone->mediaChannel->members);
+
+                                $encode = $phone->mediaChannel->members[$memberKey]['opus']
+                                    ->encode($pcm48, $SRC_RATE);
+                                break;
+
+                            case 'L16':
+                                $encode = encodePcmToL16($pcmChunk);
+
+                                break;
+
+                            default:
+                                continue 2;
+                        }
+
+                        if (!$encode) continue;
+
+                        // RTP
+                        $packet = $phone->rtpChannel->buildAudioPacket($encode);
+
+                        $phone->mediaChannel->socket->sendto(
+                            $phone->audioRemoteIp,
+                            $phone->audioRemotePort,
+                            $packet
+                        );
 
 
-                    switch (strtoupper($phone->codecName)) {
-                        case 'PCMU':
-                            $encode = encodePcmToPcmu($pcmChunk);
-                            break;
-                        case 'PCMA':
-                            $encode = encodePcmToPcma($pcmChunk);
-                            break;
-
-                        case 'G729':
-                            $encode = $phone->bcgChannel->encode($pcmChunk);
-                            break;
-                        case 'OPUS':
-                            $pcm48 = resampler($pcmChunk, $frequencyPacket, 48000);
-                            $encode = $phone->mediaChannel->members
-                            [array_keys($phone->mediaChannel->members, $ssrc, true)[0] ?? array_key_first($phone->mediaChannel->members)]
-                            ['opus']
-                                ->encode($pcm48, $phone->frequencyCall);
-                            break;
-                        case 'L16':
-                            $encode = resampler($pcmChunk, $frequencyPacket, $frequencyMember, true);
-                            break;
-
-                        default:
-                            return;
                     }
-
-                    if (!$encode) continue;
-
-
-                    $packet = $phone->rtpChannel->buildAudioPacket($encode);
-                    $phone->mediaChannel->socket->sendto($phone->audioRemoteIp, $phone->audioRemotePort, $packet);
                 }
-                cli::pcl("Fechando socket", "red");
+
+                cli::pcl("Fechando socket (Browser Mic)", "red");
             });
+
 
 
             $datasUser = $vault->get($fingerprint);
@@ -358,11 +416,21 @@ class startCall
         });
 
 
-        $phone->onKeyPress(function ($event, $peer) use ($eventSock, $callId, $portHandler) {
+        $codec = $phone->codecName;
+        $frequency = $phone->frequencyCall;
+        $phone->onKeyPress(function ($event, $peer) use ($eventSock, $callId, $portHandler, $frequency, $codec) {
             $pcmChunk = self::dtmfToScale($event);
             $id = implode(':', array_values($peer));
-            $eventSock->sendto('127.0.0.1', 9600, "{$pcmChunk}__::__{$callId}__::__{$id}__::__{$portHandler}");
+            if (empty($pcmChunk)) return;
+
+            $chunks = str_split($pcmChunk, 320);
+            foreach ($chunks as $pcmChunk) {
+                $eventSock->sendto('127.0.0.1', 9600, "{$pcmChunk}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$codec}__::__{$frequency}");
+            }
+
+
         });
+
         $phone->call($number);
 
 
@@ -439,8 +507,7 @@ class startCall
         return gethostbyname($sipServer);
     }
 
-    private
-    static function dtmfToScale(int|string $event): string
+    private static function dtmfToScale(int|string $event): string
     {
         $dtmfFrequencies = [
             '1' => [697, 1209], '2' => [697, 1336], '3' => [697, 1477],

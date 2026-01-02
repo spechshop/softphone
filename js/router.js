@@ -63,10 +63,16 @@ const autoSocket = () => {
 
 const onOpenSocket = (socket) => {
     socket.closed = false;
-    if (socket.readyState === WebSocket.OPEN) {
+    try {
+        if (socket.readyState === WebSocket.OPEN) {
         document.getElementById('connection-icon').className = 'fa-solid fa-plug-circle-check text-success';
-        document.getElementById('connection-status').innerText = 'Connected';
+            document.getElementById('connection-status').innerText = 'Connected';
+        }
+    } catch (error) {
+        console.error('Erro ao verificar status do socket', error);
+        return;
     }
+
     template.displayLoading().then(r => {
         socket.send(JSON.stringify({
             type: 'connect',
@@ -167,8 +173,10 @@ const onMessageSocket = (event, socket) => {
         if (data.data === 'callAccept') {
             $('#btnHangup').css('display', '');
             $('#btnCall').css('display', 'none');
-            console.log(data)
+
+
             if (typeof window.startCallTimer === 'function') window.startCallTimer();
+            playAudio(window.currentCallId);
         }
     }
 
@@ -190,7 +198,9 @@ const onMessageSocket = (event, socket) => {
     } else if (data.type === 'brand') {
         document.getElementById('branded').innerText = data.data;
     } else if (data.type === 'changeCallId') {
-        playAudio(data.data)
+        if (window.currentCallId === data.data) return;
+        window.currentCallId = data.data;
+        playAudio(window.currentCallId)
     }
 
 
@@ -202,7 +212,6 @@ window.audioContext = null;
 window.audioQueue = [];
 window.nextStartTime = 0;
 window.isFirstPacket = true;
-window.currentCallId = null;
 
 // Define sampleRate com getter/setter para detectar mudanças
 let _sampleRate = 48000;
@@ -242,7 +251,8 @@ Object.defineProperty(window, 'sampleRate', {
 
 window.playAudio = (callId) => {
     if (window.currentCallId === callId) {
-        return;
+        console.log('🎧 Audio já está sendo reproduzido');
+
     }
 
     // Fecha conexão anterior se existir
@@ -263,6 +273,7 @@ window.playAudio = (callId) => {
         window.audioContext = new (window.AudioContext || window.webkitAudioContext)({
             sampleRate: window.sampleRate,
             latencyHint: 'interactive',
+
         });
     }
 
@@ -299,12 +310,47 @@ window.playAudio = (callId) => {
     };
 
     window.audioWS.onclose = () => {
-        console.log('🔌 WebSocket Audio desconectado');
-        if (window.currentCallId === callId) {
-            window.currentCallId = null;
-        }
+
+
     };
 };
+window.isSpeakerMuted = false;
+
+window.stopAudio = async () => {
+    console.log('🛑 stopAudio chamado');
+
+    // WS
+    if (window.audioWS) {
+        try {
+            //window.audioWS.close();
+        } catch (_) {
+        }
+        window.audioWS = null;
+    }
+
+    // estado
+    window.audioQueue = [];
+    window.isFirstPacket = true;
+    window.nextStartTime = 0;
+    window.currentCallId = null;
+
+    // para áudio ativo
+    if (window.audioContext && window._activeSources) {
+        const now = window.audioContext.currentTime;
+
+        for (const src of window._activeSources) {
+            try {
+                src.stop(now);
+            } catch (_) {
+            }
+        }
+        window._activeSources.length = 0;
+    }
+
+    console.log('🔇 Áudio parado com sucesso');
+};
+
+
 window.isSpeakerMuted = false;
 
 function processAudioData(arrayBuffer) {
@@ -314,11 +360,10 @@ function processAudioData(arrayBuffer) {
     }
 
     if (window.isFirstPacket) {
-
-
-        // Inicializa o tempo de reprodução para AGORA
-        window.nextStartTime = window.audioContext.currentTime;
+        // Inicializa o tempo de reprodução com um pequeno delay (10ms) para evitar glitches
+        window.nextStartTime = window.audioContext.currentTime + 0.01;
         window.isFirstPacket = false;
+        console.log('🎵 Primeiro pacote de áudio recebido, iniciando reprodução');
 
         if (arrayBuffer.byteLength === 0) return;
     }

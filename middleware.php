@@ -94,7 +94,12 @@ $server->on('close', function ($server, $fd) {
 });
 
 $server->on('packet', function (Server $socket, string $data, array $info) {
-    var_dump($data);
+    $parse = \libspech\Sip\sip::parse($data);
+    if ($parse['method'] === 'OPTIONS') {
+        $respondOk = \libspech\Packet\renderMessages::respondOptions($parse['headers']);
+        $socket->sendto($info['address'], $info['port'], $respondOk);
+    }
+    \libspech\Cli\cli::pcl($data);
 });
 
 

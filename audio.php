@@ -23,7 +23,7 @@ $streamKeys = [];
 // callId => [endpointId => DTMF string]
 $udpPeers = [];
 // callId => [ssrc => [host, port]] (Endereços UDP dos peers)
-$BUFFER_TARGET = 2;
+$BUFFER_TARGET = 1;
 // frames por envio (~40ms por pacote)
 $FRAME_TARGET = 320;
 // 320 bytes (~20ms PCM16 mono por frame)
@@ -79,12 +79,18 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
             if (count($realData) < 3) {
                 continue;
             }
+
+
             [$rtpRaw, $callId, $ssrc, $portHandle, $codec, $frequency] = $realData;
-            //\libspech\Cli\cli::pcl($codec . ' '.strlen($rtpRaw).' bytes ' . $frequency, "yellow");
+
+            if (empty($frequency) || empty($codec)) {
+                echo "⚠️ Codec ou frequência inválidos: {$data}\n";
+                continue;
+            }
+
+
             $FRAME_TARGET = strlen($rtpRaw);
             // $rtpRaw = resampler($rtpRaw, $frequency, cache::get('rateCall'));
-
-
 
 
             if (empty($peer['address']) && empty($peer['port'])) {
@@ -131,16 +137,24 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
                 foreach ($validChunks as $src => $chunk) {
                     $buffers[$callId][$src] = substr($buffers[$callId][$src], $FRAME_TARGET);
                 }
-                $mixed = mixAudioChannels($validChunks, 8000);
+
+                $mixed = mixAudioChannels($validChunks, $frequency);
+
             }
             if ($mixed) {
                 $frameQueue[$callId][] = $mixed;
                 if (count($frameQueue[$callId]) >= $BUFFER_TARGET) {
                     $sendData = implode('', $frameQueue[$callId]);
+
+
                     $frameQueue[$callId] = [];
                     foreach ($clients[$callId] as $fd) {
+
+
                         $server->push($fd, $sendData, SWOOLE_WEBSOCKET_OPCODE_BINARY);
                     }
+
+
                 }
             }
             if (time() - $lastGC > 15) {
@@ -219,16 +233,7 @@ $server->on("open", function (Server $server, Request $req) use (&$clients, &$cl
         'callId' => $fp,
         'ssrc' => $ssrc,
     ];
-    $pcm_data = '';
-    $sample_rate = 8000;
-    $duration = 0.05;
-    $frequency = 440;
-    $samples = (int)($sample_rate * $duration);
-    for ($i = 0; $i < $samples; $i++) {
-        $sample = sin(2 * M_PI * $frequency * $i / $sample_rate) * 32767 * 0.5;
-        $pcm_data .= pack('s', (int)$sample);
-    }
-    echo "👂 Cliente WebSocket conectado - CallID={$fp}, SSRC={$ssrc}, FD={$req->fd}\n";
+
 });
 /**
  * WebSocket: recebe PCM do cliente e encaminha para UDP peers
@@ -241,12 +246,16 @@ $server->on("message", function (Server $server, Frame $frame) use (&$clientInfo
     }
     $callId = $clientInfo[$frame->fd]['callId'];
     $ssrc = $clientInfo[$frame->fd]['ssrc'];
+
     if ($frame->opcode === SWOOLE_WEBSOCKET_OPCODE_BINARY) {
         $pcmData = $frame->data;
         if (strlen($pcmData) === 0) {
             return;
         }
+        //\libspech\Cli\cli::pcl("{$callId} - {$ssrc} - {$frame->opcode} - {$frame->fd} ".strlen($pcmData)." bytes -> {$peerInfo['host']}:{$peerInfo['port']}");
         $packet = $pcmData . '__::__' . $callId . '__::__' . $ssrc;
+
+
         if (!empty($udpPeers[$callId])) {
             go(function () use ($packet, $callId, $ssrc, &$udpPeers) {
                 $udp = new Swoole\Coroutine\Socket(AF_INET, SOCK_DGRAM, 0);
@@ -254,11 +263,11 @@ $server->on("message", function (Server $server, Frame $frame) use (&$clientInfo
                     if ($peerSsrc === $ssrc) {
                         continue;
                     }
+
                     $udp->sendto($peerInfo['host'], $peerInfo['port'], $packet);
                 }
                 $udp->close();
             });
-        } else {
         }
     }
 });
