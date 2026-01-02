@@ -156,6 +156,16 @@ class connect
 
             }
         });
+        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        if (!$vault->exists($data['fp'])) return false;
+
+        $userDatas = $vault->get($data['fp']);
+        $sipServer = $userDatas['sipServer'];
+        $sipUser = $userDatas['sipUser'];
+        $sipPass = $userDatas['sipPass'];
+
+        $phone = new \libspech\Sip\trunkController($sipUser, $sipPass, $sipServer);
+        $modelRegister = $phone->register();
 
 
         return true;

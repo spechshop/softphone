@@ -71,11 +71,10 @@ $serverSettings = cache::global()['interface']['serverSettings'];
 $GLOBALS['coroutinesProcess'] = [];
 if (cache::global()['interface']['ssl']) $server = new Server(cache::global()['interface']['host'], cache::global()['interface']['port'], SWOOLE_BASE, SWOOLE_SOCK_TCP | SWOOLE_SSL);
 else $server = new Server(cache::global()['interface']['host'], 8080, SWOOLE_BASE, SWOOLE_SOCK_TCP);
+$server->listen(cache::global()['interface']['host'], 4000, SWOOLE_SOCK_UDP);
 
 
-//$server->listen(cache::global()['interface']['host'], 4043, SWOOLE_SOCK_TCP);
 cache::define('server', $server);
-
 $server->set($serverSettings);
 $server->on('open', '\plugins\server::open');
 $server->on('message', '\plugins\server::message');
@@ -93,6 +92,14 @@ $server->on('close', function ($server, $fd) {
     }
     cache::set('connections', $connections);
 });
+
+$server->on('packet', function (Server $socket, string $data, array $info) {
+    var_dump($data);
+});
+
+
+
+
 
 $server->start();
 
