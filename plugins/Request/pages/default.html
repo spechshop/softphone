@@ -282,36 +282,7 @@
 
     <!-- VIEW: ÁUDIO -->
     <section data-view="audio">
-        <div class="card bg-dark p-3 p-3">
-            <div class="section-title">Áudio</div>
-            <div class="mini">Ajustes rápidos (front-end)</div>
-            <div class="divider"></div>
 
-            <div class="mb-3">
-                <label class="form-label mini mb-1">Volume do microfone</label>
-                <input type="range" class="form-range" min="0" max="100" value="75" id="micVol">
-                <div class="mini" id="micVolTxt">75%</div>
-            </div>
-
-            <div class="mb-3">
-                <label class="form-label mini mb-1">Volume do alto-falante</label>
-                <input type="range" class="form-range" min="0" max="100" value="80" id="spkVol">
-                <div class="mini" id="spkVolTxt">80%</div>
-            </div>
-
-            <div class="divider"></div>
-
-            <div class="d-flex gap-2 flex-wrap">
-                <button class="btn btn-soft" type="button" id="btnNoise"><i class="fa-solid fa-broom me-1"></i><span>Noise Suppression</span>
-                </button>
-                <button class="btn btn-soft" type="button" id="btnEcho"><i class="fa-solid fa-bullhorn me-1"></i><span>Echo Cancel</span>
-                </button>
-                <button class="btn btn-soft" type="button" id="btnAgc"><i
-                        class="fa-solid fa-sliders me-1"></i><span>AGC</span></button>
-            </div>
-
-            <div class="mini mt-3" id="audioFlags">Noise: off • Echo: off • AGC: off</div>
-        </div>
 
         <div class="mt-3 card bg-dark p-3 p-3">
             <div class="section-title">Codecs</div>
@@ -320,31 +291,98 @@
 
             <div class="row g-2">
                 <div class="col-6">
-                    <div class="p-3 rounded-4 border"
-                         style="border-color:var(--border); background:rgba(255,255,255,.04)">
-                        <div class="fw-bold">PCMA</div>
-                        <div class="mini">PT 8 • 8 kHz</div>
+                    <div class="p-3 rounded-4 border codec-box" data-codec="pcma" data-format="PCMA/8000"
+                         id="codec-pcma"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">PCMA 8kHz</div>
+                        <div class="mini">PT 8 • A-law</div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="p-3 rounded-4 border"
-                         style="border-color:var(--border); background:rgba(255,255,255,.04)">
-                        <div class="fw-bold">PCMU</div>
-                        <div class="mini">PT 0 • 8 kHz</div>
+                    <div class="p-3 rounded-4 border codec-box" data-codec="pcmu" data-format="PCMU/8000"
+                         id="codec-pcmu"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">PCMU 8kHz</div>
+                        <div class="mini">PT 0 • μ-law</div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="p-3 rounded-4 border"
-                         style="border-color:var(--border); background:rgba(255,255,255,.04)">
-                        <div class="fw-bold">G.729</div>
+                    <div class="p-3 rounded-4 border codec-box" data-codec="g729" data-format="G729/8000"
+                         id="codec-g729"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">G.729 8kHz</div>
                         <div class="mini">8 kbps</div>
                     </div>
                 </div>
                 <div class="col-6">
-                    <div class="p-3 rounded-4 border"
-                         style="border-color:var(--border); background:rgba(255,255,255,.04)">
-                        <div class="fw-bold">Opus</div>
-                        <div class="mini">48 kHz • PT dinâmico</div>
+                    <div class="p-3 rounded-4 border codec-box" data-codec="opus" data-format="OPUS/48000/2"
+                         id="codec-opus"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">Opus 48kHz</div>
+                        <div class="mini">Estéreo</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border codec-box" data-codec="g722" data-format="G722/16000"
+                         id="codec-g722"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">G.722 16kHz</div>
+                        <div class="mini">PT 9 • Wideband</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border codec-box" data-codec="l16-8" data-format="L16/8000/1"
+                         id="codec-l16-8"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">L16 8kHz</div>
+                        <div class="mini">Mono • PCM</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border codec-box" data-codec="l16-16" data-format="L16/16000/1"
+                         id="codec-l16-16"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">L16 16kHz</div>
+                        <div class="mini">Mono • PCM</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border codec-box" data-codec="l16-44" data-format="L16/44100/1"
+                         id="codec-l16-44"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">L16 44.1kHz</div>
+                        <div class="mini">Mono • PCM</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border codec-box" data-codec="l16-48" data-format="L16/48000/1"
+                         id="codec-l16-48"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">L16 48kHz</div>
+                        <div class="mini">Mono • PCM</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border codec-box" data-codec="gsm" data-format="GSM/8000" id="codec-gsm"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">GSM 8kHz</div>
+                        <div class="mini">PT 3 • 13 kbps</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border codec-box" data-codec="speex" data-format="SPEEX/16000"
+                         id="codec-speex"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">Speex 16kHz</div>
+                        <div class="mini">Wideband</div>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <div class="p-3 rounded-4 border codec-box" data-codec="ilbc" data-format="ILBC/8000"
+                         id="codec-ilbc"
+                         style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
+                        <div class="fw-bold">iLBC 8kHz</div>
+                        <div class="mini">30ms frame</div>
                     </div>
                 </div>
             </div>
@@ -399,13 +437,29 @@
 
 <script>
 
+    // Expor função global para obter codec selecionado no formato correto
+    // ===== Sistema de Codecs =====
+    const codecBoxes = document.querySelectorAll('.codec-box');
+
+    // Obter codec salvo ou usar pcma como padrão
+    let selectedCodec = user.getValue('selectedCodec');
+    let selectedCodecFormat = user.getValue('selectedCodecFormat');
+
+    if (!selectedCodec) {
+        selectedCodec = 'pcma';
+        selectedCodecFormat = 'PCMA/8000';
+        user.updateUserData('selectedCodec', selectedCodec);
+        user.updateUserData('selectedCodecFormat', selectedCodecFormat);
+    }
+    window.getSelectedCodec = () => selectedCodecFormat;
     window.saveConfig = () => {
         const sipServer = document.getElementById('sipServer').value;
         const sipUser = document.getElementById('sipUser').value;
         const sipDomain = document.getElementById('sipDomain').value;
         const sipPass = document.getElementById('sipPass').value;
+        const codec = getSelectedCodec();
 
-        const data = {sipServer, sipUser, sipDomain, sipPass};
+        const data = {sipServer, sipUser, sipDomain, sipPass, codec};
 
 
         sendRecByToken(data, 'saveConfig').then((res) => {
@@ -439,6 +493,7 @@
 
         sendRecByToken({
             digits: digitsCall,
+            codec: getSelectedCodec(),
         }, 'StartCall').then((res) => {
             clearDigits();
             btnCall.style.display = 'none';
@@ -654,30 +709,6 @@
     const regStatus = document.getElementById('regStatus');
 
 
-    // ===== Audio view toggles
-    const micVol = document.getElementById('micVol');
-    const spkVol = document.getElementById('spkVol');
-    const micVolTxt = document.getElementById('micVolTxt');
-    const spkVolTxt = document.getElementById('spkVolTxt');
-
-    // Recuperar volumes da aba Áudio
-    const savedMicVol = user.getValue('micVol') || 75;
-    const savedSpkVol = user.getValue('spkVol') || 80;
-
-    micVol.value = savedMicVol;
-    micVolTxt.textContent = savedMicVol + "%";
-    spkVol.value = savedSpkVol;
-    spkVolTxt.textContent = savedSpkVol + "%";
-
-    micVol.addEventListener('input', () => {
-        micVolTxt.textContent = micVol.value + "%";
-        user.updateUserData('micVol', micVol.value);
-    });
-    spkVol.addEventListener('input', () => {
-        spkVolTxt.textContent = spkVol.value + "%";
-        user.updateUserData('spkVol', spkVol.value);
-    });
-
     // ===== Volume controls na sessão de chamadas
     const callVol = document.getElementById('callVol');
     const callVolTxt = document.getElementById('callVolTxt');
@@ -774,26 +805,6 @@
     const flags = {noise: false, echo: false, agc: false};
     const audioFlags = document.getElementById('audioFlags');
 
-    function renderFlags() {
-        audioFlags.textContent =
-            `Noise: ${flags.noise ? 'on' : 'off'} • Echo: ${flags.echo ? 'on' : 'off'} • AGC: ${flags.agc ? 'on' : 'off'}`;
-    }
-
-    function flipFlag(btnId, key) {
-        const b = document.getElementById(btnId);
-        b.addEventListener('click', () => {
-            flags[key] = !flags[key];
-            b.style.borderColor = flags[key] ? "rgba(42,169,255,.45)" : "rgba(255,255,255,.08)";
-            b.style.background = flags[key] ? "rgba(42,169,255,.14)" : "rgba(255,255,255,.06)";
-            renderFlags();
-        });
-    }
-
-    flipFlag('btnNoise', 'noise');
-    flipFlag('btnEcho', 'echo');
-    flipFlag('btnAgc', 'agc');
-    renderFlags();
-
 
     let sipServer = user.getValue('sipServer');
     let sipUser = user.getValue('sipUser');
@@ -824,8 +835,11 @@
         try {
             console.log('🎤 Iniciando microfone → WS /audioInput');
 
-            // Criar contexto de áudio com sample rate de 8kHz
-            audioContext = new AudioContext({sampleRate: 8000});
+            // Criar contexto de áudio com sample rate baseado no codec selecionado
+            const currentSampleRate = extractSampleRate(getSelectedCodec()) || 48000;
+            audioContext = new AudioContext({sampleRate: currentSampleRate});
+            console.log('🎤 Microfone iniciado com Sample rate:', audioContext.sampleRate + 'Hz');
+
 
             // Criar AudioWorklet para processar áudio
             await audioContext.audioWorklet.addModule(
@@ -1120,6 +1134,90 @@
         if (isRecording) {
             stopAudioCapture();
         }
+    });
+
+
+    // Função para extrair sample rate do formato
+    function extractSampleRate(format) {
+        // Formato: CODEC/SAMPLERATE ou CODEC/SAMPLERATE/CHANNELS
+        const parts = format.split('/');
+        if (parts.length >= 2) {
+            return parseInt(parts[1], 10);
+        }
+        return 8000; // Padrão
+    }
+
+    // Aplicar sample rate inicial baseado no codec salvo
+    window.sampleRate = extractSampleRate(selectedCodecFormat);
+    console.log('🎵 Sample rate inicial:', window.sampleRate + 'Hz', '• Codec:', selectedCodecFormat);
+
+    // Monitorar mudanças no window.sampleRate
+    let lastSampleRate = window.sampleRate;
+    setInterval(() => {
+        if (window.sampleRate !== lastSampleRate) {
+            console.log(`🔄 Sample rate mudou: ${lastSampleRate} → ${window.sampleRate}`);
+            lastSampleRate = window.sampleRate;
+
+            // Se o microfone está ativo, reinicia com o novo sample rate
+            if (isRecording) {
+                console.log('🎤 Reiniciando microfone com novo sample rate:', window.sampleRate + 'Hz');
+                stopAudioCapture();
+                setTimeout(() => {
+                    startAudioCapture();
+                }, 100);
+            }
+        }
+    }, 250); // Verifica a cada 250ms
+
+    // Função para atualizar a UI dos codecs
+    function updateCodecUI(codec) {
+
+        codecBoxes.forEach(box => {
+            const boxCodec = box.getAttribute('data-codec');
+            if (boxCodec === codec) {
+                box.style.borderColor = 'var(--accent)';
+                box.style.background = 'rgba(42,169,255,.14)';
+            } else {
+                box.style.borderColor = 'var(--border)';
+                box.style.background = 'rgba(255,255,255,.04)';
+            }
+        });
+    }
+
+    // Aplicar codec selecionado na inicialização
+    updateCodecUI(selectedCodec);
+
+    // Adicionar evento de clique em cada codec
+    codecBoxes.forEach(box => {
+        box.addEventListener('click', () => {
+            const codec = box.getAttribute('data-codec');
+            const format = box.getAttribute('data-format');
+            selectedCodec = codec;
+            selectedCodecFormat = format;
+
+            // Atualizar sample rate
+            const sampleRate = extractSampleRate(format);
+            const wasRecording = isRecording;
+
+            // Se o microfone está ativo, reinicia com o novo sample rate
+            if (wasRecording) {
+                stopAudioCapture();
+            }
+
+            window.sampleRate = sampleRate;
+
+            // Reinicia o microfone se estava ativo
+            if (wasRecording) {
+                setTimeout(() => {
+                    startAudioCapture();
+                }, 100);
+            }
+
+            user.updateUserData('selectedCodec', codec);
+            user.updateUserData('selectedCodecFormat', format);
+            updateCodecUI(codec);
+            console.log('🎵 Codec selecionado:', format, '• Sample rate:', sampleRate + 'Hz');
+        });
     });
 
 

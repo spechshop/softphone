@@ -1350,7 +1350,7 @@ ol, ul {
 }
 
 .selected {
-    background-color: #43454A;
+    background-color: #43454A !important;
 }
 
 .scrollable {

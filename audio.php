@@ -80,7 +80,8 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
                 continue;
             }
             [$rtpRaw, $callId, $ssrc, $portHandle, $codec, $frequency] = $realData;
-            // \libspech\Cli\cli::pcl($codec . ' ' . $frequency, "yellow");
+            //\libspech\Cli\cli::pcl($codec . ' '.strlen($rtpRaw).' bytes ' . $frequency, "yellow");
+            $FRAME_TARGET = strlen($rtpRaw);
             // $rtpRaw = resampler($rtpRaw, $frequency, cache::get('rateCall'));
 
 
@@ -105,7 +106,7 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
             $decoded = $rtpRaw;
             $buffers[$callId][$ssrc] ??= '';
             $buffers[$callId][$ssrc] .= $decoded;
-            if (strlen($buffers[$callId][$ssrc]) > 1920 * 4) {
+            if (strlen($buffers[$callId][$ssrc]) > ($frequency * 4)) {
                 $buffers[$callId][$ssrc] = '';
             }
             $validChunks = [];
@@ -130,7 +131,7 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
                 foreach ($validChunks as $src => $chunk) {
                     $buffers[$callId][$src] = substr($buffers[$callId][$src], $FRAME_TARGET);
                 }
-                $mixed = mixAudioChannels($validChunks, 48000);
+                $mixed = mixAudioChannels($validChunks, 8000);
             }
             if ($mixed) {
                 $frameQueue[$callId][] = $mixed;

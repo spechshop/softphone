@@ -51,6 +51,7 @@ class hangUpCall
         unset($phone);
         cache::unset('coroutinesProcess', $fingerprint);
 
+
         return $socket->push($fd, json_encode([
             'byToken' => $model['id'],
             'data' => [

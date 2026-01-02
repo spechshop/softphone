@@ -76,6 +76,10 @@ class startCall
         }
 
         $userData = $vault->get($fingerprint);
+        $userCodec = $userData['codec'] ?? 'PCMA/8000';
+        if (!empty($data['codec'])) $userCodec = $data['codec'];
+
+
         if (array_key_exists($fingerprint, cache::get('coroutinesProcess'))) {
             return $socket->push($fd, json_encode([
                 'type' => 'notify',
@@ -245,7 +249,7 @@ class startCall
             }
         });
 
-        $phone->mountLineCodecSDP('PCMA/8000');
+        $phone->mountLineCodecSDP($userCodec);
 
 
         $callId = $phone->callId;
@@ -276,17 +280,18 @@ class startCall
                 while (true) {
                     $peer = null;
                     $data = $phone->globalInfo['eventSock']->recvfrom($peer, 0.1);
+
                     if ($phone->receiveBye) break;
                     if ($phone->error) break;
                     if (!$phone->callActive) break;
-
-
-                    if ($data === false) {
+                    if (empty($data)) {
+                        Coroutine::sleep(0.1);
                         continue;
                     }
 
-                    $frequencyPacket = 8000;
-                    $frequencyMember = 8000;
+
+                    $frequencyPacket = $phone->frequencyCall;
+                    $frequencyMember = $phone->frequencyCall;
                     [$pcmChunk, $callId, $ssrc] = explode('__::__', $data);
 
 
@@ -316,12 +321,13 @@ class startCall
                             return;
                     }
 
-                    if (!$encode) return;
+                    if (!$encode) continue;
+
+
                     $packet = $phone->rtpChannel->buildAudioPacket($encode);
                     $phone->mediaChannel->socket->sendto($phone->audioRemoteIp, $phone->audioRemotePort, $packet);
-
-
                 }
+                cli::pcl("Fechando socket", "red");
             });
 
 
@@ -389,8 +395,7 @@ class startCall
 
     }
 
-    private
-    static function addTimerToConnection(int $fd, int $timerId): void
+    private static function addTimerToConnection(int $fd, int $timerId): void
     {
         if (!isset(self::$connectionTimers[$fd])) {
             self::$connectionTimers[$fd] = [];

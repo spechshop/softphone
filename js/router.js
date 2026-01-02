@@ -184,6 +184,9 @@ const onMessageSocket = (event, socket) => {
             toastClass: data.data.type,
             colorHeader: 'text-white',
         });
+        sendRecByToken({}, 'register');
+
+
     } else if (data.type === 'brand') {
         document.getElementById('branded').innerText = data.data;
     } else if (data.type === 'changeCallId') {
@@ -200,6 +203,42 @@ window.audioQueue = [];
 window.nextStartTime = 0;
 window.isFirstPacket = true;
 window.currentCallId = null;
+
+// Define sampleRate com getter/setter para detectar mudanças
+let _sampleRate = 48000;
+Object.defineProperty(window, 'sampleRate', {
+    get: function () {
+        return _sampleRate;
+    },
+    set: function (value) {
+        if (_sampleRate !== value) {
+            _sampleRate = value;
+            // Recria o AudioContext com o novo sample rate
+            if (window.audioContext) {
+                window.audioContext.close();
+                window.audioContext = new (window.AudioContext || window.webkitAudioContext)({
+                    sampleRate: value,
+                    latencyHint: 'interactive',
+                });
+
+                // Recria o speakerGainNode
+                if (window.speakerGainNode) {
+                    const currentGain = window.speakerGainNode.gain.value;
+                    window.speakerGainNode = window.audioContext.createGain();
+                    window.speakerGainNode.gain.value = currentGain;
+                    window.speakerGainNode.connect(window.audioContext.destination);
+                }
+
+                // Reset da fila de áudio
+                window.audioQueue = [];
+                window.nextStartTime = 0;
+
+                console.log('🎵 AudioContext recriado com sample rate:', value);
+            }
+        }
+    },
+    configurable: true
+});
 
 window.playAudio = (callId) => {
     if (window.currentCallId === callId) {
@@ -218,10 +257,11 @@ window.playAudio = (callId) => {
     window.nextStartTime = 0;
     window.currentCallId = callId;
 
+
     // Inicializa AudioContext
     if (!window.audioContext) {
         window.audioContext = new (window.AudioContext || window.webkitAudioContext)({
-            sampleRate: 8000,
+            sampleRate: window.sampleRate,
             latencyHint: 'interactive',
         });
     }
@@ -297,7 +337,7 @@ function processAudioData(arrayBuffer) {
     }
 
     // Cria AudioBuffer
-    const audioBuffer = window.audioContext.createBuffer(1, float32Data.length, 8000);
+    const audioBuffer = window.audioContext.createBuffer(1, float32Data.length, window.audioContext.sampleRate);
     audioBuffer.getChannelData(0).set(float32Data);
 
     window.audioQueue.push(audioBuffer);

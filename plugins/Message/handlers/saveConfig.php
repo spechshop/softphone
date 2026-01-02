@@ -70,7 +70,7 @@ class saveConfig
                 'message' => 'Verificando registro...'
             ]
         ]));
-        $needInputs = ['sipServer', 'sipUser', 'sipPass'];
+        $needInputs = ['sipServer', 'sipUser', 'sipPass', 'codec'];
         foreach ($needInputs as $input) {
             if (empty($data[$input])) {
                 return $socket->push($fd, json_encode([
@@ -101,7 +101,6 @@ class saveConfig
         $trunkController->expires = 1800;
 
         if (!$trunkController->register(5)) {
-            var_dump($trunkController->isRegistered, $trunkController->register(5));
             return $socket->push($fd, json_encode([
                 'type' => 'notify',
                 'data' => [
