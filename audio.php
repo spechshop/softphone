@@ -10,25 +10,15 @@ use Swoole\WebSocket\Server;
 ini_set('memory_limit', '4024M');
 include 'libspech/plugins/autoloader.php';
 $clients = [];
-// callId => [fd => fd] (WebSocket connections)
 $clientInfo = [];
-// fd => [callId, ssrc] (Info das conexões)
 $buffers = [];
-// callId => [ssrc => buffer PCM]
 $lastSeen = [];
-// callId => [ssrc => timestamp]
 $frameQueue = [];
-// callId => [frames PCM]
 $streamKeys = [];
-// callId => [endpointId => DTMF string]
 $udpPeers = [];
-// callId => [ssrc => [host, port]] (Endereços UDP dos peers)
-$BUFFER_TARGET = 1;
-// frames por envio (~40ms por pacote)
+$BUFFER_TARGET = 2;
 $FRAME_TARGET = 320;
-// 320 bytes (~20ms PCM16 mono por frame)
 $MAX_SILENCE = 30;
-// segundos até GC de SSRC inativo
 /**
  * Configuração do servidor WebSocket
  */
@@ -37,22 +27,17 @@ $server->set([
     'ssl_cert_file' => 'fullchain.pem',
     'ssl_key_file' => 'privkey.pem'
 ]);
-/**
- * 🔥 Listener UDP: recebe pacotes PCM decodificados
- */
+
 $channelDecode = [];
-// Mover para escopo global
 cache::define('rateCall', 8000);
-$server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buffers, &$frameQueue, &$streamKeys, &$lastSeen, &$channelDecode, $BUFFER_TARGET, $FRAME_TARGET, $MAX_SILENCE) {
+$server->on("start", function (Server $server) use (&$clientInfo, &$clients, &$udpPeers, &$buffers, &$frameQueue, &$streamKeys, &$lastSeen, &$channelDecode, $BUFFER_TARGET, $FRAME_TARGET, $MAX_SILENCE) {
     $controlFile = 'audio_control.txt';
     file_put_contents($controlFile, '');
-    // Cria arquivo vazio
     echo "📁 Arquivo de controle criado: {$controlFile}\n";
     echo "💡 Para parar o servidor, escreva 'STOP' no arquivo {$controlFile}\n";
     go(function () use ($controlFile) {
         while (true) {
             \Swoole\Coroutine::sleep(2);
-            // Verifica a cada 2 segundos
             if (file_exists($controlFile)) {
                 $content = trim(file_get_contents($controlFile));
                 if (!empty($content) && (strtoupper($content) === 'STOP' || strtoupper($content) === 'EXIT')) {
@@ -64,7 +49,7 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
             }
         }
     });
-    go(function () use ($server, &$clients, &$buffers, &$frameQueue, &$lastSeen, &$channelDecode, &$udpPeers, $BUFFER_TARGET, $FRAME_TARGET, $MAX_SILENCE) {
+    go(function () use (&$clientInfo, $server, &$clients, &$buffers, &$frameQueue, &$lastSeen, &$channelDecode, &$udpPeers, $BUFFER_TARGET, $FRAME_TARGET, $MAX_SILENCE) {
         $udp = new Swoole\Coroutine\Socket(AF_INET, SOCK_DGRAM, 0);
         $udp->bind("0.0.0.0", 9600);
         echo "🎧 Servidor UDP aguardando pacotes em 9600...\n";
@@ -79,20 +64,12 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
             if (count($realData) < 3) {
                 continue;
             }
-
-
-            [$rtpRaw, $callId, $ssrc, $portHandle, $codec, $frequency] = $realData;
-
-            if (empty($frequency) || empty($codec)) {
+            [$rtpRaw, $callId, $ssrc, $portHandle, $userFrequency, $frequency] = $realData;
+            if (empty($frequency) || empty($userFrequency)) {
                 echo "⚠️ Codec ou frequência inválidos: {$data}\n";
                 continue;
             }
-
-
             $FRAME_TARGET = strlen($rtpRaw);
-            // $rtpRaw = resampler($rtpRaw, $frequency, cache::get('rateCall'));
-
-
             if (empty($peer['address']) && empty($peer['port'])) {
                 $udp->sendto('127.0.0.1', $portHandle, SOCKET_EREMOTE);
                 $res = $udp->recvfrom($peer, 1);
@@ -112,7 +89,7 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
             $decoded = $rtpRaw;
             $buffers[$callId][$ssrc] ??= '';
             $buffers[$callId][$ssrc] .= $decoded;
-            if (strlen($buffers[$callId][$ssrc]) > ($frequency * 4)) {
+            if (strlen($buffers[$callId][$ssrc]) > $frequency * 8) {
                 $buffers[$callId][$ssrc] = '';
             }
             $validChunks = [];
@@ -137,24 +114,30 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
                 foreach ($validChunks as $src => $chunk) {
                     $buffers[$callId][$src] = substr($buffers[$callId][$src], $FRAME_TARGET);
                 }
-
-                $mixed = mixAudioChannels($validChunks, $frequency);
+                $mixed = mixAudioChannels($validChunks, $userFrequency);
 
             }
             if ($mixed) {
+
                 $frameQueue[$callId][] = $mixed;
+
                 if (count($frameQueue[$callId]) >= $BUFFER_TARGET) {
                     $sendData = implode('', $frameQueue[$callId]);
-
-
                     $frameQueue[$callId] = [];
                     foreach ($clients[$callId] as $fd) {
+                        $ssrc = $clientInfo[$fd]['ssrc'];
+                        if ($ssrc == 'mic-user') continue;
 
 
-                        $server->push($fd, $sendData, SWOOLE_WEBSOCKET_OPCODE_BINARY);
+                        $mixer = resampler($sendData, $frequency, $userFrequency);
+                        $sendData = $mixer;
+
+                        if (strlen($mixer) > 0) {
+                            // \libspech\Cli\cli::pcl(strlen($sendData) . ' ssrc:' . $ssrc . ' fd:' . $fd . '  ' . $userFrequency);
+                            $server->push($fd, $mixer, SWOOLE_WEBSOCKET_OPCODE_BINARY);
+                        }
+
                     }
-
-
                 }
             }
             if (time() - $lastGC > 15) {
@@ -185,7 +168,7 @@ $server->on("start", function (Server $server) use (&$clients, &$udpPeers, &$buf
     });
 });
 /**
- * 🔥 HTTP: endpoint para consulta de DTMF keys e página de exemplo
+ *  endpoint para consulta de DTMF keys e página de exemplo
  */
 $server->on("request", function (Request $req, Response $res) use (&$streamKeys) {
     $res->header("Access-Control-Allow-Origin", "*");
@@ -216,7 +199,7 @@ $server->on("request", function (Request $req, Response $res) use (&$streamKeys)
     $res->end("Not Found");
 });
 /**
- * 🔥 WebSocket: cliente conecta para receber áudio ao vivo
+ *   WebSocket: cliente conecta para receber áudio ao vivo
  */
 $server->on("open", function (Server $server, Request $req) use (&$clients, &$clientInfo) {
     $fp = $req->get["fp"] ?? null;
@@ -233,7 +216,6 @@ $server->on("open", function (Server $server, Request $req) use (&$clients, &$cl
         'callId' => $fp,
         'ssrc' => $ssrc,
     ];
-
 });
 /**
  * WebSocket: recebe PCM do cliente e encaminha para UDP peers
@@ -246,16 +228,12 @@ $server->on("message", function (Server $server, Frame $frame) use (&$clientInfo
     }
     $callId = $clientInfo[$frame->fd]['callId'];
     $ssrc = $clientInfo[$frame->fd]['ssrc'];
-
     if ($frame->opcode === SWOOLE_WEBSOCKET_OPCODE_BINARY) {
         $pcmData = $frame->data;
         if (strlen($pcmData) === 0) {
             return;
         }
-        //\libspech\Cli\cli::pcl("{$callId} - {$ssrc} - {$frame->opcode} - {$frame->fd} ".strlen($pcmData)." bytes -> {$peerInfo['host']}:{$peerInfo['port']}");
         $packet = $pcmData . '__::__' . $callId . '__::__' . $ssrc;
-
-
         if (!empty($udpPeers[$callId])) {
             go(function () use ($packet, $callId, $ssrc, &$udpPeers) {
                 $udp = new Swoole\Coroutine\Socket(AF_INET, SOCK_DGRAM, 0);
@@ -263,7 +241,6 @@ $server->on("message", function (Server $server, Frame $frame) use (&$clientInfo
                     if ($peerSsrc === $ssrc) {
                         continue;
                     }
-
                     $udp->sendto($peerInfo['host'], $peerInfo['port'], $packet);
                 }
                 $udp->close();
@@ -291,30 +268,6 @@ $server->on("close", function ($serv, $fd) use (&$clients, &$buffers, &$clientIn
     }
 });
 $server->start();
-/**
- * 🔥 Mixagem com normalização leve
- */
-function normalizeAndMix(array $chunks): string
-{
-    if (count($chunks) === 1) {
-        return reset($chunks);
-    }
-    $minLen = min(array_map("strlen", $chunks));
-    $minLen -= $minLen % 2;
-    $result = '';
-    for ($i = 0; $i < $minLen; $i += 2) {
-        $sum = 0;
-        foreach ($chunks as $buf) {
-            $sample = unpack("s", substr($buf, $i, 2))[1];
-            $sum += $sample;
-        }
-        $avg = (int)($sum / count($chunks));
-        $avg = max(-32768, min(32767, $avg * 1.2));
-        // Normalização leve
-        $result .= pack("s", $avg);
-    }
-    return $result;
-}
 
 /**
  * Cabeçalho WAV simples

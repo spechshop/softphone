@@ -65,11 +65,17 @@ class connect
             ]));
         }
 
-        $socket->push($fd, json_encode([
-            'type' => 'setPage',
-            'page' => $data['currentPage'],
-        ]));
-        var_dump(cache::get('connections'));
+        if (cache::get('interface')['pages'][$data['currentPage']]) {
+            $socket->push($fd, json_encode([
+                'type' => 'setPage',
+                'page' => $data['currentPage'],
+            ]));
+        } else {
+            $socket->push($fd, json_encode([
+                'type' => 'setPage',
+                'page' => 'default',
+            ]));
+        }
 
 
         $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
@@ -187,7 +193,18 @@ class connect
         for (; ;) {
             $peer = [];
             $res = $phone->socket->recvfrom($peer, 5);
+
+
             $receive = sip::parse($res);
+            if ($receive['method'] !== 401) {
+                if ($receive['method'] == '200') {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+
             $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
             $nonce = value($wwwAuthenticate, 'nonce="', '"');
             $realm = value($wwwAuthenticate, 'realm="', '"');

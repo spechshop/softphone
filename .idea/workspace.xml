@@ -18,15 +18,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="Adicione página inicial completa para documentação do projeto em `docs/index.html`&#10;&#10;### Problema&#10;O projeto não possuía uma página inicial estruturada para documentação, dificultando o entendimento dos recursos e de sua instalação pelos usuários.&#10;&#10;### Solução&#10;- Criado o arquivo `docs/index.html` com layout completo em HTML e estilo CSS inline.&#10;- Adicionadas seções descritivas: introdução, recursos, requisitos, instalação, arquitetura, e links úteis.&#10;- Incluído guia detalhado para configuração de ambiente e execução do projeto.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: `docs/index.html` com detalhamento do projeto.&#10;- Adicionado: Referências visuais (badges) e seções explicativas.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="Remover stubs de áudio obsoletos e corrigir fluxo de WebSocket para áudio&#10;&#10;### Problema&#10;- O arquivo `extra_audio_stubs.php` continha stubs gerados automaticamente que não estavam sendo utilizados, acumulando código redundante. &#10;- No fluxo de WebSocket, havia inconsistências no tratamento de áudio e no gerenciamento de chamadas, como conexões antigas não fechadas e logs insuficientes.&#10;&#10;### Solução&#10;- Removido: `extra_audio_stubs.php` para eliminar stubs desatualizados.&#10;- Adicionado: logs detalhados para acompanhamento do status do áudio e eventos das conexões no front-end (`router.js`) e back-end (`audio.php`, `startCall.php`).&#10;- Alterado: lógica de inicialização e reconexão de WebSocket no front-end para melhor controle de chamadas.&#10;- Corrigido: tratamento de áudio no fluxo VoIP, incluindo melhorias no buffer PCM e logs de eventos importantes.&#10;&#10;### Mudanças Relevantes&#10;- Removido: `libspech/extra/stubs/extra_audio_stubs.php`.&#10;- Alterado: gerenciamento de áudio em `router.js` e back-end (`audio.php`, `startCall.php`) com buffers otimizados e logs adicionais.&#10;- Adicionado: verificação de frequência e codec antes de processar áudio no back-end.&#10;- Corrigido: reconexões de WebSocket para chamada de áudio com gerenciamento de IDs de chamadas (`connect.php`, `router.js`).&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto:&#10;- A mudança no fluxo de áudio pode gerar variações no timing do envio de pacotes em sistemas de baixa latência.&#10;- Necessidade de testar integrações para codecs específicos como OPUS e G729.&#10;&#10;Nenhum efeito colateral conhecido até o momento.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/audio.php" beforeDir="false" afterPath="$PROJECT_DIR$/audio.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/libspech/extra/stubs/extra_audio_stubs.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/middleware.php" beforeDir="false" afterPath="$PROJECT_DIR$/middleware.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/checkCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/checkCall.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/connect.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/connect.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/register.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/register.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
     </list>
@@ -49,7 +46,7 @@
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="176" />
+    <option name="cachedIndexableFilesCount" value="175" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -121,7 +118,7 @@
     <commands />
     <urls />
   </component>
-  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="PHP 8.5" />
+  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="8.5.1-dev" />
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
   </component>
@@ -134,38 +131,38 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "JavaScript Debug.audio.html.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "volume-dev",
-    "javascript.nodejs.core.library.configured.version": "21.0.0",
-    "javascript.nodejs.core.library.typings.version": "25.0.3",
-    "javascript.preferred.runtime.type.id": "node",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/lotus/PROJETOS/spechphone/libspech",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "project.propVCSSupport.Mappings",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;JavaScript Debug.audio.html.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;volume-dev&quot;,
+    &quot;javascript.nodejs.core.library.configured.version&quot;: &quot;21.0.0&quot;,
+    &quot;javascript.nodejs.core.library.typings.version&quot;: &quot;25.0.3&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/lotus/PROJETOS/spechphone/libspech&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;project.propVCSSupport.Mappings&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "ChangesTree.GroupingKeys": [
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;ChangesTree.GroupingKeys&quot;: [
+      &quot;repository&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecapSettings">
     <option name="autoUpdateEnabled" value="false" />
   </component>
@@ -238,15 +235,12 @@
       <workItem from="1767246830758" duration="1188000" />
       <workItem from="1767340237983" duration="1035000" />
       <workItem from="1767341894579" duration="8444000" />
-      <workItem from="1767351689117" duration="23581000" />
-    </task>
-    <task id="LOCAL-00031" summary="### Atualiza exibição de tabs e adiciona screenshot ao README&#10;&#10;### Problema&#10;A navegação entre tabs da interface não ocultava os conteúdos correspondentes de forma dinâmica, deixando múltiplos conteúdos visíveis ao mesmo tempo. Além disso, a documentação no README carecia de visuais exemplificando as principais interfaces.&#10;&#10;### Solução&#10;- Implementada lógica para alternância dinâmica entre conteúdos exibidos nas tabs, ocultando os não selecionados.&#10;- Adicionados screenshots das principais interfaces (chamada, áudio e configuração) ao README para melhor entendimento visual.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Lógica de exibição dinâmica entre `.tab-content` no arquivo `plugins/Request/pages/index.html`.&#10;- Adicionado: Secção de screenshots no `README.md` com imagens exemplificando a interface do sistema.&#10;- Adicionado: Arquivos de screenshots (`screenshot_audio.png`, `screenshot_call.png`, `screenshot_config.png`).&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767101667601</created>
-      <option name="number" value="00031" />
-      <option name="presentableId" value="LOCAL-00031" />
-      <option name="project" value="LOCAL" />
-      <updated>1767101667601</updated>
+      <workItem from="1767351689117" duration="24394000" />
+      <workItem from="1767382579698" duration="19000" />
+      <workItem from="1767383097780" duration="50000" />
+      <workItem from="1767386431872" duration="24000" />
+      <workItem from="1767425147488" duration="57000" />
+      <workItem from="1767449915510" duration="6174000" />
     </task>
     <task id="LOCAL-00032" summary="### Atualiza exibição de tabs e adiciona screenshot ao README&#10;&#10;### Problema&#10;A navegação entre tabs da interface não ocultava os conteúdos correspondentes de forma dinâmica, deixando múltiplos conteúdos visíveis ao mesmo tempo. Além disso, a documentação no README carecia de visuais exemplificando as principais interfaces.&#10;&#10;### Solução&#10;- Implementada lógica para alternância dinâmica entre conteúdos exibidos nas tabs, ocultando os não selecionados.&#10;- Adicionados screenshots das principais interfaces (chamada, áudio e configuração) ao README para melhor entendimento visual.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Lógica de exibição dinâmica entre `.tab-content` no arquivo `plugins/Request/pages/index.html`.&#10;- Adicionado: Secção de screenshots no `README.md` com imagens exemplificando a interface do sistema.&#10;- Adicionado: Arquivos de screenshots (`screenshot_audio.png`, `screenshot_call.png`, `screenshot_config.png`).&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -632,7 +626,15 @@
       <option name="project" value="LOCAL" />
       <updated>1767360399865</updated>
     </task>
-    <option name="localTasksCounter" value="80" />
+    <task id="LOCAL-00080" summary="Remover stubs de áudio obsoletos e corrigir fluxo de WebSocket para áudio&#10;&#10;### Problema&#10;- O arquivo `extra_audio_stubs.php` continha stubs gerados automaticamente que não estavam sendo utilizados, acumulando código redundante. &#10;- No fluxo de WebSocket, havia inconsistências no tratamento de áudio e no gerenciamento de chamadas, como conexões antigas não fechadas e logs insuficientes.&#10;&#10;### Solução&#10;- Removido: `extra_audio_stubs.php` para eliminar stubs desatualizados.&#10;- Adicionado: logs detalhados para acompanhamento do status do áudio e eventos das conexões no front-end (`router.js`) e back-end (`audio.php`, `startCall.php`).&#10;- Alterado: lógica de inicialização e reconexão de WebSocket no front-end para melhor controle de chamadas.&#10;- Corrigido: tratamento de áudio no fluxo VoIP, incluindo melhorias no buffer PCM e logs de eventos importantes.&#10;&#10;### Mudanças Relevantes&#10;- Removido: `libspech/extra/stubs/extra_audio_stubs.php`.&#10;- Alterado: gerenciamento de áudio em `router.js` e back-end (`audio.php`, `startCall.php`) com buffers otimizados e logs adicionais.&#10;- Adicionado: verificação de frequência e codec antes de processar áudio no back-end.&#10;- Corrigido: reconexões de WebSocket para chamada de áudio com gerenciamento de IDs de chamadas (`connect.php`, `router.js`).&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto:&#10;- A mudança no fluxo de áudio pode gerar variações no timing do envio de pacotes em sistemas de baixa latência.&#10;- Necessidade de testar integrações para codecs específicos como OPUS e G729.&#10;&#10;Nenhum efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1767377977011</created>
+      <option name="number" value="00080" />
+      <option name="presentableId" value="LOCAL-00080" />
+      <option name="project" value="LOCAL" />
+      <updated>1767377977012</updated>
+    </task>
+    <option name="localTasksCounter" value="81" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -652,17 +654,6 @@
                   <entry key="Show.Git.Branches" value="true" />
                 </map>
               </option>
-              <option name="FILTERS">
-                <map>
-                  <entry key="branch">
-                    <value>
-                      <list>
-                        <option value="origin/volume-dev" />
-                      </list>
-                    </value>
-                  </entry>
-                </map>
-              </option>
             </State>
           </value>
         </entry>
@@ -670,7 +661,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Atualize instruções de instalação e execução no README&#10;&#10;### Problema&#10;As instruções de instalação e execução no `README.md` estavam incompletas e mal formatadas, dificultando o entendimento e a reprodução dos passos pelos usuários.&#10;&#10;### Solução&#10;- Ajustada a formatação dos comandos para maior legibilidade.&#10;- Adicionada instrução específica para o download do repositório `libspech` caso não esteja presente ou atualizado.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Formatação dos comandos no `README.md` para blocos de código com estilo consistente.&#10;- Adicionado: Instrução para clonar a biblioteca `libspech` no passo de instalação.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Atualize manipulação de áudio para suportar codec e frequência dinâmica&#10;&#10;### Problema&#10;O sistema não considerava dinamicamente o codec e a frequência dos pacotes RTP recebidos, o que limitava a compatibilidade com diferentes configurações de áudio. Além disso, a frequência fixa de 8000 Hz no mix de canais causava inconsistências na qualidade do áudio para frequências mais altas.&#10;&#10;### Solução&#10;- Adicionado suporte para codec e frequência dinâmica no processamento de áudio.&#10;- Modificado o método `mixAudioChannels` para trabalhar com frequência de 48000 Hz, garantindo maior fidelidade.&#10;- Alterado fluxo de envio de pacotes RTP para incluir informações de codec e frequência.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Frequência padrão de mistura de áudio de 8000 Hz para 48000 Hz (`audio.php`).&#10;- Adicionado: Suporte ao envio de codec e frequência nos pacotes RTP gerados (`startCall.php`).&#10;- Refatorado: Lógica de extração de dados RTP em `audio.php` para considerar codec e frequência.&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Alterações no processamento podem influenciar a performance sob alta carga devido ao aumento da frequência de processamento.&#10;⚠️ Limitação conhecida: Necessidade de validação em produção com diferentes codecs para garantir compatibilidade total." />
     <MESSAGE value="Remova chamada ao método `defineTimeout` no fluxo de `startCall`&#10;&#10;### Problema&#10;O método `defineTimeout` estava definido no fluxo de início de chamada (`startCall.php`), porém sua execução não apresentava efeito prático nesse contexto. Essa chamada era redundante e podia causar confusão na manutenção do código.&#10;&#10;### Solução&#10;- Removida a linha que executava o método `defineTimeout(3200)` no arquivo `plugins/Message/handlers/startCall.php`.&#10;&#10;### Mudanças relevantes&#10;- Removido: Chamada desnecessária ao método `defineTimeout` no fluxo de manipulação de chamadas.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Remova funcionalidade de gravação e reprodução de áudio local&#10;&#10;### Problema&#10;A página `audio.html` continha uma interface e lógica para gravação de áudio local e reprodução, mas essa funcionalidade não era mais utilizada e mantê-la no código gerava complexidade desnecessária. Além disso, a remoção afeta arquivos relacionados à lógica de manipulação de áudio.&#10;&#10;### Solução&#10;- Excluído o arquivo `plugins/Request/pages/audio.html`, que continha a interface e lógica para gravação e reprodução de áudio.&#10;- Corrigido fluxo no arquivo `default.html`, para ajuste de campos e remoção de dependências irrelevantes.&#10;&#10;### Mudanças relevantes&#10;- Removido: Arquivo `audio.html` (plugins/Request/pages).&#10;- Removido: Mapeamento redundante do diretório `libspech1` em `.idea/vcs.xml`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
@@ -695,7 +685,8 @@
     <MESSAGE value="Comente a linha referente ao diretório `/libspech/` no `.gitignore`&#10;&#10;### Problema&#10;A entrada `/libspech/` no `.gitignore` estava impedindo o rastreamento de mudanças no diretório, mas a exclusão deixou de ser necessária no contexto atual. No entanto, não havia certeza absoluta se este diretório deveria ser totalmente removido do controle de versão ou mantido.&#10;&#10;### Solução&#10;- Comentado a linha `/libspech/` no `.gitignore`, permitindo que o diretório seja rastreado novamente enquanto abertura para revisão futura é mantida.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Comentada a linha referente ao diretório `/libspech/` no arquivo `.gitignore`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. Monitorar o repositório para verificar possíveis conflitos ou mudanças inesper" />
     <MESSAGE value="Comente a linha referente ao diretório `/libspech/` no `.gitignore`&#10;&#10;### Problema&#10;A entrada `/libspech/` no `.gitignore` estava impedindo o rastreamento de mudanças no diretório, mas a exclusão deixou de ser necessária no contexto atual. No entanto, não havia certeza absoluta se este diretório deveria ser totalmente removido do controle de versão ou mantido.&#10;&#10;### Solução&#10;- Comentado a linha `/libspech/` no `.gitignore`, permitindo que o diretório seja rastreado novamente enquanto abertura para revisão futura é mantida.&#10;- Adicionado submódulo `libspech` no repositório via `.gitmodules`.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Comentada a linha referente ao diretório `/libspech/` no arquivo `.gitignore`.&#10;- Adicionado: Configuração de submódulo para o diretório `libspech` no arquivo `.gitmodules`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. Monitorar o repositório para verificar possíveis conflitos ou mudanças inesperadas envolvendo este diretório." />
     <MESSAGE value="Adicione página inicial completa para documentação do projeto em `docs/index.html`&#10;&#10;### Problema&#10;O projeto não possuía uma página inicial estruturada para documentação, dificultando o entendimento dos recursos e de sua instalação pelos usuários.&#10;&#10;### Solução&#10;- Criado o arquivo `docs/index.html` com layout completo em HTML e estilo CSS inline.&#10;- Adicionadas seções descritivas: introdução, recursos, requisitos, instalação, arquitetura, e links úteis.&#10;- Incluído guia detalhado para configuração de ambiente e execução do projeto.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: `docs/index.html` com detalhamento do projeto.&#10;- Adicionado: Referências visuais (badges) e seções explicativas.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
-    <option name="LAST_COMMIT_MESSAGE" value="Adicione página inicial completa para documentação do projeto em `docs/index.html`&#10;&#10;### Problema&#10;O projeto não possuía uma página inicial estruturada para documentação, dificultando o entendimento dos recursos e de sua instalação pelos usuários.&#10;&#10;### Solução&#10;- Criado o arquivo `docs/index.html` com layout completo em HTML e estilo CSS inline.&#10;- Adicionadas seções descritivas: introdução, recursos, requisitos, instalação, arquitetura, e links úteis.&#10;- Incluído guia detalhado para configuração de ambiente e execução do projeto.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: `docs/index.html` com detalhamento do projeto.&#10;- Adicionado: Referências visuais (badges) e seções explicativas.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
+    <MESSAGE value="Remover stubs de áudio obsoletos e corrigir fluxo de WebSocket para áudio&#10;&#10;### Problema&#10;- O arquivo `extra_audio_stubs.php` continha stubs gerados automaticamente que não estavam sendo utilizados, acumulando código redundante. &#10;- No fluxo de WebSocket, havia inconsistências no tratamento de áudio e no gerenciamento de chamadas, como conexões antigas não fechadas e logs insuficientes.&#10;&#10;### Solução&#10;- Removido: `extra_audio_stubs.php` para eliminar stubs desatualizados.&#10;- Adicionado: logs detalhados para acompanhamento do status do áudio e eventos das conexões no front-end (`router.js`) e back-end (`audio.php`, `startCall.php`).&#10;- Alterado: lógica de inicialização e reconexão de WebSocket no front-end para melhor controle de chamadas.&#10;- Corrigido: tratamento de áudio no fluxo VoIP, incluindo melhorias no buffer PCM e logs de eventos importantes.&#10;&#10;### Mudanças Relevantes&#10;- Removido: `libspech/extra/stubs/extra_audio_stubs.php`.&#10;- Alterado: gerenciamento de áudio em `router.js` e back-end (`audio.php`, `startCall.php`) com buffers otimizados e logs adicionais.&#10;- Adicionado: verificação de frequência e codec antes de processar áudio no back-end.&#10;- Corrigido: reconexões de WebSocket para chamada de áudio com gerenciamento de IDs de chamadas (`connect.php`, `router.js`).&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto:&#10;- A mudança no fluxo de áudio pode gerar variações no timing do envio de pacotes em sistemas de baixa latência.&#10;- Necessidade de testar integrações para codecs específicos como OPUS e G729.&#10;&#10;Nenhum efeito colateral conhecido até o momento." />
+    <option name="LAST_COMMIT_MESSAGE" value="Remover stubs de áudio obsoletos e corrigir fluxo de WebSocket para áudio&#10;&#10;### Problema&#10;- O arquivo `extra_audio_stubs.php` continha stubs gerados automaticamente que não estavam sendo utilizados, acumulando código redundante. &#10;- No fluxo de WebSocket, havia inconsistências no tratamento de áudio e no gerenciamento de chamadas, como conexões antigas não fechadas e logs insuficientes.&#10;&#10;### Solução&#10;- Removido: `extra_audio_stubs.php` para eliminar stubs desatualizados.&#10;- Adicionado: logs detalhados para acompanhamento do status do áudio e eventos das conexões no front-end (`router.js`) e back-end (`audio.php`, `startCall.php`).&#10;- Alterado: lógica de inicialização e reconexão de WebSocket no front-end para melhor controle de chamadas.&#10;- Corrigido: tratamento de áudio no fluxo VoIP, incluindo melhorias no buffer PCM e logs de eventos importantes.&#10;&#10;### Mudanças Relevantes&#10;- Removido: `libspech/extra/stubs/extra_audio_stubs.php`.&#10;- Alterado: gerenciamento de áudio em `router.js` e back-end (`audio.php`, `startCall.php`) com buffers otimizados e logs adicionais.&#10;- Adicionado: verificação de frequência e codec antes de processar áudio no back-end.&#10;- Corrigido: reconexões de WebSocket para chamada de áudio com gerenciamento de IDs de chamadas (`connect.php`, `router.js`).&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto:&#10;- A mudança no fluxo de áudio pode gerar variações no timing do envio de pacotes em sistemas de baixa latência.&#10;- Necessidade de testar integrações para codecs específicos como OPUS e G729.&#10;&#10;Nenhum efeito colateral conhecido até o momento." />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
@@ -710,40 +701,33 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/js/router.js</url>
-          <line>138</line>
-          <properties lambdaOrdinal="-1" />
+          <line>139</line>
           <option name="timeStamp" value="26" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>474</line>
-          <properties lambdaOrdinal="-1" />
+          <line>493</line>
           <option name="timeStamp" value="29" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/js/router.js</url>
-          <line>136</line>
-          <properties lambdaOrdinal="-1" />
+          <line>137</line>
           <option name="timeStamp" value="30" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
           <url>file://$PROJECT_DIR$/plugins/Message/handlers/connect.php</url>
-          <line>186</line>
+          <line>192</line>
           <option name="timeStamp" value="22" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
           <url>file://$PROJECT_DIR$/audio.php</url>
-          <line>216</line>
+          <line>199</line>
           <option name="timeStamp" value="27" />
         </line-breakpoint>
-        <line-breakpoint enabled="true" type="php-line-method">
+        <line-breakpoint enabled="true" type="php">
           <url>file://$PROJECT_DIR$/audio.php</url>
-          <line>296</line>
-          <properties>
-            <option name="className" value="" />
-            <option name="methodName" value="\normalizeAndMix" />
-          </properties>
-          <option name="timeStamp" value="10" />
+          <line>108</line>
+          <option name="timeStamp" value="31" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

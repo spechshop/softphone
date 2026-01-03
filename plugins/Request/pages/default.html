@@ -418,6 +418,24 @@
                 <input class="form-control soft-input" id="sipPass" type="text" value="">
             </div>
 
+            <div class="mb-3">
+                <label class="form-label mini mb-1">Codec do Tronco</label>
+                <select class="form-control soft-input" id="trunkCodec">
+                    <option value="PCMA/8000">PCMA 8kHz (A-law)</option>
+                    <option value="PCMU/8000">PCMU 8kHz (μ-law)</option>
+                    <option value="G729/8000">G.729 8kHz</option>
+                    <option value="OPUS/48000/2">Opus 48kHz (Estéreo)</option>
+                    <option value="G722/16000">G.722 16kHz (Wideband)</option>
+                    <option value="L16/8000/1">L16 8kHz (PCM Mono)</option>
+                    <option value="L16/16000/1">L16 16kHz (PCM Mono)</option>
+                    <option value="L16/44100/1">L16 44.1kHz (PCM Mono)</option>
+                    <option value="L16/48000/1">L16 48kHz (PCM Mono)</option>
+                    <option value="GSM/8000">GSM 8kHz</option>
+                    <option value="SPEEX/16000">Speex 16kHz (Wideband)</option>
+                    <option value="ILBC/8000">iLBC 8kHz</option>
+                </select>
+            </div>
+
             <div class="d-flex gap-2">
                 <button class="btn btn-soft w-100" type="button" onclick="saveConfig()">
                     <i
@@ -458,8 +476,9 @@
         const sipDomain = document.getElementById('sipDomain').value;
         const sipPass = document.getElementById('sipPass').value;
         const codec = getSelectedCodec();
+        const trunkCodec = document.getElementById('trunkCodec').value;
 
-        const data = {sipServer, sipUser, sipDomain, sipPass, codec};
+        const data = {sipServer, sipUser, sipDomain, sipPass, codec, trunkCodec};
 
 
         sendRecByToken(data, 'saveConfig').then((res) => {
@@ -814,9 +833,11 @@
     let sipServer = user.getValue('sipServer');
     let sipUser = user.getValue('sipUser');
     let sipPass = user.getValue('sipPass');
+    let trunkCodec = user.getValue('trunkCodec');
     if (sipServer) document.getElementById('sipServer').value = sipServer;
     if (sipUser) document.getElementById('sipUser').value = sipUser;
     if (sipPass) document.getElementById('sipPass').value = sipPass;
+    if (trunkCodec) document.getElementById('trunkCodec').value = trunkCodec;
 
     // ===== Microphone Audio Capture & WebSocket Stream
     let audioContext = null;
@@ -1231,6 +1252,10 @@
             user.updateUserData('selectedCodecFormat', format);
             updateCodecUI(codec);
             console.log('🎵 Codec selecionado:', format, '• Sample rate:', sampleRate + 'Hz');
+            user.updateUserData('codec', format);
+            user.updateUserData('sampleRate', sampleRate);
+
+
         });
     });
 

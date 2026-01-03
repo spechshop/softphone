@@ -76,8 +76,8 @@ class startCall
         }
 
         $userData = $vault->get($fingerprint);
-        $userCodec = $userData['codec'] ?? 'PCMA/8000';
-        if (!empty($data['codec'])) $userCodec = $data['codec'];
+        $trunkCodec = $userData['trunkCodec'] ?? 'PCMA/8000';
+        //if (!empty($data['codec'])) $userCodec = $data['codec'];
 
 
         if (array_key_exists($fingerprint, cache::get('coroutinesProcess'))) {
@@ -249,7 +249,7 @@ class startCall
             }
         });
 
-        $phone->mountLineCodecSDP($userCodec);
+        $phone->mountLineCodecSDP($trunkCodec);
 
 
         $callId = $phone->callId;
@@ -260,8 +260,13 @@ class startCall
         $portHandler = $phone->globalInfo['eventSock']->getsockname()['port'];
 
 
+        $userCodec = $data['codec'] ?? 'PCMA/8000';
+        $parts = explode('/', $userCodec);
+        $userFrequency = (int)$parts[1] ?? 8000;
 
-        $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone, $codec, $frequency) use ($fingerprint, $portHandler) {
+
+        $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone, $codec, $frequency)
+        use ($fingerprint, $portHandler, $userFrequency) {
             if (strlen($pcmData) < 12) return;
             $id = implode(':', array_values($peer));
 
@@ -271,7 +276,7 @@ class startCall
 
             /** @var Socket $eventSock */
             $phone->globalInfo['eventSock']
-                ->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}__::__{$codec}__::__{$frequency}");
+                ->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
         });
 
 
@@ -386,7 +391,6 @@ class startCall
 
                 cli::pcl("Fechando socket (Browser Mic)", "red");
             });
-
 
 
             $datasUser = $vault->get($fingerprint);

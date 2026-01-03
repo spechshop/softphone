@@ -70,7 +70,7 @@ class saveConfig
                 'message' => 'Verificando registro...'
             ]
         ]));
-        $needInputs = ['sipServer', 'sipUser', 'sipPass', 'codec'];
+        $needInputs = ['sipServer', 'sipUser', 'sipPass', 'codec', 'trunkCodec'];
         foreach ($needInputs as $input) {
             if (empty($data[$input])) {
                 return $socket->push($fd, json_encode([

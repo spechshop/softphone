@@ -48,6 +48,15 @@ class register
             $peer = [];
             $res = $phone->socket->recvfrom($peer, 5);
             $receive = sip::parse($res);
+            if ($receive['method'] !== 401) {
+                if ($receive['method'] == '200') {
+                    return true;
+                } else {
+                    return false;
+                }
+            }
+
+
             $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
             $nonce = value($wwwAuthenticate, 'nonce="', '"');
             $realm = value($wwwAuthenticate, 'realm="', '"');
