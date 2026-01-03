@@ -5,6 +5,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.2.1] - 2026-01-03
+
+### Added
+
+- Documentation landing page at `docs/index.html` detailing setup, architecture,
+  and useful links for the
+  project. [[3a4cddc](https://github.com/berzersks/spechphone/commit/3a4cddcfde06b507169cf8542fc4d102a9464249), [5a5499f](https://github.com/berzersks/spechphone/commit/5a5499fb6c5dd5ab8ba8668479e8625ea6c86183)]
+- Validation of the SIP `trunkCodec` field when saving
+  configuration. [[3933496](https://github.com/berzersks/spechphone/commit/39334964fe42695b8d6d2e321e37471b2682d44a)]
+
+### Changed
+
+- SIP registration flow now returns explicit success/failure for non-`401` HTTP
+  responses, and connection requests fall back to the `default` page when an
+  invalid route is
+  provided. [[3933496](https://github.com/berzersks/spechphone/commit/39334964fe42695b8d6d2e321e37471b2682d44a)]
+- Audio/WebSocket call handling tuned with buffer improvements, codec/frequency
+  checks, reconnection controls, and richer logging across client and
+  server. [[8258d29](https://github.com/berzersks/spechphone/commit/8258d2938515bccdb6405a753ebb9b9d3ff6d82c)]
+
+### Fixed
+
+- Cleaned up stale audio call connections and improved PCM buffering to reduce
+  audio inconsistencies during WebSocket
+  calls. [[8258d29](https://github.com/berzersks/spechphone/commit/8258d2938515bccdb6405a753ebb9b9d3ff6d82c)]
+
+### Removed
+
+- Deprecated audio stub file for unused extra audio
+  code. [[8258d29](https://github.com/berzersks/spechphone/commit/8258d2938515bccdb6405a753ebb9b9d3ff6d82c)]
+
 ## [0.2.0] - 2025-12-30
 
 ### Added
@@ -49,5 +80,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed
 - Bug in `cache.php` regarding conditional removal of global keys. [[cd69b96](https://github.com/berzersks/spechphone/commit/cd69b96bc3571a9fb3b8506b29ce9ea9166a8bc7)]
 
+[0.2.1]: https://github.com/berzersks/spechphone/commits/39334964fe42695b8d6d2e321e37471b2682d44a
 [0.2.0]: https://github.com/berzersks/spechphone/commits/96d2c378e6051d5532704bc73c81750d016e0c60
 [0.1.0]: https://github.com/berzersks/spechphone/commits/d0d9d66f6ef9a19c240a54d35cd8fe6c4869d2fe
