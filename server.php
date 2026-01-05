@@ -12,6 +12,8 @@ use Swoole\WebSocket\Server;
 global $server;
 global $coroutinesProcess;
 
+
+print "Thread started..." . PHP_EOL;
 include 'libspech/plugins/autoloader.php';
 include 'plugins/autoload.php';
 
@@ -25,7 +27,7 @@ if (cacheLibSpech::get('interface')['ssl']) {
             $keyFile = $interfacetr['serverSettings']['ssl_key_file'];
             $certFile = $interfacetr['serverSettings']['ssl_cert_file'];
             \libspech\Cli\cli::pcl("Generating SSL certificates...");
-            \libspech\Cli\cli::pcl("Arquivos: $keyFile, $certFile");
+
 
             // Gerar chave privada e certificado em arquivos separados
             shell_exec('openssl req -x509 -nodes -days 365 -newkey rsa:2048 -keyout ' . escapeshellarg($keyFile) . ' -out ' . escapeshellarg($certFile) . ' -subj "/C=BR/ST=State/L=City/O=Organization/OU=Unit/CN=localhost" 2>&1');
@@ -58,10 +60,6 @@ if (cacheLibSpech::get('interface')['ssl']) {
 }
 
 
-
-
-
-print "Thread started..." . PHP_EOL;
 cache::define('breakAllLoops', false);
 
 
@@ -99,7 +97,6 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         $respondOk = \libspech\Packet\renderMessages::respondOptions($parse['headers']);
         $socket->sendto($info['address'], $info['port'], $respondOk);
     }
-    \libspech\Cli\cli::pcl($data);
 });
 
 

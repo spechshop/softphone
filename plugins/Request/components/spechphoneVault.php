@@ -30,7 +30,7 @@ class spechphoneVault
             throw new \RuntimeException('ext-sodium não carregada');
         }
 
-        $this->path = $path;
+        $this->path = $this->resolvePath($path);
         $this->debounceMs = max(100, $debounceMs);
 
         $key = sodium_hex2bin($hexKey32);
@@ -98,6 +98,38 @@ class spechphoneVault
     }
 
     /* ================= Internals ================= */
+
+    private function resolvePath(string $path): string
+    {
+        $dir = dirname($path);
+        $filename = basename($path);
+
+        // Tenta usar o caminho original
+        if (is_dir($dir) && is_writable($dir)) {
+            return $path;
+        }
+
+        // Tenta criar o diretório original
+        if (!is_dir($dir) && @mkdir($dir, 0777, true) && is_writable($dir)) {
+            return $path;
+        }
+
+        // Fallback: usa o diretório temporário do sistema
+        $fallbackDir = sys_get_temp_dir() . '/spechphone';
+        if (!is_dir($fallbackDir)) {
+            if (!@mkdir($fallbackDir, 0777, true)) {
+                throw new \RuntimeException(
+                    "Não foi possível criar nem o diretório '{$dir}' nem o fallback '{$fallbackDir}'. " .
+                    "Verifique as permissões do sistema de arquivos."
+                );
+            }
+        }
+
+        $fallbackPath = \plugins\Request\appController::baseDir() . $filename;
+
+
+        return $fallbackPath;
+    }
 
     private function atomicNumberOp(string $key, int|float $delta): int|float
     {
@@ -213,11 +245,20 @@ class spechphoneVault
     private function atomicWrite(string $file, string $bytes): void
     {
         $dir = dirname($file);
-        if (!is_dir($dir)) mkdir($dir, 777, true);
-
         $tmp = $file . '.tmp.' . getmypid();
-        file_put_contents($tmp, $bytes, LOCK_EX);
-        rename($tmp, $file);
+
+        if (@file_put_contents($tmp, $bytes, LOCK_EX) === false) {
+            throw new \RuntimeException(
+                "Não foi possível escrever no arquivo temporário '{$tmp}'. " .
+                "Verifique as permissões do diretório '{$dir}'."
+            );
+        }
+
+        if (!@rename($tmp, $file)) {
+            @unlink($tmp);
+        }
+
+        @chmod($file, 0666);
     }
 
     private function withLock(callable $fn): void

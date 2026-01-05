@@ -28,6 +28,18 @@ class register
         $sipServer = $userDatas['sipServer'];
         $sipUser = $userDatas['sipUser'];
         $sipPass = $userDatas['sipPass'];
+        $needInputs = ['sipServer', 'sipUser', 'sipPass'];
+        foreach ($needInputs as $input) {
+            if (empty($userDatas[$input])) {
+                return $socket->push($fd, json_encode([
+                    'type' => 'notify',
+                    'data' => [
+                        'type' => 'bg-danger text-white',
+                        'message' => 'Campo obrigatório não preenchido: ' . $input
+                    ]
+                ]));
+            }
+        }
 
         try {
             $phone = new \libspech\Sip\trunkController($sipUser, $sipPass, $sipServer);

@@ -7,7 +7,6 @@ use libspech\Cache\cache;
 use libspech\Cli\cli;
 use libspech\Network\network;
 use libspech\Sip\sip;
-use Random\RandomException;
 use Swoole\Timer;
 
 class connect
@@ -169,6 +168,10 @@ class connect
         });
         $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
         if (!$vault->exists($data['fp'])) return false;
+        $Rules = ['sipServer', 'sipUser', 'sipPass'];
+        foreach ($Rules as $rule) {
+            if (empty($data[$rule])) return false;
+        }
 
         $userDatas = $vault->get($data['fp']);
         $sipServer = $userDatas['sipServer'];
@@ -177,7 +180,7 @@ class connect
 
         try {
             $phone = new \libspech\Sip\trunkController($sipUser, $sipPass, $sipServer);
-        } catch (RandomException $e) {
+        } catch (\Throwable $e) {
             return false;
         }
         $modelRegister = $phone->modelRegister();
