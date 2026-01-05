@@ -18,14 +18,16 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="Remover stubs de áudio obsoletos e corrigir fluxo de WebSocket para áudio&#10;&#10;### Problema&#10;- O arquivo `extra_audio_stubs.php` continha stubs gerados automaticamente que não estavam sendo utilizados, acumulando código redundante. &#10;- No fluxo de WebSocket, havia inconsistências no tratamento de áudio e no gerenciamento de chamadas, como conexões antigas não fechadas e logs insuficientes.&#10;&#10;### Solução&#10;- Removido: `extra_audio_stubs.php` para eliminar stubs desatualizados.&#10;- Adicionado: logs detalhados para acompanhamento do status do áudio e eventos das conexões no front-end (`router.js`) e back-end (`audio.php`, `startCall.php`).&#10;- Alterado: lógica de inicialização e reconexão de WebSocket no front-end para melhor controle de chamadas.&#10;- Corrigido: tratamento de áudio no fluxo VoIP, incluindo melhorias no buffer PCM e logs de eventos importantes.&#10;&#10;### Mudanças Relevantes&#10;- Removido: `libspech/extra/stubs/extra_audio_stubs.php`.&#10;- Alterado: gerenciamento de áudio em `router.js` e back-end (`audio.php`, `startCall.php`) com buffers otimizados e logs adicionais.&#10;- Adicionado: verificação de frequência e codec antes de processar áudio no back-end.&#10;- Corrigido: reconexões de WebSocket para chamada de áudio com gerenciamento de IDs de chamadas (`connect.php`, `router.js`).&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto:&#10;- A mudança no fluxo de áudio pode gerar variações no timing do envio de pacotes em sistemas de baixa latência.&#10;- Necessidade de testar integrações para codecs específicos como OPUS e G729.&#10;&#10;Nenhum efeito colateral conhecido até o momento.">
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="Adicione modal interativo para visualização em tela cheia de capturas de tela em `docs/index.html`&#10;&#10;### Problema&#10;A seção de capturas de tela na documentação exibia as imagens de forma estática, limitando a interação e dificultando a visualização em dispositivos com telas menores.&#10;&#10;### Solução&#10;- Implementado modal interativo em HTML, CSS e JavaScript para visualização em tela cheia das capturas de tela.&#10;- Adicionada transição suave e zoom ao passar o cursor sobre as imagens.&#10;- Incluído suporte à navegação intuitiva (clique no modal, botão de fechar e tecla ESC).&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Modal de visualização em tela cheia no arquivo `docs/index.html`.&#10;- Adicionado: Estilos CSS para transições e animações ao abrir o modal.&#10;- Adicionado: Script JavaScript para gerenciamento de eventos do modal e comportamento responsivo.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. Monitorar o comportamento do modal em dispositivos móveis e navegadores menos comuns.">
+      <change afterPath="$PROJECT_DIR$/post.md" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/audio.php" beforeDir="false" afterPath="$PROJECT_DIR$/audio.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/middleware.php" beforeDir="false" afterPath="$PROJECT_DIR$/server.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/connect.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/connect.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/register.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/register.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/components/spechphoneVault.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/components/spechphoneVault.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/configInterface.json" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/configInterface.json" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,7 +48,7 @@
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="175" />
+    <option name="cachedIndexableFilesCount" value="186" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -131,38 +133,38 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;JavaScript Debug.audio.html.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;volume-dev&quot;,
-    &quot;javascript.nodejs.core.library.configured.version&quot;: &quot;21.0.0&quot;,
-    &quot;javascript.nodejs.core.library.typings.version&quot;: &quot;25.0.3&quot;,
-    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/lotus/PROJETOS/spechphone/libspech&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;project.propVCSSupport.Mappings&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "JavaScript Debug.audio.html.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "volume-dev",
+    "javascript.nodejs.core.library.configured.version": "21.0.0",
+    "javascript.nodejs.core.library.typings.version": "25.0.3",
+    "javascript.preferred.runtime.type.id": "node",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/lotus/PROJETOS/spechphone/docs",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "junie.project.settings",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;ChangesTree.GroupingKeys&quot;: [
-      &quot;repository&quot;
+  "keyToStringList": {
+    "ChangesTree.GroupingKeys": [
+      "repository"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecapSettings">
     <option name="autoUpdateEnabled" value="false" />
   </component>
@@ -175,6 +177,7 @@
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/docs" />
       <recent name="$PROJECT_DIR$" />
     </key>
   </component>
@@ -240,39 +243,11 @@
       <workItem from="1767383097780" duration="50000" />
       <workItem from="1767386431872" duration="24000" />
       <workItem from="1767425147488" duration="57000" />
-      <workItem from="1767449915510" duration="6174000" />
-    </task>
-    <task id="LOCAL-00032" summary="### Atualiza exibição de tabs e adiciona screenshot ao README&#10;&#10;### Problema&#10;A navegação entre tabs da interface não ocultava os conteúdos correspondentes de forma dinâmica, deixando múltiplos conteúdos visíveis ao mesmo tempo. Além disso, a documentação no README carecia de visuais exemplificando as principais interfaces.&#10;&#10;### Solução&#10;- Implementada lógica para alternância dinâmica entre conteúdos exibidos nas tabs, ocultando os não selecionados.&#10;- Adicionados screenshots das principais interfaces (chamada, áudio e configuração) ao README para melhor entendimento visual.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Lógica de exibição dinâmica entre `.tab-content` no arquivo `plugins/Request/pages/index.html`.&#10;- Adicionado: Secção de screenshots no `README.md` com imagens exemplificando a interface do sistema.&#10;- Adicionado: Arquivos de screenshots (`screenshot_audio.png`, `screenshot_call.png`, `screenshot_config.png`).&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767101827004</created>
-      <option name="number" value="00032" />
-      <option name="presentableId" value="LOCAL-00032" />
-      <option name="project" value="LOCAL" />
-      <updated>1767101827004</updated>
-    </task>
-    <task id="LOCAL-00033" summary="Altere tab padrão para &quot;call&quot; ao carregar a página&#10;&#10;### Problema&#10;A tab padrão exibida ao carregar a página era &quot;config&quot;, o que poderia confundir usuários que esperam iniciar diretamente na interface de chamadas.&#10;&#10;### Solução&#10;- Alterado valor padrão da variável `currentTab` para &quot;call&quot; no arquivo `plugins/Request/pages/index.html`.&#10;- Essa alteração garante que a interface de chamadas seja a primeira exibida ao carregar a página, proporcionando uma experiência mais intuitiva.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Valor padrão de `currentTab` no arquivo `plugins/Request/pages/index.html`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767102637250</created>
-      <option name="number" value="00033" />
-      <option name="presentableId" value="LOCAL-00033" />
-      <option name="project" value="LOCAL" />
-      <updated>1767102637250</updated>
-    </task>
-    <task id="LOCAL-00034" summary="Adicione arquivo de licença Apache 2.0&#10;&#10;### Problema&#10;O repositório não possuía um arquivo de licença, o que dificultava a compreensão das permissões e restrições para uso, modificação e redistribuição do código.&#10;&#10;### Solução&#10;- Adicionado o arquivo `LICENSE.txt` com o texto completo da licença Apache 2.0.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Arquivo de licença `LICENSE.txt` na raiz do projeto.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767106197910</created>
-      <option name="number" value="00034" />
-      <option name="presentableId" value="LOCAL-00034" />
-      <option name="project" value="LOCAL" />
-      <updated>1767106197910</updated>
-    </task>
-    <task id="LOCAL-00035" summary="Adicione arquivo de licença Apache 2.0&#10;&#10;### Problema&#10;O repositório não possuía um arquivo de licença, o que dificultava a compreensão das permissões e restrições para uso, modificação e redistribuição do código.&#10;&#10;### Solução&#10;- Adicionado o arquivo `LICENSE.txt` com o texto completo da licença Apache 2.0.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Arquivo de licença `LICENSE.txt` na raiz do projeto.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767106392138</created>
-      <option name="number" value="00035" />
-      <option name="presentableId" value="LOCAL-00035" />
-      <option name="project" value="LOCAL" />
-      <updated>1767106392138</updated>
+      <workItem from="1767449915510" duration="7733000" />
+      <workItem from="1767468148163" duration="612000" />
+      <workItem from="1767549886453" duration="3006000" />
+      <workItem from="1767620801309" duration="3985000" />
+      <workItem from="1767628065066" duration="3137000" />
     </task>
     <task id="LOCAL-00036" summary="Adicione arquivo de licença Apache 2.0&#10;&#10;### Problema&#10;O repositório não possuía um arquivo de licença, o que dificultava a compreensão das permissões e restrições para uso, modificação e redistribuição do código.&#10;&#10;### Solução&#10;- Adicionado o arquivo `LICENSE.txt` com o texto completo da licença Apache 2.0.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Arquivo de licença `LICENSE.txt` na raiz do projeto.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -634,7 +609,39 @@
       <option name="project" value="LOCAL" />
       <updated>1767377977012</updated>
     </task>
-    <option name="localTasksCounter" value="81" />
+    <task id="LOCAL-00081" summary="Adicione campo `trunkCodec` à validação e ajuste fluxo de registro SIP&#10;&#10;### Problema&#10;O campo `trunkCodec` não era validado no processo de configuração SIP, gerando possíveis lacunas em registros incompletos. Além disso, no fluxo de registro SIP, a ausência de tratamento adequado para respostas HTTP diferentes de `401` causava falhas silenciosas na autenticação.&#10;&#10;### Solução&#10;- Adicionado o campo `trunkCodec` à lista de validações no arquivo `saveConfig.php`.&#10;- Alterado o fluxo de registro em `register.php` para tratar casos onde a resposta HTTP não seja 401, retornando adequadamente o sucesso (`200`) ou indicando falha em outros casos.&#10;- Implementada verificação condicional para páginas inexistentes no handler `connect.php`, definindo a página `'default'` como fallback seguro.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Campo `trunkCodec` à validação de entrada em `saveConfig.php`.&#10;- Corrigido: Tratamento de registros SIP em `register.php` para respostas HTTP diferentes de 401.&#10;- Alterado: Fallback para páginas inexistentes no processo de conexão em `connect.php`.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: O sistema agora depende da validação do campo `trunkCodec` para registros completos, podendo invalidar configurações antigas que não incluam o campo.&#10;⚠️ Limitação conhecida: Necessidade de testar o fluxo de registro com diferentes respostas SIP para garantir a robustez do tratamento.&#10;Nenhum outro efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1767456128806</created>
+      <option name="number" value="00081" />
+      <option name="presentableId" value="LOCAL-00081" />
+      <option name="project" value="LOCAL" />
+      <updated>1767456128806</updated>
+    </task>
+    <task id="LOCAL-00082" summary="Adicione campo `trunkCodec` à validação e ajuste fluxo de registro SIP&#10;&#10;### Problema&#10;O campo `trunkCodec` não era validado no processo de configuração SIP, gerando possíveis lacunas em registros incompletos. Além disso, no fluxo de registro SIP, a ausência de tratamento adequado para respostas HTTP diferentes de `401` causava falhas silenciosas na autenticação.&#10;&#10;### Solução&#10;- Adicionado o campo `trunkCodec` à lista de validações no arquivo `saveConfig.php`.&#10;- Alterado o fluxo de registro em `register.php` para tratar casos onde a resposta HTTP não seja 401, retornando adequadamente o sucesso (`200`) ou indicando falha em outros casos.&#10;- Implementada verificação condicional para páginas inexistentes no handler `connect.php`, definindo a página `'default'` como fallback seguro.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Campo `trunkCodec` à validação de entrada em `saveConfig.php`.&#10;- Corrigido: Tratamento de registros SIP em `register.php` para respostas HTTP diferentes de 401.&#10;- Alterado: Fallback para páginas inexistentes no processo de conexão em `connect.php`.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: O sistema agora depende da validação do campo `trunkCodec` para registros completos, podendo invalidar configurações antigas que não incluam o campo.&#10;⚠️ Limitação conhecida: Necessidade de testar o fluxo de registro com diferentes respostas SIP para garantir a robustez do tratamento.&#10;Nenhum outro efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1767456247651</created>
+      <option name="number" value="00082" />
+      <option name="presentableId" value="LOCAL-00082" />
+      <option name="project" value="LOCAL" />
+      <updated>1767456247651</updated>
+    </task>
+    <task id="LOCAL-00083" summary="Altere o tema visual e adicione seção de capturas de tela em `docs/index.html`&#10;&#10;### Problema&#10;O tema visual da documentação dificultava a leitura em ambientes de baixa luminosidade, e não havia exemplos visuais de telas importantes do projeto, dificultando o entendimento das funcionalidades pelos usuários.&#10;&#10;### Solução&#10;- Alterado o tema para cores adaptadas ao modo escuro, melhorando a legibilidade.&#10;- Adicionada uma seção de capturas de tela em HTML para exibir interfaces significativas do projeto.&#10;- Incluídas imagens de interfaces de configuração, chamadas e processamento de áudio.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Estilo visual no arquivo `docs/index.html` para um tema escuro.&#10;- Adicionado: Seção de capturas de tela na documentação (`docs/index.html`) com seis novas imagens (ex.: `screenshot_config.png`, `screenshot_call.png`).&#10;- Adicionado: Novos arquivos de imagem no diretório `docs/`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1767621717633</created>
+      <option name="number" value="00083" />
+      <option name="presentableId" value="LOCAL-00083" />
+      <option name="project" value="LOCAL" />
+      <updated>1767621717633</updated>
+    </task>
+    <task id="LOCAL-00084" summary="Adicione modal interativo para visualização em tela cheia de capturas de tela em `docs/index.html`&#10;&#10;### Problema&#10;A seção de capturas de tela na documentação exibia as imagens de forma estática, limitando a interação e dificultando a visualização em dispositivos com telas menores.&#10;&#10;### Solução&#10;- Implementado modal interativo em HTML, CSS e JavaScript para visualização em tela cheia das capturas de tela.&#10;- Adicionada transição suave e zoom ao passar o cursor sobre as imagens.&#10;- Incluído suporte à navegação intuitiva (clique no modal, botão de fechar e tecla ESC).&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Modal de visualização em tela cheia no arquivo `docs/index.html`.&#10;- Adicionado: Estilos CSS para transições e animações ao abrir o modal.&#10;- Adicionado: Script JavaScript para gerenciamento de eventos do modal e comportamento responsivo.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. Monitorar o comportamento do modal em dispositivos móveis e navegadores menos comuns.">
+      <option name="closed" value="true" />
+      <created>1767625489540</created>
+      <option name="number" value="00084" />
+      <option name="presentableId" value="LOCAL-00084" />
+      <option name="project" value="LOCAL" />
+      <updated>1767625489540</updated>
+    </task>
+    <option name="localTasksCounter" value="85" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -661,9 +668,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Atualize manipulação de áudio para suportar codec e frequência dinâmica&#10;&#10;### Problema&#10;O sistema não considerava dinamicamente o codec e a frequência dos pacotes RTP recebidos, o que limitava a compatibilidade com diferentes configurações de áudio. Além disso, a frequência fixa de 8000 Hz no mix de canais causava inconsistências na qualidade do áudio para frequências mais altas.&#10;&#10;### Solução&#10;- Adicionado suporte para codec e frequência dinâmica no processamento de áudio.&#10;- Modificado o método `mixAudioChannels` para trabalhar com frequência de 48000 Hz, garantindo maior fidelidade.&#10;- Alterado fluxo de envio de pacotes RTP para incluir informações de codec e frequência.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Frequência padrão de mistura de áudio de 8000 Hz para 48000 Hz (`audio.php`).&#10;- Adicionado: Suporte ao envio de codec e frequência nos pacotes RTP gerados (`startCall.php`).&#10;- Refatorado: Lógica de extração de dados RTP em `audio.php` para considerar codec e frequência.&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Alterações no processamento podem influenciar a performance sob alta carga devido ao aumento da frequência de processamento.&#10;⚠️ Limitação conhecida: Necessidade de validação em produção com diferentes codecs para garantir compatibilidade total." />
-    <MESSAGE value="Remova chamada ao método `defineTimeout` no fluxo de `startCall`&#10;&#10;### Problema&#10;O método `defineTimeout` estava definido no fluxo de início de chamada (`startCall.php`), porém sua execução não apresentava efeito prático nesse contexto. Essa chamada era redundante e podia causar confusão na manutenção do código.&#10;&#10;### Solução&#10;- Removida a linha que executava o método `defineTimeout(3200)` no arquivo `plugins/Message/handlers/startCall.php`.&#10;&#10;### Mudanças relevantes&#10;- Removido: Chamada desnecessária ao método `defineTimeout` no fluxo de manipulação de chamadas.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
-    <MESSAGE value="Remova funcionalidade de gravação e reprodução de áudio local&#10;&#10;### Problema&#10;A página `audio.html` continha uma interface e lógica para gravação de áudio local e reprodução, mas essa funcionalidade não era mais utilizada e mantê-la no código gerava complexidade desnecessária. Além disso, a remoção afeta arquivos relacionados à lógica de manipulação de áudio.&#10;&#10;### Solução&#10;- Excluído o arquivo `plugins/Request/pages/audio.html`, que continha a interface e lógica para gravação e reprodução de áudio.&#10;- Corrigido fluxo no arquivo `default.html`, para ajuste de campos e remoção de dependências irrelevantes.&#10;&#10;### Mudanças relevantes&#10;- Removido: Arquivo `audio.html` (plugins/Request/pages).&#10;- Removido: Mapeamento redundante do diretório `libspech1` em `.idea/vcs.xml`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Remova a seção de exibição de codecs da interface&#10;&#10;### Problema&#10;A página `default.html` continha uma seção destinada à exibição de codecs com informações simuladas. Essa interface não era utilizada no fluxo principal e representava complexidade desnecessária na manutenção do código.&#10;&#10;### Solução&#10;- Removida a seção completa de exibição de codecs no arquivo `default.html`.&#10;&#10;### Mudanças relevantes&#10;- Removido: Bloco HTML responsável pela exibição de codecs simulados na página `default.html`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Atualize limpeza de recursos no encerramento de chamadas em `startCall.php`&#10;&#10;### Problema&#10;O fluxo de encerramento de chamadas no arquivo `startCall.php` não realizava a limpeza completa de recursos associados, como conexões e objetos temporários, o que poderia ocasionar vazamento de memória e inconsistências em carga alta.&#10;&#10;### Solução&#10;- Adicionada exclusão de objetos em cache relacionados ao identificador de chamada (`fingerprint`).&#10;- Incluído loop para notificar conexões abertas com a mensagem `bye` antes de encerrar.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Chamada a `cache::unset` para remover o registro `coroutinesProcess` da memória.&#10;- Adicionado: Loop para enviar eventos `bye` às conexões associadas ao fingerprint atual.&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Alteração pode modificar o comportamento em cenários de chamadas simultâneas, sendo necessário monitorar em produção." />
     <MESSAGE value="Atualize encerramento de chamadas para evitar conexões abertas&#10;&#10;### Problema&#10;No arquivo `hangUpCall.php`, o encerramento de chamadas não incluía a liberação completa de recursos, deixando conexões abertas em determinados cenários. Essa limitação poderia causar vazamento de memória ou inconsistências durante operação prolongada.&#10;&#10;### Solução&#10;- Adicionada a chamada ao método `close()` após `bye()` para garantir o encerramento adequado da conexão.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Chamada ao método `close()` no fluxo de encerramento em `plugins/Message/handlers/hangUpCall.php`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
@@ -686,7 +690,10 @@
     <MESSAGE value="Comente a linha referente ao diretório `/libspech/` no `.gitignore`&#10;&#10;### Problema&#10;A entrada `/libspech/` no `.gitignore` estava impedindo o rastreamento de mudanças no diretório, mas a exclusão deixou de ser necessária no contexto atual. No entanto, não havia certeza absoluta se este diretório deveria ser totalmente removido do controle de versão ou mantido.&#10;&#10;### Solução&#10;- Comentado a linha `/libspech/` no `.gitignore`, permitindo que o diretório seja rastreado novamente enquanto abertura para revisão futura é mantida.&#10;- Adicionado submódulo `libspech` no repositório via `.gitmodules`.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Comentada a linha referente ao diretório `/libspech/` no arquivo `.gitignore`.&#10;- Adicionado: Configuração de submódulo para o diretório `libspech` no arquivo `.gitmodules`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. Monitorar o repositório para verificar possíveis conflitos ou mudanças inesperadas envolvendo este diretório." />
     <MESSAGE value="Adicione página inicial completa para documentação do projeto em `docs/index.html`&#10;&#10;### Problema&#10;O projeto não possuía uma página inicial estruturada para documentação, dificultando o entendimento dos recursos e de sua instalação pelos usuários.&#10;&#10;### Solução&#10;- Criado o arquivo `docs/index.html` com layout completo em HTML e estilo CSS inline.&#10;- Adicionadas seções descritivas: introdução, recursos, requisitos, instalação, arquitetura, e links úteis.&#10;- Incluído guia detalhado para configuração de ambiente e execução do projeto.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: `docs/index.html` com detalhamento do projeto.&#10;- Adicionado: Referências visuais (badges) e seções explicativas.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Remover stubs de áudio obsoletos e corrigir fluxo de WebSocket para áudio&#10;&#10;### Problema&#10;- O arquivo `extra_audio_stubs.php` continha stubs gerados automaticamente que não estavam sendo utilizados, acumulando código redundante. &#10;- No fluxo de WebSocket, havia inconsistências no tratamento de áudio e no gerenciamento de chamadas, como conexões antigas não fechadas e logs insuficientes.&#10;&#10;### Solução&#10;- Removido: `extra_audio_stubs.php` para eliminar stubs desatualizados.&#10;- Adicionado: logs detalhados para acompanhamento do status do áudio e eventos das conexões no front-end (`router.js`) e back-end (`audio.php`, `startCall.php`).&#10;- Alterado: lógica de inicialização e reconexão de WebSocket no front-end para melhor controle de chamadas.&#10;- Corrigido: tratamento de áudio no fluxo VoIP, incluindo melhorias no buffer PCM e logs de eventos importantes.&#10;&#10;### Mudanças Relevantes&#10;- Removido: `libspech/extra/stubs/extra_audio_stubs.php`.&#10;- Alterado: gerenciamento de áudio em `router.js` e back-end (`audio.php`, `startCall.php`) com buffers otimizados e logs adicionais.&#10;- Adicionado: verificação de frequência e codec antes de processar áudio no back-end.&#10;- Corrigido: reconexões de WebSocket para chamada de áudio com gerenciamento de IDs de chamadas (`connect.php`, `router.js`).&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto:&#10;- A mudança no fluxo de áudio pode gerar variações no timing do envio de pacotes em sistemas de baixa latência.&#10;- Necessidade de testar integrações para codecs específicos como OPUS e G729.&#10;&#10;Nenhum efeito colateral conhecido até o momento." />
-    <option name="LAST_COMMIT_MESSAGE" value="Remover stubs de áudio obsoletos e corrigir fluxo de WebSocket para áudio&#10;&#10;### Problema&#10;- O arquivo `extra_audio_stubs.php` continha stubs gerados automaticamente que não estavam sendo utilizados, acumulando código redundante. &#10;- No fluxo de WebSocket, havia inconsistências no tratamento de áudio e no gerenciamento de chamadas, como conexões antigas não fechadas e logs insuficientes.&#10;&#10;### Solução&#10;- Removido: `extra_audio_stubs.php` para eliminar stubs desatualizados.&#10;- Adicionado: logs detalhados para acompanhamento do status do áudio e eventos das conexões no front-end (`router.js`) e back-end (`audio.php`, `startCall.php`).&#10;- Alterado: lógica de inicialização e reconexão de WebSocket no front-end para melhor controle de chamadas.&#10;- Corrigido: tratamento de áudio no fluxo VoIP, incluindo melhorias no buffer PCM e logs de eventos importantes.&#10;&#10;### Mudanças Relevantes&#10;- Removido: `libspech/extra/stubs/extra_audio_stubs.php`.&#10;- Alterado: gerenciamento de áudio em `router.js` e back-end (`audio.php`, `startCall.php`) com buffers otimizados e logs adicionais.&#10;- Adicionado: verificação de frequência e codec antes de processar áudio no back-end.&#10;- Corrigido: reconexões de WebSocket para chamada de áudio com gerenciamento de IDs de chamadas (`connect.php`, `router.js`).&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto:&#10;- A mudança no fluxo de áudio pode gerar variações no timing do envio de pacotes em sistemas de baixa latência.&#10;- Necessidade de testar integrações para codecs específicos como OPUS e G729.&#10;&#10;Nenhum efeito colateral conhecido até o momento." />
+    <MESSAGE value="Adicione campo `trunkCodec` à validação e ajuste fluxo de registro SIP&#10;&#10;### Problema&#10;O campo `trunkCodec` não era validado no processo de configuração SIP, gerando possíveis lacunas em registros incompletos. Além disso, no fluxo de registro SIP, a ausência de tratamento adequado para respostas HTTP diferentes de `401` causava falhas silenciosas na autenticação.&#10;&#10;### Solução&#10;- Adicionado o campo `trunkCodec` à lista de validações no arquivo `saveConfig.php`.&#10;- Alterado o fluxo de registro em `register.php` para tratar casos onde a resposta HTTP não seja 401, retornando adequadamente o sucesso (`200`) ou indicando falha em outros casos.&#10;- Implementada verificação condicional para páginas inexistentes no handler `connect.php`, definindo a página `'default'` como fallback seguro.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Campo `trunkCodec` à validação de entrada em `saveConfig.php`.&#10;- Corrigido: Tratamento de registros SIP em `register.php` para respostas HTTP diferentes de 401.&#10;- Alterado: Fallback para páginas inexistentes no processo de conexão em `connect.php`.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: O sistema agora depende da validação do campo `trunkCodec` para registros completos, podendo invalidar configurações antigas que não incluam o campo.&#10;⚠️ Limitação conhecida: Necessidade de testar o fluxo de registro com diferentes respostas SIP para garantir a robustez do tratamento.&#10;Nenhum outro efeito colateral conhecido até o momento." />
+    <MESSAGE value="Altere o tema visual e adicione seção de capturas de tela em `docs/index.html`&#10;&#10;### Problema&#10;O tema visual da documentação dificultava a leitura em ambientes de baixa luminosidade, e não havia exemplos visuais de telas importantes do projeto, dificultando o entendimento das funcionalidades pelos usuários.&#10;&#10;### Solução&#10;- Alterado o tema para cores adaptadas ao modo escuro, melhorando a legibilidade.&#10;- Adicionada uma seção de capturas de tela em HTML para exibir interfaces significativas do projeto.&#10;- Incluídas imagens de interfaces de configuração, chamadas e processamento de áudio.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Estilo visual no arquivo `docs/index.html` para um tema escuro.&#10;- Adicionado: Seção de capturas de tela na documentação (`docs/index.html`) com seis novas imagens (ex.: `screenshot_config.png`, `screenshot_call.png`).&#10;- Adicionado: Novos arquivos de imagem no diretório `docs/`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
+    <MESSAGE value="Adicione modal interativo para visualização em tela cheia de capturas de tela em `docs/index.html`&#10;&#10;### Problema&#10;A seção de capturas de tela na documentação exibia as imagens de forma estática, limitando a interação e dificultando a visualização em dispositivos com telas menores.&#10;&#10;### Solução&#10;- Implementado modal interativo em HTML, CSS e JavaScript para visualização em tela cheia das capturas de tela.&#10;- Adicionada transição suave e zoom ao passar o cursor sobre as imagens.&#10;- Incluído suporte à navegação intuitiva (clique no modal, botão de fechar e tecla ESC).&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Modal de visualização em tela cheia no arquivo `docs/index.html`.&#10;- Adicionado: Estilos CSS para transições e animações ao abrir o modal.&#10;- Adicionado: Script JavaScript para gerenciamento de eventos do modal e comportamento responsivo.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. Monitorar o comportamento do modal em dispositivos móveis e navegadores menos comuns." />
+    <option name="LAST_COMMIT_MESSAGE" value="Adicione modal interativo para visualização em tela cheia de capturas de tela em `docs/index.html`&#10;&#10;### Problema&#10;A seção de capturas de tela na documentação exibia as imagens de forma estática, limitando a interação e dificultando a visualização em dispositivos com telas menores.&#10;&#10;### Solução&#10;- Implementado modal interativo em HTML, CSS e JavaScript para visualização em tela cheia das capturas de tela.&#10;- Adicionada transição suave e zoom ao passar o cursor sobre as imagens.&#10;- Incluído suporte à navegação intuitiva (clique no modal, botão de fechar e tecla ESC).&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Modal de visualização em tela cheia no arquivo `docs/index.html`.&#10;- Adicionado: Estilos CSS para transições e animações ao abrir o modal.&#10;- Adicionado: Script JavaScript para gerenciamento de eventos do modal e comportamento responsivo.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. Monitorar o comportamento do modal em dispositivos móveis e navegadores menos comuns." />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
@@ -714,9 +721,14 @@
           <line>137</line>
           <option name="timeStamp" value="30" />
         </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
+          <line>1074</line>
+          <option name="timeStamp" value="33" />
+        </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
           <url>file://$PROJECT_DIR$/plugins/Message/handlers/connect.php</url>
-          <line>192</line>
+          <line>195</line>
           <option name="timeStamp" value="22" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
