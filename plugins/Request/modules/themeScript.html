@@ -1,87 +1,46 @@
+
 <script>
-    (function () {
-        const host = window.location.hostname;
 
-        if (host.includes("music.")) {
-            //const newUrl = `https://${host}:4455${window.location.pathname}${window.location.search}${window.location.hash}`;
-            if (window.location.port !== "4455") {
-                //window.location.href = newUrl;
-            }
+
+    function hexToRgb(hex) {
+        hex = hex.replace('#', '');
+        if (hex.length === 3) {
+            hex = hex.split('').map(c => c + c).join('');
         }
-    })();
+        const num = parseInt(hex, 16);
+        return {
+            r: (num >> 16) & 255,
+            g: (num >> 8) & 255,
+            b: num & 255
+        };
+    }
 
-    (function () {
-        const styleId = 'hide-table-data-style';
+    function rgbStringToRgb(str) {
+        const m = str.match(/rgba?\(([^)]+)\)/);
+        if (!m) return null;
+        const parts = m[1].split(',').map(v => v.trim());
+        return {
+            r: parseInt(parts[0]),
+            g: parseInt(parts[1]),
+            b: parseInt(parts[2])
+        };
+    }
 
-        function toggleDataVisibility() {
-            const styleEl = document.getElementById(styleId);
-            const icon = toggleBtn.querySelector('i');
+    function deriveGlow(color, alpha = 0.15, boost = 1.15) {
+        let rgb;
 
-            if (styleEl) {
-                styleEl.remove();
-                icon.className = 'fa-solid fa-eye-slash';
-                toggleBtn.title = 'Ocultar Dados';
-            } else {
-                const style = document.createElement('style');
-                style.id = styleId;
-                style.innerHTML = `
-                td {
-                    color: transparent !important;
-                    text-shadow: 0 0 10px rgba(0,0,0,0.5);
-                    transition: color 0.2s ease;
-                }
-            `;
-                document.head.appendChild(style);
-                icon.className = 'fa-solid fa-eye';
-                toggleBtn.title = 'Mostrar Dados';
-            }
+        if (color.startsWith('#')) {
+            rgb = hexToRgb(color);
+        } else if (color.startsWith('rgb')) {
+            rgb = rgbStringToRgb(color);
         }
 
-        // Cria botão com ícone do FontAwesome
-        const toggleBtn = document.createElement('button');
-        toggleBtn.title = 'Ocultar Dados';
-        toggleBtn.innerHTML = '<i class="fa-solid fa-eye-slash"></i>';
-        Object.assign(toggleBtn.style, {
-            position: 'fixed',
-            bottom: '10px',
-            right: '10px',
-            zIndex: 9999,
-            padding: '10px',
-            background: '#0d6efd',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            fontSize: '18px',
-            width: '46px',
-            height: '46px',
-            display: 'none',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-        });
+        if (!rgb) return 'transparent';
 
-        toggleBtn.onclick = toggleDataVisibility;
-        document.body.appendChild(toggleBtn);
+        const brighten = (v) => Math.min(255, Math.floor(v * boost));
 
-        // Aplica efeito mesmo com DOM mudando
-        const observer = new MutationObserver(() => {
-            const styleEl = document.getElementById(styleId);
-            if (styleEl) {
-                document.querySelectorAll('td').forEach(td => {
-                    td.style.color = 'transparent';
-                    td.style.textShadow = '0 0 10px rgba(0,0,0,0.5)';
-                });
-            }
-        });
-
-        observer.observe(document.body, {
-            childList: true,
-            subtree: true
-        });
-
-
-    })();
+        return `rgba(${brighten(rgb.r)}, ${brighten(rgb.g)}, ${brighten(rgb.b)}, ${alpha})`;
+    }
 
     // Sistema de Troca de Temas
     (function () {
@@ -96,7 +55,9 @@
                     '--menu-bg': '#181818',
                     '--text': 'rgb(255 248 230 / 90%)',
                     '--navbar-bg': '#181818',
-                    '--card-bg': '#151515'
+                    '--card-bg': '#151515',
+
+
                 }
             },
             ocean: {
@@ -161,6 +122,11 @@
 
         function applyTheme(themeName) {
             const theme = themes[themeName];
+            theme.colors['--glow-1'] = deriveGlow(theme.colors['--accent']);
+            theme.colors['--glow-2'] = deriveGlow(theme.colors['--accent'], 0.2, 0.5);
+
+
+
             if (!theme) return;
 
             // Remove estilo anterior se existir
@@ -168,14 +134,34 @@
                 themeStyleElement.remove();
             }
 
+
             // Cria novo elemento de estilo com regras CSS importantes
             themeStyleElement = document.createElement('style');
             themeStyleElement.id = 'dynamic-theme-style';
             themeStyleElement.innerHTML = `
-            /* Backgrounds principais */
-            body, .input-group-text, .offcanvas {
-                background-color: ${theme.colors['--primary-bg']} !important;
-            }
+                           body {
+    background-color: ${theme.colors['--primary-bg']} !important;
+    background-image:
+        radial-gradient(
+            1200px at 20% 10%,
+            ${theme.colors['--glow-1'] || 'transparent'},
+            transparent 60%
+        ),
+        radial-gradient(
+            800px at 80% 90%,
+            ${theme.colors['--glow-2'] || 'transparent'},
+            transparent 60%
+        );
+    background-repeat: no-repeat;
+    background-attachment: fixed;
+}
+
+.input-group-text, .offcanvas {
+    background-color: ${theme.colors['--primary-bg']} !important;
+}
+
+
+
 
             .bg-dark, #menu-bar, .navbar, .navbar-dark, .modal-content,
             .offcanvas-start, nav.navbar, .navbar.bg-dark,
@@ -989,36 +975,36 @@
 
     function isVisible(el) {
         const selectElement = el instanceof HTMLElement ? el : document.querySelector(el);
-    try {
-        return selectElement && selectElement.offsetWidth > 0 && selectElement.offsetHeight > 0;
-    } catch {
-        return false;
+        try {
+            return selectElement && selectElement.offsetWidth > 0 && selectElement.offsetHeight > 0;
+        } catch {
+            return false;
+        }
     }
-}
 
-/**
- * Aguarda um elemento ficar visível na DOM
- * @param {string} el
- * @param {number} timeout Tempo máximo em ms
- * @param {number} interval Intervalo de checagem (default 100ms)
- * @returns {Promise<HTMLElement>}
- */
-function waitVisible(el, timeout = 5000, interval = 100) {
-    return new Promise((resolve, reject) => {
-        const start = Date.now();
+    /**
+     * Aguarda um elemento ficar visível na DOM
+     * @param {string} el
+     * @param {number} timeout Tempo máximo em ms
+     * @param {number} interval Intervalo de checagem (default 100ms)
+     * @returns {Promise<HTMLElement>}
+     */
+    function waitVisible(el, timeout = 5000, interval = 100) {
+        return new Promise((resolve, reject) => {
+            const start = Date.now();
 
-        (function check() {
-            if (isVisible(el)) {
-                return resolve(el);
-            }
+            (function check() {
+                if (isVisible(el)) {
+                    return resolve(el);
+                }
 
-            if (Date.now() - start >= timeout) {
-                return reject(new Error('Elemento não visível'));
-            }
+                if (Date.now() - start >= timeout) {
+                    return reject(new Error('Elemento não visível'));
+                }
 
-            setTimeout(check, interval);
-        })();
-    });
-}
+                setTimeout(check, interval);
+            })();
+        });
+    }
 
 </script>
