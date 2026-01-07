@@ -19,10 +19,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Corrigir validações no registro SIP e aprimorar persistência de dados  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** Faltavam validações para campos obrigatórios (`sipServer`, `sipUser`, `sipPass`) no registro SIP, causando falhas silenciosas no processo.  &#10;- **Problema 2:** Persistência de dados sensíveis dependia de caminhos inválidos ou inacessíveis, levando a exceções runtime.  &#10;&#10;- **Correções realizadas:**  &#10;  - Adicionadas validações explícitas no fluxo de registro SIP para campos obrigatórios, garantindo notificações em tempo real via WebSocket.  &#10;  - Implementado o método `resolvePath` no `spechphoneVault` para criar diretórios automaticamente ou usar fallback seguro em caso de erro no diretório original.  &#10;  - Alterado o mecanismo de escrita de arquivos (`atomicWrite`) para validar permissões no diretório e notificar erros adequadamente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações obrigatórias para `sipServer`, `sipUser` e `sipPass` (`plugins/Message/handlers/register.php`).  &#10;- **Adicionado:** Função `resolvePath` para gerenciamento seguro de diretórios no `spechphoneVault` (`plugins/Request/components/spechphoneVault.php`).  &#10;- **Alterado:** Tratamento de erros em `atomicWrite` e melhorias na notificação de falhas.  &#10;- **Modificado:** Implementações relacionadas ao registro SIP no arquivo `connect.php`.  &#10;- **Alterado:** Porta padrão do projeto de `443` para `9501` (`plugins/configInterface.json`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: O aumento de validações pode rejeitar registros antigos incompletos.  &#10;- ⚠️ Dependência obrigatória das permissões de sistema de arquivos e extensões como `libsodium`.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de registro em ambientes de produção.">
-      <change afterPath="$PROJECT_DIR$/stubGen.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/gbrowsers.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gbrowsers.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Request/modules/themeScript.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/modules/themeScript.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/post.md" beforeDir="false" afterPath="$PROJECT_DIR$/post.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/libspech/trunkController.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/libspech/trunkController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -150,7 +153,7 @@
     "node.js.selected.package.eslint": "(autodetect)",
     "node.js.selected.package.tslint": "(autodetect)",
     "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "ml.llm.LLMConfigurable",
+    "settings.editor.selected.configurable": "editor.stickyLines",
     "to.speed.mode.migration.done": "true",
     "ts.external.directory.path": "/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external",
     "vue.rearranger.settings.migration": "true"
@@ -248,6 +251,8 @@
       <workItem from="1767620801309" duration="3985000" />
       <workItem from="1767628065066" duration="7677000" />
       <workItem from="1767666427752" duration="19237000" />
+      <workItem from="1767700569468" duration="989000" />
+      <workItem from="1767719872009" duration="34955000" />
     </task>
     <task id="LOCAL-00038" summary="Atualize descrição e estrutura do README para maior clareza&#10;&#10;### Problema&#10;O `README.md` possuía várias inconsistências no formato e repetição de informações, com algumas seções confusas ou mal organizadas para novos usuários. Além disso, a formatação dificultava o entendimento dos recursos e funcionalidades principais.&#10;&#10;### Solução&#10;- Reestruturada a organização do arquivo para melhor fluxo de leitura.&#10;- Removidas redundâncias e ajustados cabeçalhos e títulos de seções.&#10;- Reescrita e reformulada a descrição do projeto, destacando pontos principais como características, funcionalidades e requisitos.&#10;- Adicionados exemplos detalhados de instalação, execução e configuração.&#10;- Integrados screenshots das interfaces principais (chamada, áudio e configuração) para melhor compreensão visual.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Estrutura completa do `README.md`, reorganizando o conteúdo e ajustando o tom para maior clareza.&#10;- Adicionado: Imagens representativas da interface (chamada, áudio e configuração) ao README.&#10;- Adicionado: Exposição mais clara das características e funcionalidades do projeto.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -666,7 +671,7 @@
                   <entry key="branch">
                     <value>
                       <list>
-                        <option value="HEAD" />
+                        <option value="libspech/spechphone" />
                       </list>
                     </value>
                   </entry>
@@ -730,7 +735,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>493</line>
+          <line>569</line>
           <option name="timeStamp" value="29" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
@@ -740,7 +745,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>1074</line>
+          <line>1152</line>
           <option name="timeStamp" value="33" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">

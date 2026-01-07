@@ -13,6 +13,14 @@
     {
       "name": "spechshop - softswitch",
       "url": "https://localhost/default"
+    },
+    {
+      "name": "spechshop - softswitch",
+      "url": "https://localhost:9501/"
+    },
+    {
+      "name": "spechshop - softswitch",
+      "url": "https://localhost:9501/default"
     }
   ]
 }]]></component>

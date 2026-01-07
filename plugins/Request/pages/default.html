@@ -450,10 +450,86 @@
 
     </section>
 
+    <!-- VIEW: HISTORY -->
+    <section data-view="history">
+        <div class="card bg-dark p-3">
+            <div class="section-title">Histórico de Chamadas</div>
+            <div class="divider"></div>
+            <div class="list-group list-group-flush" id="historyList">
+                <!-- History items will be here -->
+                <div class="text-center text-muted mt-3 mini">Nenhuma chamada recente</div>
+            </div>
+            <button class="btn btn-outline-danger w-100 mt-3" onclick="clearHistory()">
+                <i class="fa-solid fa-trash me-2"></i>Limpar Histórico
+            </button>
+        </div>
+    </section>
+
 </div>
 
 
 <script>
+    // ===== HISTORY SYSTEM =====
+    // Inject Tab
+    const footer = document.querySelector('.footer');
+    if (footer && !document.querySelector('[data-tab="history"]')) {
+        const btn = document.createElement('div');
+        btn.className = 'tabbtn';
+        btn.dataset.tab = 'history';
+        btn.innerHTML = '<i class="fa-solid fa-clock-rotate-left"></i><div class="t">Histórico</div>';
+        footer.appendChild(btn);
+    }
+
+    // History Logic
+    window.callHistory = JSON.parse(localStorage.getItem('spech_call_history') || '[]');
+
+    window.renderHistory = () => {
+        const list = document.getElementById('historyList');
+        if (!list) return;
+        list.innerHTML = '';
+        if (callHistory.length === 0) {
+            list.innerHTML = '<div class="text-center text-muted mt-3 mini">Nenhuma chamada recente</div>';
+            return;
+        }
+
+        callHistory.sort((a, b) => b.date - a.date).forEach(item => {
+            const date = new Date(item.date);
+            const dateStr = date.toLocaleDateString() + ' ' + date.toLocaleTimeString().slice(0, 5);
+            const el = document.createElement('div');
+            el.className = 'list-group-item bg-transparent border-bottom border-secondary d-flex justify-content-between align-items-center px-0 py-2';
+            el.innerHTML = `
+                <div>
+                    <div class="fw-bold text-white">${item.number}</div>
+                    <div class="mini text-muted">${dateStr}</div>
+                </div>
+                <button class="btn btn-sm btn-soft rounded-circle" onclick="digits='${item.number}'; renderDigits(); document.querySelector('[data-tab=\\'call\\']').click();">
+                    <i class="fa-solid fa-phone text-success"></i>
+                </button>
+            `;
+            list.appendChild(el);
+        });
+    }
+
+    window.addToHistory = (number) => {
+        if (!number) return;
+        // Avoid duplicate top entry (debounce 5s)
+        if (callHistory.length > 0 && callHistory[0].number === number && (Date.now() - callHistory[0].date < 5000)) return;
+
+        callHistory.unshift({number, date: Date.now()});
+        if (callHistory.length > 50) callHistory.pop();
+        localStorage.setItem('spech_call_history', JSON.stringify(callHistory));
+        if (document.querySelector('[data-view="history"]').classList.contains('show')) renderHistory();
+    }
+
+    window.clearHistory = () => {
+        if (!confirm('Limpar histórico?')) return;
+        callHistory = [];
+        localStorage.setItem('spech_call_history', '[]');
+        renderHistory();
+    }
+
+    // Initial Render
+    setTimeout(renderHistory, 500);
 
     // Expor função global para obter codec selecionado no formato correto
     // ===== Sistema de Codecs =====
@@ -509,6 +585,8 @@
         user.updateUserData('lastDigits', digits);
         user.updateUserData('lastCallTime', new Date().getTime());
         const digitsCall = digits;
+
+        if (typeof addToHistory === 'function') addToHistory(digitsCall);
 
         sendRecByToken({
             digits: digitsCall,
@@ -866,7 +944,7 @@
             return;
         }
 
-        const wsUrl = `${proto}//${location.host}:8888?fp=${fp}&ssrc=mic-user`;
+        const wsUrl = `${proto}//${infoURI().host}:8888?fp=${fp}&ssrc=mic-user`;
 
         // Fecha conexão anterior se existir
         if (websocket && websocket.readyState === WebSocket.OPEN) {

@@ -265,18 +265,19 @@ class startCall
         $userFrequency = (int)$parts[1] ?? 8000;
 
 
+        cli::pcl($userCodec, "cyan");
+
         $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone, $codec, $frequency)
         use ($fingerprint, $portHandler, $userFrequency) {
             if (strlen($pcmData) < 12) return;
             $id = implode(':', array_values($peer));
 
-
             // resample
 
 
-            /** @var Socket $eventSock */
-            $phone->globalInfo['eventSock']
-                ->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
+            cli::pcl("Recebendo audio " . strlen($pcmData), "green");
+
+            $phone->globalInfo['eventSock']->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
         });
 
 
