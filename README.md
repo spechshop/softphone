@@ -73,7 +73,7 @@ git clone https://github.com/spechshop/libspech
 
 # Obtain the pcg729 runtime (PHP optimized for audio)
 # Using curl:
-curl -L https://github.com/spechshop/pcg729/releases/download/current/php -o php
+# curl -L https://github.com/spechshop/pcg729/releases/download/current/php -o php
 # Or using wget: wget https://github.com/spechshop/pcg729/releases/download/current/php
 
 # Configure and install the runtime
