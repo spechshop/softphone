@@ -268,24 +268,24 @@ class startCall
         cli::pcl($userCodec, "cyan");
 
         $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone, $codec, $frequency)
-        use ($fingerprint, $portHandler, $userFrequency) {
+        use ($fingerprint, $portHandler, $userCodec, $userFrequency, $trunkCodec) {
             if (strlen($pcmData) < 12) return;
             $id = implode(':', array_values($peer));
 
             // resample
 
 
-            cli::pcl("Recebendo audio " . strlen($pcmData), "green");
+
 
             $phone->globalInfo['eventSock']->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
         });
 
 
-        $phone->onAnswer(function (trunkController $phone) use ($socket, $vault, $fingerprint) {
+        $phone->onAnswer(function (trunkController $phone) use ($socket, $vault, $fingerprint, $userFrequency) {
             $phone->receiveMedia();
             cli::pcl("Recebendo audio", "green");
 
-            Coroutine::create(function () use ($phone) {
+            Coroutine::create(function () use ($phone, $userFrequency) {
 
                 cli::pcl("Iniciando socket (Browser Mic → RTP)", "green");
 
@@ -301,9 +301,9 @@ class startCall
 
                 // parâmetros VoIP
                 $FRAME_MS = 20;
-                $SRC_RATE = $phone->frequencyCall; // ex: 8000
+                $SRC_RATE = $userFrequency; // ex: 8000
                 $SAMPLES_PER_FRAME = (int)($SRC_RATE * ($FRAME_MS / 1000)); // 160
-                $PCM_FRAME_BYTES = $SAMPLES_PER_FRAME * 2; // PCM16 = 320 bytes
+                $PCM_FRAME_BYTES = $SAMPLES_PER_FRAME * 8; // PCM16 = 320 bytes
 
                 cli::pcl(
                     "Frame VoIP: {$FRAME_MS}ms | {$SAMPLES_PER_FRAME} samples | {$PCM_FRAME_BYTES} bytes",
@@ -339,6 +339,10 @@ class startCall
                         $pcmBuffer = substr($pcmBuffer, $PCM_FRAME_BYTES);
 
                         $encode = null;
+
+                        if (strtoupper($phone->codecName) !== 'OPUS' && $SRC_RATE !== $phone->frequencyCall) {
+                            $pcmChunk = resampler($pcmChunk, $SRC_RATE, $phone->frequencyCall);
+                        }
 
                         switch (strtoupper($phone->codecName)) {
 

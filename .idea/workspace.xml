@@ -19,13 +19,11 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Corrigir validações no registro SIP e aprimorar persistência de dados  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** Faltavam validações para campos obrigatórios (`sipServer`, `sipUser`, `sipPass`) no registro SIP, causando falhas silenciosas no processo.  &#10;- **Problema 2:** Persistência de dados sensíveis dependia de caminhos inválidos ou inacessíveis, levando a exceções runtime.  &#10;&#10;- **Correções realizadas:**  &#10;  - Adicionadas validações explícitas no fluxo de registro SIP para campos obrigatórios, garantindo notificações em tempo real via WebSocket.  &#10;  - Implementado o método `resolvePath` no `spechphoneVault` para criar diretórios automaticamente ou usar fallback seguro em caso de erro no diretório original.  &#10;  - Alterado o mecanismo de escrita de arquivos (`atomicWrite`) para validar permissões no diretório e notificar erros adequadamente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações obrigatórias para `sipServer`, `sipUser` e `sipPass` (`plugins/Message/handlers/register.php`).  &#10;- **Adicionado:** Função `resolvePath` para gerenciamento seguro de diretórios no `spechphoneVault` (`plugins/Request/components/spechphoneVault.php`).  &#10;- **Alterado:** Tratamento de erros em `atomicWrite` e melhorias na notificação de falhas.  &#10;- **Modificado:** Implementações relacionadas ao registro SIP no arquivo `connect.php`.  &#10;- **Alterado:** Porta padrão do projeto de `443` para `9501` (`plugins/configInterface.json`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: O aumento de validações pode rejeitar registros antigos incompletos.  &#10;- ⚠️ Dependência obrigatória das permissões de sistema de arquivos e extensões como `libsodium`.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de registro em ambientes de produção.">
-      <change beforePath="$PROJECT_DIR$/.idea/gbrowsers.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gbrowsers.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/libspech/trunkController.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/libspech/trunkController.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -46,7 +44,7 @@
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="203" />
+    <option name="cachedIndexableFilesCount" value="204" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -79,7 +77,7 @@
         <entry key="$PROJECT_DIR$/libspech" value="master" />
       </map>
     </option>
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/libspech" />
     <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -131,39 +129,39 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "JavaScript Debug.audio.html.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "volume-dev",
-    "javascript.nodejs.core.library.configured.version": "21.0.0",
-    "javascript.nodejs.core.library.typings.version": "25.0.3",
-    "javascript.preferred.runtime.type.id": "node",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/lotus/PROJETOS/spechphone",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "editor.stickyLines",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;JavaScript Debug.audio.html.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;spech&quot;,
+    &quot;javascript.nodejs.core.library.configured.version&quot;: &quot;21.0.0&quot;,
+    &quot;javascript.nodejs.core.library.typings.version&quot;: &quot;25.0.3&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/lotus/PROJETOS/spechphone&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;editor.stickyLines&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "ChangesTree.GroupingKeys": [
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;ChangesTree.GroupingKeys&quot;: [
+      &quot;repository&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecapSettings">
     <option name="autoUpdateEnabled" value="false" />
   </component>
@@ -252,15 +250,8 @@
       <workItem from="1767628065066" duration="7677000" />
       <workItem from="1767666427752" duration="19237000" />
       <workItem from="1767700569468" duration="989000" />
-      <workItem from="1767719872009" duration="34955000" />
-    </task>
-    <task id="LOCAL-00038" summary="Atualize descrição e estrutura do README para maior clareza&#10;&#10;### Problema&#10;O `README.md` possuía várias inconsistências no formato e repetição de informações, com algumas seções confusas ou mal organizadas para novos usuários. Além disso, a formatação dificultava o entendimento dos recursos e funcionalidades principais.&#10;&#10;### Solução&#10;- Reestruturada a organização do arquivo para melhor fluxo de leitura.&#10;- Removidas redundâncias e ajustados cabeçalhos e títulos de seções.&#10;- Reescrita e reformulada a descrição do projeto, destacando pontos principais como características, funcionalidades e requisitos.&#10;- Adicionados exemplos detalhados de instalação, execução e configuração.&#10;- Integrados screenshots das interfaces principais (chamada, áudio e configuração) para melhor compreensão visual.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Estrutura completa do `README.md`, reorganizando o conteúdo e ajustando o tom para maior clareza.&#10;- Adicionado: Imagens representativas da interface (chamada, áudio e configuração) ao README.&#10;- Adicionado: Exposição mais clara das características e funcionalidades do projeto.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767108712921</created>
-      <option name="number" value="00038" />
-      <option name="presentableId" value="LOCAL-00038" />
-      <option name="project" value="LOCAL" />
-      <updated>1767108712921</updated>
+      <workItem from="1767719872009" duration="45152000" />
+      <workItem from="1767804071205" duration="2767000" />
     </task>
     <task id="LOCAL-00039" summary="Atualize instruções de instalação e execução no README&#10;&#10;### Problema&#10;As instruções de instalação e execução no `README.md` estavam incompletas e mal formatadas, dificultando o entendimento e a reprodução dos passos pelos usuários.&#10;&#10;### Solução&#10;- Ajustada a formatação dos comandos para maior legibilidade.&#10;- Adicionada instrução específica para o download do repositório `libspech` caso não esteja presente ou atualizado.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Formatação dos comandos no `README.md` para blocos de código com estilo consistente.&#10;- Adicionado: Instrução para clonar a biblioteca `libspech` no passo de instalação.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -646,7 +637,15 @@
       <option name="project" value="LOCAL" />
       <updated>1767633333632</updated>
     </task>
-    <option name="localTasksCounter" value="87" />
+    <task id="LOCAL-00087" summary="### TÍTULO  &#10;Corrigir validações no registro SIP e aprimorar persistência de dados  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** Faltavam validações para campos obrigatórios (`sipServer`, `sipUser`, `sipPass`) no registro SIP, causando falhas silenciosas no processo.  &#10;- **Problema 2:** Persistência de dados sensíveis dependia de caminhos inválidos ou inacessíveis, levando a exceções runtime.  &#10;&#10;- **Correções realizadas:**  &#10;  - Adicionadas validações explícitas no fluxo de registro SIP para campos obrigatórios, garantindo notificações em tempo real via WebSocket.  &#10;  - Implementado o método `resolvePath` no `spechphoneVault` para criar diretórios automaticamente ou usar fallback seguro em caso de erro no diretório original.  &#10;  - Alterado o mecanismo de escrita de arquivos (`atomicWrite`) para validar permissões no diretório e notificar erros adequadamente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações obrigatórias para `sipServer`, `sipUser` e `sipPass` (`plugins/Message/handlers/register.php`).  &#10;- **Adicionado:** Função `resolvePath` para gerenciamento seguro de diretórios no `spechphoneVault` (`plugins/Request/components/spechphoneVault.php`).  &#10;- **Alterado:** Tratamento de erros em `atomicWrite` e melhorias na notificação de falhas.  &#10;- **Modificado:** Implementações relacionadas ao registro SIP no arquivo `connect.php`.  &#10;- **Alterado:** Porta padrão do projeto de `443` para `9501` (`plugins/configInterface.json`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: O aumento de validações pode rejeitar registros antigos incompletos.  &#10;- ⚠️ Dependência obrigatória das permissões de sistema de arquivos e extensões como `libsodium`.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de registro em ambientes de produção.">
+      <option name="closed" value="true" />
+      <created>1767767292576</created>
+      <option name="number" value="00087" />
+      <option name="presentableId" value="LOCAL-00087" />
+      <option name="project" value="LOCAL" />
+      <updated>1767767292576</updated>
+    </task>
+    <option name="localTasksCounter" value="88" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
