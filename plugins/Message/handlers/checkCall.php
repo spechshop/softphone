@@ -13,7 +13,7 @@ class checkCall
         $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
 
 
-        $fingerprint = $data['fp'];
+        $fingerprint = $data['fp'] ?? '';
         if (!$vault->exists($fingerprint)) {
             print 'fingerprint not exists' . PHP_EOL;
             $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));

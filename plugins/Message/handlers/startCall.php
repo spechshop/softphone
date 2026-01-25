@@ -89,6 +89,18 @@ class startCall
                 ]
             ]));
         }
+        $needRules = ['sipUser', 'sipPass', 'sipServer'];
+        foreach ($needRules as $rule) {
+            if (empty($userData[$rule])) {
+                return $socket->push($fd, json_encode([
+                    'type' => 'notify',
+                    'data' => [
+                        'type' => 'bg-danger text-white',
+                        'message' => 'Campo obrigatório não preenchido: ' . $rule
+                    ]
+                ]));
+            }
+        }
 
 
         if (!array_key_exists($fingerprint, cache::get('coroutinesProcess'))) {
