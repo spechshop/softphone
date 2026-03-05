@@ -268,13 +268,20 @@ window.playAudio = (callId) => {
     window.currentCallId = callId;
 
 
-    // Inicializa AudioContext
+    // Inicializa AudioContext DENTRO da interação do usuário (playAudio é chamado após clicar em "Chamar")
     if (!window.audioContext) {
         window.audioContext = new (window.AudioContext || window.webkitAudioContext)({
-            sampleRate: window.sampleRate,
+            sampleRate: window.sampleRate || 48000,
             latencyHint: 'interactive',
-
         });
+        console.log('🎵 AudioContext criado após interação do usuário, estado:', window.audioContext.state);
+    }
+
+    // Resume AudioContext se necessário (após interação do usuário)
+    if (window.audioContext.state === 'suspended') {
+        window.audioContext.resume()
+            .then(() => console.log('✅ AudioContext resumido'))
+            .catch(e => console.warn('❌ Erro ao resumir AudioContext:', e));
     }
 
     if (!window.speakerGainNode) {
@@ -392,9 +399,23 @@ function processAudioData(arrayBuffer) {
 }
 
 
-function scheduleAudioBuffer() {
+async function scheduleAudioBuffer() {
     if (window.audioQueue.length === 0) return;
     if (window.isSpeakerMuted) return;
+
+    // Resume AudioContext se estiver suspenso (requisito do Chrome)
+    if (window.audioContext.state === 'suspended') {
+
+        document.getElementById('btnSpeaker').click();
+        document.getElementById('btnSpeaker').click();
+
+
+        // Se ainda está suspenso após tentar resumir, não reproduz
+        if (window.audioContext.state === 'suspended') {
+            return;
+        }
+    }
+
     while (window.audioQueue.length > 0) {
         const buffer = window.audioQueue.shift();
         const source = window.audioContext.createBufferSource();

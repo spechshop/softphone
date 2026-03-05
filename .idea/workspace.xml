@@ -18,11 +18,23 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Corrigir validações no registro SIP e aprimorar persistência de dados  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** Faltavam validações para campos obrigatórios (`sipServer`, `sipUser`, `sipPass`) no registro SIP, causando falhas silenciosas no processo.  &#10;- **Problema 2:** Persistência de dados sensíveis dependia de caminhos inválidos ou inacessíveis, levando a exceções runtime.  &#10;&#10;- **Correções realizadas:**  &#10;  - Adicionadas validações explícitas no fluxo de registro SIP para campos obrigatórios, garantindo notificações em tempo real via WebSocket.  &#10;  - Implementado o método `resolvePath` no `spechphoneVault` para criar diretórios automaticamente ou usar fallback seguro em caso de erro no diretório original.  &#10;  - Alterado o mecanismo de escrita de arquivos (`atomicWrite`) para validar permissões no diretório e notificar erros adequadamente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações obrigatórias para `sipServer`, `sipUser` e `sipPass` (`plugins/Message/handlers/register.php`).  &#10;- **Adicionado:** Função `resolvePath` para gerenciamento seguro de diretórios no `spechphoneVault` (`plugins/Request/components/spechphoneVault.php`).  &#10;- **Alterado:** Tratamento de erros em `atomicWrite` e melhorias na notificação de falhas.  &#10;- **Modificado:** Implementações relacionadas ao registro SIP no arquivo `connect.php`.  &#10;- **Alterado:** Porta padrão do projeto de `443` para `9501` (`plugins/configInterface.json`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: O aumento de validações pode rejeitar registros antigos incompletos.  &#10;- ⚠️ Dependência obrigatória das permissões de sistema de arquivos e extensões como `libsodium`.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de registro em ambientes de produção.">
-      <change beforePath="$PROJECT_DIR$/.idea/gbrowsers.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gbrowsers.xml" afterDir="false" />
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Adicionar validações obrigatórias no fluxo de chamada em WebSocket  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A ausência de validações para campos obrigatórios (`sipUser`, `sipPass`, `sipServer`) nos dados do usuário permitia fluxos incorretos ao iniciar chamadas, resultando em falhas silenciosas.  &#10;- **Solução:** Adicionada checagem explícita para campos obrigatórios no arquivo `startCall.php`. Caso algum campo não esteja preenchido, o sistema retorna uma notificação via WebSocket, informando o campo ausente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações para `sipUser`, `sipPass` e `sipServer` no fluxo de chamada para verificar a integridade dos dados (`plugins/Message/handlers/startCall.php`).  &#10;- **Alterado:** Mensagens de retorno em WebSocket para incluir feedback imediato em caso de erros.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: Usuários com dados incompletos poderão ter suas chamadas bloqueadas após a validação.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de chamada em produção.">
+      <change afterPath="$PROJECT_DIR$/plugins/Request/pages/audio.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/checkCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/checkCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/audio.php" beforeDir="false" afterPath="$PROJECT_DIR$/audio.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/css/buildCurl.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/buildCurl.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/css/templated.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/templated.css" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/dtmf.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/dtmf.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/register.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/register.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/components/spechphoneVault.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/components/spechphoneVault.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/modules/themeScript.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/modules/themeScript.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/router/server.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/router/server.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/rec.wav" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -43,7 +55,7 @@
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="201" />
+    <option name="cachedIndexableFilesCount" value="227" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -100,12 +112,12 @@
     }
   ]
 }</component>
-  <component name="GithubPullRequestsUISettings">{
-  &quot;selectedUrlAndAccountId&quot;: {
-    &quot;url&quot;: &quot;https://github.com/spechshop/libspech.git&quot;,
-    &quot;accountId&quot;: &quot;8bca2ec2-35df-4a44-bd7f-3e929af06171&quot;
+  <component name="GithubPullRequestsUISettings"><![CDATA[{
+  "selectedUrlAndAccountId": {
+    "url": "https://github.com/spechshop/spechphone.git",
+    "accountId": "112bf7fc-43a6-4ca6-9ea4-b1fd2030c70d"
   }
-}</component>
+}]]></component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/.env" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/.gitmodules" root0="FORCE_HIGHLIGHTING" />
@@ -138,6 +150,7 @@
     "RunOnceActivity.git.unshallow": "true",
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
     "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
     "git-widget-placeholder": "volume-dev",
     "javascript.nodejs.core.library.configured.version": "18.19.1",
@@ -191,8 +204,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-8fceda3e36b7-JavaScript-PS-261.17801.67" />
-        <option value="bundled-php-predefined-a98d8de5180a-089bd905bdf4-com.jetbrains.php.sharedIndexes-PS-261.17801.67" />
+        <option value="bundled-js-predefined-d6986cc7102b-3bd3a6803838-JavaScript-PS-261.21849.25" />
+        <option value="bundled-php-predefined-a98d8de5180a-a9a4ea3ee0f4-com.jetbrains.php.sharedIndexes-PS-261.21849.25" />
       </set>
     </attachedChunks>
   </component>
@@ -251,15 +264,10 @@
       <workItem from="1767700569468" duration="989000" />
       <workItem from="1767719872009" duration="45152000" />
       <workItem from="1767804071205" duration="2767000" />
-      <workItem from="1769373117428" duration="273000" />
-    </task>
-    <task id="LOCAL-00039" summary="Atualize instruções de instalação e execução no README&#10;&#10;### Problema&#10;As instruções de instalação e execução no `README.md` estavam incompletas e mal formatadas, dificultando o entendimento e a reprodução dos passos pelos usuários.&#10;&#10;### Solução&#10;- Ajustada a formatação dos comandos para maior legibilidade.&#10;- Adicionada instrução específica para o download do repositório `libspech` caso não esteja presente ou atualizado.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Formatação dos comandos no `README.md` para blocos de código com estilo consistente.&#10;- Adicionado: Instrução para clonar a biblioteca `libspech` no passo de instalação.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767109433972</created>
-      <option name="number" value="00039" />
-      <option name="presentableId" value="LOCAL-00039" />
-      <option name="project" value="LOCAL" />
-      <updated>1767109433972</updated>
+      <workItem from="1769373117428" duration="1005000" />
+      <workItem from="1769451193295" duration="253000" />
+      <workItem from="1769532672316" duration="10000" />
+      <workItem from="1772725072590" duration="14093000" />
     </task>
     <task id="LOCAL-00040" summary="Atualize instruções de instalação e execução no README&#10;&#10;### Problema&#10;As instruções de instalação e execução no `README.md` estavam incompletas e mal formatadas, dificultando o entendimento e a reprodução dos passos pelos usuários.&#10;&#10;### Solução&#10;- Ajustada a formatação dos comandos para maior legibilidade.&#10;- Adicionada instrução específica para o download do repositório `libspech` caso não esteja presente ou atualizado.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Formatação dos comandos no `README.md` para blocos de código com estilo consistente.&#10;- Adicionado: Instrução para clonar a biblioteca `libspech` no passo de instalação.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -645,7 +653,15 @@
       <option name="project" value="LOCAL" />
       <updated>1767767292576</updated>
     </task>
-    <option name="localTasksCounter" value="88" />
+    <task id="LOCAL-00088" summary="### TÍTULO  &#10;Adicionar validações obrigatórias no fluxo de chamada em WebSocket  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A ausência de validações para campos obrigatórios (`sipUser`, `sipPass`, `sipServer`) nos dados do usuário permitia fluxos incorretos ao iniciar chamadas, resultando em falhas silenciosas.  &#10;- **Solução:** Adicionada checagem explícita para campos obrigatórios no arquivo `startCall.php`. Caso algum campo não esteja preenchido, o sistema retorna uma notificação via WebSocket, informando o campo ausente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações para `sipUser`, `sipPass` e `sipServer` no fluxo de chamada para verificar a integridade dos dados (`plugins/Message/handlers/startCall.php`).  &#10;- **Alterado:** Mensagens de retorno em WebSocket para incluir feedback imediato em caso de erros.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: Usuários com dados incompletos poderão ter suas chamadas bloqueadas após a validação.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de chamada em produção.">
+      <option name="closed" value="true" />
+      <created>1769373492802</created>
+      <option name="number" value="00088" />
+      <option name="presentableId" value="LOCAL-00088" />
+      <option name="project" value="LOCAL" />
+      <updated>1769373492802</updated>
+    </task>
+    <option name="localTasksCounter" value="89" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -689,7 +705,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Atualize encerramento de chamadas para evitar conexões abertas&#10;&#10;### Problema&#10;No arquivo `hangUpCall.php`, o encerramento de chamadas não incluía a liberação completa de recursos, deixando conexões abertas em determinados cenários. Essa limitação poderia causar vazamento de memória ou inconsistências durante operação prolongada.&#10;&#10;### Solução&#10;- Adicionada a chamada ao método `close()` após `bye()` para garantir o encerramento adequado da conexão.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Chamada ao método `close()` no fluxo de encerramento em `plugins/Message/handlers/hangUpCall.php`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Atualize `hangUpCall` para lidar com erros de encerramento de chamadas&#10;&#10;### Problema&#10;No arquivo `default.html`, a função `hangUpCall` não tratava erros durante o envio do comando de encerramento de chamadas. Essa limitação poderia causar erros silenciosos, impactando o fluxo de finalização do processo.&#10;&#10;### Solução&#10;- Adicionada instrução `try/catch` ao método `hangUpCall` para capturar e exibir erros no encerramento de chamadas.&#10;- Alterado o comportamento para garantir que a variável `isStopped` seja redefinida em casos de erro.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Lógica de encerramento da chamada na função `hangUpCall` em `default.html`.&#10;- Adicionado: Tratamento de erros com `try/catch` e mensagem de log em `hangUpCall`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Adicione suporte para geração automática de certificados SSL e script de validação&#10;&#10;### Problema&#10;A inicialização do servidor falhava caso os arquivos de certificado SSL (certificados e chave privada) não estivessem configurados ou presentes. Isso impactava o funcionamento correto do HTTPS/WSS necessário para ambientes seguros no navegador.&#10;&#10;### Solução&#10;- **middleware.php**:&#10;  - Adicionado suporte para geração automática de certificados SSL autoassinados usando OpenSSL.&#10;  - Incluída verificação da existência dos arquivos `ssl_cert_file` e `ssl_key_file`.&#10;  - Geração automática acionada caso os arquivos estejam ausentes, garantindo a criação de um ambiente funcional.&#10;  - Tratamento de erros aprimorado para validação da configuração SSL no `interface.json`.&#10;&#10;- **run-tests.php**:&#10;  - Criado um novo script com diversas validações automatizadas para o projeto, como:&#10;    - Verificação de sintaxe PHP.&#10;    - Validação de arquivos JSON.&#10;    - Estrutura de diretórios de plugins.&#10;    - Testes adicionais para garantir que os arquivos principais existem e estão corretos.&#10;  - Gerado o arquivo `fixs.json`, contendo recomendações de correções automatizadas para inconsistências.&#10;&#10;- **README.md**:&#10;  - Documentação atualizada com instruções de geração automática de certificados SSL e execução de testes.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Geração de certificados SSL no arquivo `middleware.php`.&#10;- Adicionado: Script de testes gerais `run-tests.php` para análise e validação do projeto.&#10;- Alterado: Documentação no `README.md` para incluir detalhes sobre SSL e execução de testes.&#10;- Removido: Informações duplicadas na seção de instalação do `README.md`.&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto:&#10;- Dependência do OpenSSL para geração automática de certificados SSL. É necessário garantir que essa biblioteca esteja instalada no ambiente.&#10;- Pequeno aumento no tempo de inicialização devido à geração de certificados.&#10;&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Atualize lógica de inicialização e adicione script de testes integrados&#10;&#10;### Problema&#10;1. Arquivo `middleware.php`: Configurações de SSL estavam sujeitas a erros caso o certificado ou as chaves não existissem, afetando a inicialização do servidor.&#10;2. Ausência de validações automatizadas do projeto, dificultando identificar erros de sintaxe e problemas de configuração antes da execução.&#10;&#10;### Solução&#10;- Adicionada lógica de geração automática de certificados SSL caso os arquivos configurados não sejam encontrados.&#10;- Criado `run-tests.php` para validações automáticas abrangendo:&#10;  - Verificação de sintaxe PHP.&#10;  - Validação de arquivos JSON de configuração.&#10;  - Checagem de estrutura em diretórios de plugins.&#10;  - Geração de arquivo `fixs.json` com possíveis soluções para erros detectados.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Geração dinâmica de certificados SSL em `middleware.php`, com tratamento de erros e validação da existência dos arquivos.&#10;- Adicionado: Script `run-tests.php` para execução de testes integrados.&#10;- Alterado: `README.md` atualizado com instruções detalhadas sobre instalação, geração de certificados e execução de testes.&#10;&#10;### Impactos, riscos ou limitações&#10;- ⚠️ Possível impacto: Geração dinâmica de certificação SSL pode falhar caso o OpenSSL não esteja instalado no sistema.&#10;- ⚠️ Possível impacto: O script `run-tests.php` depende da estrutura atual do projeto e pode não funcionar corretamente em ambientes modificados.&#10;- Nenhum outro efeito colateral conhecido até o momento." />
@@ -714,7 +729,8 @@
     <MESSAGE value="Adicione modal interativo para visualização em tela cheia de capturas de tela em `docs/index.html`&#10;&#10;### Problema&#10;A seção de capturas de tela na documentação exibia as imagens de forma estática, limitando a interação e dificultando a visualização em dispositivos com telas menores.&#10;&#10;### Solução&#10;- Implementado modal interativo em HTML, CSS e JavaScript para visualização em tela cheia das capturas de tela.&#10;- Adicionada transição suave e zoom ao passar o cursor sobre as imagens.&#10;- Incluído suporte à navegação intuitiva (clique no modal, botão de fechar e tecla ESC).&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Modal de visualização em tela cheia no arquivo `docs/index.html`.&#10;- Adicionado: Estilos CSS para transições e animações ao abrir o modal.&#10;- Adicionado: Script JavaScript para gerenciamento de eventos do modal e comportamento responsivo.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. Monitorar o comportamento do modal em dispositivos móveis e navegadores menos comuns." />
     <MESSAGE value=" TÍTULO&#10;Implementar `spechphoneVault` e corrigir fluxo de registro em WebSocket&#10;&#10;### CORPO DO COMMIT&#10;- **Problema 1:** Limitações na segurança e persistência de dados sensíveis. Não havia suporte a armazenamento seguro e sincronizado para dados críticos.&#10;- **Problema 2:** Falta de validações em campos obrigatórios no fluxo de registro SIP causava falhas silenciosas.&#10;- **Correções realizadas:**&#10;  - Foi desenvolvido o componente `spechphoneVault` com suporte a armazenamento seguro usando `libsodium` e sincronização usando `Swoole\\Lock`.&#10;  - Adicionadas validações explícitas de campos obrigatórios para o registro SIP no arquivo `register.php`, notificando em tempo real através do WebSocket.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Adicionado:** `spechphoneVault`, um novo mecanismo de armazenamento seguro de dados (`plugins/Request/components/spechphoneVault.php`).&#10;- **Alterado:** Método de inicialização de caminhos no `spechphoneVault` com criação automática de diretórios.&#10;- **Adicionado:** Validações para `sipServer`, `sipUser` e `sipPass` no fluxo de registro SIP (`plugins/Message/handlers/register.php`).&#10;- **Alterado:** Tratamento e notificação de falhas ao criar diretórios ou escrever arquivos (`resolvePath` e `atomicWrite` em `spechphoneVault.php`).&#10;- **Renomeado:** Arquivo `middleware.php` para `server.php`.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;- ⚠️ Possível impacto: O uso de `libsodium` e operações de sincronização em memória podem impactar a performance, especialmente sob alta carga.&#10;- ⚠️ Limitação conhecida: Dependência obrigatória das extensões `libsodium` e `Swoole` para pleno funcionamento do componente.&#10;- Nenhum efeito colateral conhecido até o momento. Monitoramento recomendado em ambiente de produção." />
     <MESSAGE value="### TÍTULO  &#10;Corrigir validações no registro SIP e aprimorar persistência de dados  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** Faltavam validações para campos obrigatórios (`sipServer`, `sipUser`, `sipPass`) no registro SIP, causando falhas silenciosas no processo.  &#10;- **Problema 2:** Persistência de dados sensíveis dependia de caminhos inválidos ou inacessíveis, levando a exceções runtime.  &#10;&#10;- **Correções realizadas:**  &#10;  - Adicionadas validações explícitas no fluxo de registro SIP para campos obrigatórios, garantindo notificações em tempo real via WebSocket.  &#10;  - Implementado o método `resolvePath` no `spechphoneVault` para criar diretórios automaticamente ou usar fallback seguro em caso de erro no diretório original.  &#10;  - Alterado o mecanismo de escrita de arquivos (`atomicWrite`) para validar permissões no diretório e notificar erros adequadamente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações obrigatórias para `sipServer`, `sipUser` e `sipPass` (`plugins/Message/handlers/register.php`).  &#10;- **Adicionado:** Função `resolvePath` para gerenciamento seguro de diretórios no `spechphoneVault` (`plugins/Request/components/spechphoneVault.php`).  &#10;- **Alterado:** Tratamento de erros em `atomicWrite` e melhorias na notificação de falhas.  &#10;- **Modificado:** Implementações relacionadas ao registro SIP no arquivo `connect.php`.  &#10;- **Alterado:** Porta padrão do projeto de `443` para `9501` (`plugins/configInterface.json`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: O aumento de validações pode rejeitar registros antigos incompletos.  &#10;- ⚠️ Dependência obrigatória das permissões de sistema de arquivos e extensões como `libsodium`.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de registro em ambientes de produção." />
-    <option name="LAST_COMMIT_MESSAGE" value="### TÍTULO  &#10;Corrigir validações no registro SIP e aprimorar persistência de dados  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** Faltavam validações para campos obrigatórios (`sipServer`, `sipUser`, `sipPass`) no registro SIP, causando falhas silenciosas no processo.  &#10;- **Problema 2:** Persistência de dados sensíveis dependia de caminhos inválidos ou inacessíveis, levando a exceções runtime.  &#10;&#10;- **Correções realizadas:**  &#10;  - Adicionadas validações explícitas no fluxo de registro SIP para campos obrigatórios, garantindo notificações em tempo real via WebSocket.  &#10;  - Implementado o método `resolvePath` no `spechphoneVault` para criar diretórios automaticamente ou usar fallback seguro em caso de erro no diretório original.  &#10;  - Alterado o mecanismo de escrita de arquivos (`atomicWrite`) para validar permissões no diretório e notificar erros adequadamente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações obrigatórias para `sipServer`, `sipUser` e `sipPass` (`plugins/Message/handlers/register.php`).  &#10;- **Adicionado:** Função `resolvePath` para gerenciamento seguro de diretórios no `spechphoneVault` (`plugins/Request/components/spechphoneVault.php`).  &#10;- **Alterado:** Tratamento de erros em `atomicWrite` e melhorias na notificação de falhas.  &#10;- **Modificado:** Implementações relacionadas ao registro SIP no arquivo `connect.php`.  &#10;- **Alterado:** Porta padrão do projeto de `443` para `9501` (`plugins/configInterface.json`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: O aumento de validações pode rejeitar registros antigos incompletos.  &#10;- ⚠️ Dependência obrigatória das permissões de sistema de arquivos e extensões como `libsodium`.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de registro em ambientes de produção." />
+    <MESSAGE value="### TÍTULO  &#10;Adicionar validações obrigatórias no fluxo de chamada em WebSocket  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A ausência de validações para campos obrigatórios (`sipUser`, `sipPass`, `sipServer`) nos dados do usuário permitia fluxos incorretos ao iniciar chamadas, resultando em falhas silenciosas.  &#10;- **Solução:** Adicionada checagem explícita para campos obrigatórios no arquivo `startCall.php`. Caso algum campo não esteja preenchido, o sistema retorna uma notificação via WebSocket, informando o campo ausente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações para `sipUser`, `sipPass` e `sipServer` no fluxo de chamada para verificar a integridade dos dados (`plugins/Message/handlers/startCall.php`).  &#10;- **Alterado:** Mensagens de retorno em WebSocket para incluir feedback imediato em caso de erros.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: Usuários com dados incompletos poderão ter suas chamadas bloqueadas após a validação.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de chamada em produção." />
+    <option name="LAST_COMMIT_MESSAGE" value="### TÍTULO  &#10;Adicionar validações obrigatórias no fluxo de chamada em WebSocket  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A ausência de validações para campos obrigatórios (`sipUser`, `sipPass`, `sipServer`) nos dados do usuário permitia fluxos incorretos ao iniciar chamadas, resultando em falhas silenciosas.  &#10;- **Solução:** Adicionada checagem explícita para campos obrigatórios no arquivo `startCall.php`. Caso algum campo não esteja preenchido, o sistema retorna uma notificação via WebSocket, informando o campo ausente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações para `sipUser`, `sipPass` e `sipServer` no fluxo de chamada para verificar a integridade dos dados (`plugins/Message/handlers/startCall.php`).  &#10;- **Alterado:** Mensagens de retorno em WebSocket para incluir feedback imediato em caso de erros.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: Usuários com dados incompletos poderão ter suas chamadas bloqueadas após a validação.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de chamada em produção." />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
@@ -723,18 +739,13 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/plugins/Request/pages/index.html</url>
-          <line>131</line>
-          <option name="timeStamp" value="6" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/js/router.js</url>
           <line>139</line>
           <option name="timeStamp" value="26" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>569</line>
+          <line>578</line>
           <option name="timeStamp" value="29" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
@@ -744,7 +755,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>1152</line>
+          <line>1228</line>
           <option name="timeStamp" value="33" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
@@ -754,13 +765,13 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
           <url>file://$PROJECT_DIR$/audio.php</url>
-          <line>199</line>
+          <line>234</line>
           <option name="timeStamp" value="27" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
           <url>file://$PROJECT_DIR$/audio.php</url>
-          <line>108</line>
-          <option name="timeStamp" value="31" />
+          <line>238</line>
+          <option name="timeStamp" value="36" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

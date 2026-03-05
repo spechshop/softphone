@@ -14,9 +14,12 @@ $clientInfo = [];
 $buffers = [];
 $lastSeen = [];
 $frameQueue = [];
+$jitterBuffer = []; // Buffer para absorver variação de latência
+$packetTimestamps = []; // Timestamps dos pacotes para ordenação
 $streamKeys = [];
 $udpPeers = [];
-$BUFFER_TARGET = 2;
+$BUFFER_TARGET = 6; // Aumentado para 6 - máxima resiliência em rede fraca
+$JITTER_BUFFER_SIZE = 5; // Aumentado para 5 pacotes extras para compensar jitter
 $FRAME_TARGET = 320;
 $MAX_SILENCE = 30;
 /**
@@ -30,7 +33,7 @@ $server->set([
 
 $channelDecode = [];
 cache::define('rateCall', 8000);
-$server->on("start", function (Server $server) use (&$clientInfo, &$clients, &$udpPeers, &$buffers, &$frameQueue, &$streamKeys, &$lastSeen, &$channelDecode, $BUFFER_TARGET, $FRAME_TARGET, $MAX_SILENCE) {
+$server->on("start", function (Server $server) use (&$clientInfo, &$clients, &$udpPeers, &$buffers, &$frameQueue, &$jitterBuffer, &$packetTimestamps, &$streamKeys, &$lastSeen, &$channelDecode, $BUFFER_TARGET, $JITTER_BUFFER_SIZE, $FRAME_TARGET, $MAX_SILENCE) {
     $controlFile = 'audio_control.txt';
     file_put_contents($controlFile, '');
     echo "📁 Arquivo de controle criado: {$controlFile}\n";
@@ -49,7 +52,7 @@ $server->on("start", function (Server $server) use (&$clientInfo, &$clients, &$u
             }
         }
     });
-    go(function () use (&$clientInfo, $server, &$clients, &$buffers, &$frameQueue, &$lastSeen, &$channelDecode, &$udpPeers, $BUFFER_TARGET, $FRAME_TARGET, $MAX_SILENCE) {
+    go(function () use (&$clientInfo, $server, &$clients, &$buffers, &$frameQueue, &$jitterBuffer, &$packetTimestamps, &$lastSeen, &$channelDecode, &$udpPeers, $BUFFER_TARGET, $JITTER_BUFFER_SIZE, $FRAME_TARGET, $MAX_SILENCE) {
         $udp = new Swoole\Coroutine\Socket(AF_INET, SOCK_DGRAM, 0);
         $udp->bind("0.0.0.0", 9600);
         echo "🎧 Servidor UDP aguardando pacotes em 9600...\n";
@@ -87,10 +90,41 @@ $server->on("start", function (Server $server) use (&$clientInfo, &$clients, &$u
             }
             $lastSeen[$callId][$ssrc] = time();
             $decoded = $rtpRaw;
+
+            // Jitter buffer: armazena pacotes com timestamp
+            $jitterBuffer[$callId][$ssrc] ??= [];
+            $packetTimestamps[$callId][$ssrc] ??= 0;
+
+            $timestamp = microtime(true);
+            $jitterBuffer[$callId][$ssrc][] = [
+                'data' => $decoded,
+                'timestamp' => $timestamp,
+            ];
+
+            // Limita tamanho do jitter buffer
+            if (count($jitterBuffer[$callId][$ssrc]) > $JITTER_BUFFER_SIZE + 10) {
+                array_shift($jitterBuffer[$callId][$ssrc]);
+            }
+
+            // Processa apenas se tiver pacotes suficientes (espera jitter buffer encher)
+            if (count($jitterBuffer[$callId][$ssrc]) < $JITTER_BUFFER_SIZE) {
+                continue;
+            }
+
+            // Ordena por timestamp e pega o mais antigo
+            usort($jitterBuffer[$callId][$ssrc], function ($a, $b) {
+                return $a['timestamp'] <=> $b['timestamp'];
+            });
+
+            $packet = array_shift($jitterBuffer[$callId][$ssrc]);
+            $decoded = $packet['data'];
+
             $buffers[$callId][$ssrc] ??= '';
             $buffers[$callId][$ssrc] .= $decoded;
-            if (strlen($buffers[$callId][$ssrc]) > $frequency * 8) {
-                $buffers[$callId][$ssrc] = '';
+
+            // Limita buffer para evitar latência excessiva (aumentado para 16x - máximo)
+            if (strlen($buffers[$callId][$ssrc]) > $frequency * 16) {
+                $buffers[$callId][$ssrc] = substr($buffers[$callId][$ssrc], -($frequency * 8));
             }
             $validChunks = [];
             foreach ($buffers[$callId] as $source => $buf) {
@@ -140,11 +174,12 @@ $server->on("start", function (Server $server) use (&$clientInfo, &$clients, &$u
                     }
                 }
             }
-            if (time() - $lastGC > 15) {
+            // GC mais frequente para liberar memória (reduzido de 15s para 8s)
+            if (time() - $lastGC > 8) {
                 $current = time();
                 foreach ($lastSeen as $cId => $ssrcs) {
                     if (empty($clients[$cId])) {
-                        unset($lastSeen[$cId], $buffers[$cId], $frameQueue[$cId]);
+                        unset($lastSeen[$cId], $buffers[$cId], $frameQueue[$cId], $jitterBuffer[$cId], $packetTimestamps[$cId]);
                         foreach ($ssrcs as $s => $_) {
                             unset($channelDecode[$s]);
                         }
@@ -153,12 +188,12 @@ $server->on("start", function (Server $server) use (&$clientInfo, &$clients, &$u
                     }
                     foreach ($ssrcs as $s => $ts) {
                         if ($current - $ts > $MAX_SILENCE) {
-                            unset($channelDecode[$s], $lastSeen[$cId][$s], $buffers[$cId][$s]);
+                            unset($channelDecode[$s], $lastSeen[$cId][$s], $buffers[$cId][$s], $jitterBuffer[$cId][$s], $packetTimestamps[$cId][$s]);
                             echo "🗑️ Removido canal inativo: {$cId}/{$s}\n";
                         }
                     }
                     if (empty($lastSeen[$cId])) {
-                        unset($lastSeen[$cId], $buffers[$cId], $frameQueue[$cId]);
+                        unset($lastSeen[$cId], $buffers[$cId], $frameQueue[$cId], $jitterBuffer[$cId], $packetTimestamps[$cId]);
                     }
                 }
                 $lastGC = time();
@@ -235,12 +270,13 @@ $server->on("message", function (Server $server, Frame $frame) use (&$clientInfo
         }
         $packet = $pcmData . '__::__' . $callId . '__::__' . $ssrc;
         if (!empty($udpPeers[$callId])) {
-            go(function () use ($packet, $callId, $ssrc, &$udpPeers) {
+            go(function () use ($packet, $pcmData, $callId, $ssrc, &$udpPeers) {
                 $udp = new Swoole\Coroutine\Socket(AF_INET, SOCK_DGRAM, 0);
                 foreach ($udpPeers[$callId] as $peerSsrc => $peerInfo) {
                     if ($peerSsrc === $ssrc) {
                         continue;
                     }
+                    //\libspech\Cli\cli::pcl(strlen($pcmData)."bytes to {$peerInfo['host']}:{$peerInfo['port']}");
                     $udp->sendto($peerInfo['host'], $peerInfo['port'], $packet);
                 }
                 $udp->close();

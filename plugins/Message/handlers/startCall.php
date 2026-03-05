@@ -176,7 +176,7 @@ class startCall
 
         }
 
-        $audioBuffer = '';
+
         $phone->onRinging(function ($phone) use ($socket, $fingerprint) {
             $fds = cache::get('connections')[$fingerprint] ?? [];
             foreach ($fds as $fd) {
@@ -231,6 +231,8 @@ class startCall
 
 
         $phone->onHangup(function (trunkController $phone) use ($model, $fd, $socket, $fingerprint) {
+
+
             $socket->push($fd, json_encode([
                 'byToken' => $model['id'],
                 'data' => [
@@ -293,11 +295,12 @@ class startCall
         });
 
 
+
         $phone->onAnswer(function (trunkController $phone) use ($socket, $vault, $fingerprint, $userFrequency) {
             $phone->receiveMedia();
             cli::pcl("Recebendo audio", "green");
 
-            Coroutine::create(function () use ($phone, $userFrequency) {
+            Coroutine::create(function () use (&$cacheAudio, $phone, $userFrequency) {
 
                 cli::pcl("Iniciando socket (Browser Mic → RTP)", "green");
 
@@ -315,33 +318,28 @@ class startCall
                 $FRAME_MS = 20;
                 $SRC_RATE = $userFrequency; // ex: 8000
                 $SAMPLES_PER_FRAME = (int)($SRC_RATE * ($FRAME_MS / 1000)); // 160
-                $PCM_FRAME_BYTES = $SAMPLES_PER_FRAME * 8; // PCM16 = 320 bytes
+                $PCM_FRAME_BYTES = $SAMPLES_PER_FRAME * 2; // PCM16 = 2 bytes por sample = 320 bytes
 
-                cli::pcl(
-                    "Frame VoIP: {$FRAME_MS}ms | {$SAMPLES_PER_FRAME} samples | {$PCM_FRAME_BYTES} bytes",
-                    "cyan"
-                );
+
 
                 while (true) {
 
                     $peer = null;
-                    $data = $phone->globalInfo['eventSock']->recvfrom($peer, 0.1);
+                    $data = $phone->globalInfo['eventSock']->recvfrom($peer, 0.2);
 
                     // condições de saída
                     if ($phone->receiveBye) break;
                     if ($phone->error) break;
                     if (!$phone->callActive) break;
 
-                    if (empty($data)) {
-                        Coroutine::sleep(0.01);
-                        continue;
-                    }
 
                     // separa payload
                     [$pcmIn, $callId, $ssrc] = explode('__::__', $data, 3);
 
+
                     // acumula PCM do browser (NUNCA confiar no tamanho recebido)
                     $pcmBuffer .= $pcmIn;
+
 
                     // enquanto houver frame VoIP completo…
                     while (strlen($pcmBuffer) >= $PCM_FRAME_BYTES) {

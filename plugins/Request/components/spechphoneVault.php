@@ -53,8 +53,9 @@ class spechphoneVault
      * @param mixed $value
      * @return bool
      */
-    public function set(string $key, mixed $value): bool
+    public function set(string|null $key, mixed $value): bool
     {
+        if (empty($key)) return false;
         $this->withLock(function () use ($key, $value) {
             $this->data[$key] = $this->normalize($value);
             $this->markDirty();
@@ -76,10 +77,10 @@ class spechphoneVault
         return true;
     }
 
-    public function exists(string $key = ''): bool
+    public function exists(string|null $key = ''): bool
     {
         if (empty($key)) return false;
-        return array_key_exists($key, $this->data);
+        return array_key_exists($key, $this->data ?? []);
     }
 
     public function incr(string $key, int|float $by = 1): int|float

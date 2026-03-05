@@ -31,6 +31,7 @@ class register
         $needInputs = ['sipServer', 'sipUser', 'sipPass'];
         foreach ($needInputs as $input) {
             if (empty($userDatas[$input])) {
+                return false;
                 return $socket->push($fd, json_encode([
                     'type' => 'notify',
                     'data' => [

@@ -38,7 +38,10 @@ class server
                 $eRoute = explode('/', $page);
                 $nameRoute =  explode('.html', str_replace(['.php'], '', $eRoute[count($eRoute) - 1]))[0];
                 if (in_array($nameRoute, \cache::get('interface')['pages'])) {
-                if ($nameRoute !== $page) continue;
+                    $pathName = basename($path);
+
+
+                    if ($pathName !== $nameRoute) continue;
                     $response->status(200);
                     $response->header('Content-Type', 'text/html; charset=utf-8');
                     $html = file_get_contents($page);

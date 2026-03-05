@@ -1508,6 +1508,9 @@ ol, ul {
     z-index: 1;
 }
 
+#btnBackspace:active {
+    color: #0a0c17 !important;
+}
 
 
 
