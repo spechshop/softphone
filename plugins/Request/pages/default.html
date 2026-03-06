@@ -578,7 +578,7 @@
 
     window.startCall = () => {
 
-        let digits;
+        var digits = window.digits;
         if (!digits) {
             digits = user.getValue('lastDigits') || '';
             if (!digits) {
