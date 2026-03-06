@@ -19,7 +19,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada incorretamente como `null` ao recuperar o valor de `user.getValue('lastDigits')`, o que podia gerar falhas na funcionalidade.  &#10;- **Solução:** Ajustada a inicialização para definir uma string vazia como valor padrão, garantindo consistência no fluxo de chamadas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
-      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/jquery.toast.min.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/jquery.toast.min.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -252,15 +253,7 @@
       <workItem from="1769373117428" duration="1005000" />
       <workItem from="1769451193295" duration="253000" />
       <workItem from="1769532672316" duration="10000" />
-      <workItem from="1772725072590" duration="25740000" />
-    </task>
-    <task id="LOCAL-00044" summary="Remova a seção de exibição de codecs da interface&#10;&#10;### Problema&#10;A página `default.html` continha uma seção destinada à exibição de codecs com informações simuladas. Essa interface não era utilizada no fluxo principal e representava complexidade desnecessária na manutenção do código.&#10;&#10;### Solução&#10;- Removida a seção completa de exibição de codecs no arquivo `default.html`.&#10;&#10;### Mudanças relevantes&#10;- Removido: Bloco HTML responsável pela exibição de codecs simulados na página `default.html`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767131691158</created>
-      <option name="number" value="00044" />
-      <option name="presentableId" value="LOCAL-00044" />
-      <option name="project" value="LOCAL" />
-      <updated>1767131691158</updated>
+      <workItem from="1772725072590" duration="26619000" />
     </task>
     <task id="LOCAL-00045" summary="Remova a seção de exibição de codecs da interface&#10;&#10;### Problema&#10;A página `default.html` continha uma seção destinada à exibição de codecs com informações simuladas. Essa interface não era utilizada no fluxo principal e representava complexidade desnecessária na manutenção do código.&#10;&#10;### Solução&#10;- Removida a seção completa de exibição de codecs no arquivo `default.html`.&#10;&#10;### Mudanças relevantes&#10;- Removido: Bloco HTML responsável pela exibição de codecs simulados na página `default.html`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -646,7 +639,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772822559996</updated>
     </task>
-    <option name="localTasksCounter" value="93" />
+    <task id="LOCAL-00093" summary="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada incorretamente como `null` ao recuperar o valor de `user.getValue('lastDigits')`, o que podia gerar falhas na funcionalidade.  &#10;- **Solução:** Ajustada a inicialização para definir uma string vazia como valor padrão, garantindo consistência no fluxo de chamadas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1772822635831</created>
+      <option name="number" value="00093" />
+      <option name="presentableId" value="LOCAL-00093" />
+      <option name="project" value="LOCAL" />
+      <updated>1772822635831</updated>
+    </task>
+    <option name="localTasksCounter" value="94" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
