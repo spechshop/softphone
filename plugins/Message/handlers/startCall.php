@@ -317,6 +317,7 @@ class startCall
                 // parâmetros VoIP
                 $FRAME_MS = 20;
                 $SRC_RATE = $userFrequency; // ex: 8000
+
                 $SAMPLES_PER_FRAME = (int)($SRC_RATE * ($FRAME_MS / 1000)); // 160
                 $PCM_FRAME_BYTES = $SAMPLES_PER_FRAME * 2; // PCM16 = 2 bytes por sample = 320 bytes
 
@@ -326,6 +327,7 @@ class startCall
 
                     $peer = null;
                     $data = $phone->globalInfo['eventSock']->recvfrom($peer, 0.2);
+                    //cli::pcl("SRC_RATE: {$SRC_RATE}", "green");
 
                     // condições de saída
                     if ($phone->receiveBye) break;

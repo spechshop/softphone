@@ -614,7 +614,15 @@
                 console.log('🔇 Microfone permanece desligado (conforme preferência salva)');
             }
             startCallTimer();
-            playAudio(window.currentCallId)
+
+            // Aguarda currentCallId ser definido antes de chamar playAudio
+            console.log('🎧 currentCallId atual:', window.currentCallId);
+            if (window.currentCallId) {
+                console.log('🎧 Chamando playAudio com callId:', window.currentCallId);
+                playAudio(window.currentCallId);
+            } else {
+                console.log('⏳ Aguardando currentCallId ser definido via WebSocket (changeCallId)');
+            }
 
         });
 
@@ -799,6 +807,9 @@
 
     btnCall.addEventListener('click', () => startCall());
 
+    // Flag para controlar restauração após reload
+    let isCallRestored = false;
+
     // ===== Check call status periodically =====
     setInterval(() => {
         sendRecByToken({}, 'checkCall').then((res) => {
@@ -815,6 +826,29 @@
                 if (!callTimerInterval && typeof window.startCallTimer === 'function') {
                     window.startCallTimer();
                 }
+
+                // RESTAURAÇÃO APÓS RELOAD: Reconecta áudio e microfone
+                if (!isCallRestored) {
+                    isCallRestored = true;
+                    console.log('🔄 Chamada ativa detectada após reload, restaurando estado...');
+
+                    // Reconecta áudio de recepção
+                    if (window.currentCallId) {
+                        console.log('🎧 Reconectando áudio de recepção...');
+                        playAudio(window.currentCallId);
+                    }
+
+                    // Restaura microfone se estava ligado
+                    if (!isMicStop && !isRecording) {
+                        console.log('🎤 Microfone estava ligado, reiniciando captura...');
+                        startAudioCapture();
+                        // Atualiza UI do microfone
+                        iconMic.classList.remove('fa-microphone-slash');
+                        iconMic.classList.add('fa-microphone');
+                    } else {
+                        console.log('🔇 Microfone estava desligado ou já está rodando');
+                    }
+                }
             } else {
                 // Chamada não está ativa, garante que está no estado correto
                 if (btnCall.style.display === 'none') {
@@ -826,6 +860,9 @@
                 if (callTimerInterval && typeof window.stopCallTimer === 'function') {
                     window.stopCallTimer();
                 }
+
+                // Reset flag de restauração quando não há chamada
+                isCallRestored = false;
             }
         }).catch(err => {
             console.error('Erro ao verificar status da chamada:', err);

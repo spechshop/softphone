@@ -275,6 +275,24 @@ window.playAudio = (callId) => {
             latencyHint: 'interactive',
         });
         console.log('🎵 AudioContext criado após interação do usuário, estado:', window.audioContext.state);
+
+        // Listener global para resumir AudioContext em qualquer interação
+        if (!window._audioContextResumeListenerAdded) {
+            const resumeAudioContext = async () => {
+                if (window.audioContext && window.audioContext.state === 'suspended') {
+                    try {
+                        await window.audioContext.resume();
+                        console.log('✅ AudioContext resumido via interação do usuário');
+                    } catch (e) {
+                        console.warn('❌ Erro ao resumir AudioContext:', e);
+                    }
+                }
+            };
+
+            document.addEventListener('click', resumeAudioContext, {once: false});
+            document.addEventListener('touchstart', resumeAudioContext, {once: false});
+            window._audioContextResumeListenerAdded = true;
+        }
     }
 
     // Resume AudioContext se necessário (após interação do usuário)
@@ -405,13 +423,18 @@ async function scheduleAudioBuffer() {
 
     // Resume AudioContext se estiver suspenso (requisito do Chrome)
     if (window.audioContext.state === 'suspended') {
-
-        document.getElementById('btnSpeaker').click();
-        document.getElementById('btnSpeaker').click();
-
+        console.log('🔊 Alto-falante ativo');
+        try {
+            await window.audioContext.resume();
+            console.log('✅ AudioContext resumido com sucesso, estado:', window.audioContext.state);
+        } catch (e) {
+            console.error('❌ Erro ao resumir AudioContext:', e);
+            return;
+        }
 
         // Se ainda está suspenso após tentar resumir, não reproduz
         if (window.audioContext.state === 'suspended') {
+            console.warn('⚠️ AudioContext ainda suspenso, aguardando interação do usuário');
             return;
         }
     }
