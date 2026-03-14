@@ -18,9 +18,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Adicionar timestamp ao envio de DTMF e novo logotipo&#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** O envio de DTMF não incluía informações de timestamp, dificultando a rastreabilidade dos eventos no fluxo de chamadas.  &#10;- **Problema 2:** O logotipo do projeto era inexistente, o que impactava na identidade visual da aplicação.  &#10;&#10;- **Solução:**  &#10;  - Adicionado um campo `timestamp` com o horário atual (`Date.now()`) ao enviar DTMFs no método `sendRecByToken` no arquivo `plugins/Request/pages/default.html`.  &#10;  - Inserido novo logotipo no formato SVG para utilização no sistema.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Campo `timestamp` no envio de DTMF em `sendRecByToken` (`plugins/Request/pages/default.html`).  &#10;- **Adicionado:** Arquivo `logo.svg` como novo logotipo do projeto.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
-      <change beforePath="$PROJECT_DIR$/plugins/Request/modules/includes/head.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/modules/includes/head.html" afterDir="false" />
-    </list>
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Adicionar timestamp ao envio de DTMF e novo logotipo&#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** O envio de DTMF não incluía informações de timestamp, dificultando a rastreabilidade dos eventos no fluxo de chamadas.  &#10;- **Problema 2:** O logotipo do projeto era inexistente, o que impactava na identidade visual da aplicação.  &#10;&#10;- **Solução:**  &#10;  - Adicionado um campo `timestamp` com o horário atual (`Date.now()`) ao enviar DTMFs no método `sendRecByToken` no arquivo `plugins/Request/pages/default.html`.  &#10;  - Inserido novo logotipo no formato SVG para utilização no sistema.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Campo `timestamp` no envio de DTMF em `sendRecByToken` (`plugins/Request/pages/default.html`).  &#10;- **Adicionado:** Arquivo `logo.svg` como novo logotipo do projeto.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento." />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -253,15 +251,7 @@
       <workItem from="1769451193295" duration="253000" />
       <workItem from="1769532672316" duration="10000" />
       <workItem from="1772725072590" duration="27976000" />
-      <workItem from="1773454102826" duration="1373000" />
-    </task>
-    <task id="LOCAL-00048" summary="Atualize encerramento de chamadas para evitar conexões abertas&#10;&#10;### Problema&#10;No arquivo `hangUpCall.php`, o encerramento de chamadas não incluía a liberação completa de recursos, deixando conexões abertas em determinados cenários. Essa limitação poderia causar vazamento de memória ou inconsistências durante operação prolongada.&#10;&#10;### Solução&#10;- Adicionada a chamada ao método `close()` após `bye()` para garantir o encerramento adequado da conexão.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Chamada ao método `close()` no fluxo de encerramento em `plugins/Message/handlers/hangUpCall.php`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767142578986</created>
-      <option name="number" value="00048" />
-      <option name="presentableId" value="LOCAL-00048" />
-      <option name="project" value="LOCAL" />
-      <updated>1767142578986</updated>
+      <workItem from="1773454102826" duration="1760000" />
     </task>
     <task id="LOCAL-00049" summary="Atualize encerramento de chamadas para evitar conexões abertas&#10;&#10;### Problema&#10;No arquivo `hangUpCall.php`, o encerramento de chamadas não incluía a liberação completa de recursos, deixando conexões abertas em determinados cenários. Essa limitação poderia causar vazamento de memória ou inconsistências durante operação prolongada.&#10;&#10;### Solução&#10;- Adicionada a chamada ao método `close()` após `bye()` para garantir o encerramento adequado da conexão.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Chamada ao método `close()` no fluxo de encerramento em `plugins/Message/handlers/hangUpCall.php`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -647,7 +637,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773455359623</updated>
     </task>
-    <option name="localTasksCounter" value="97" />
+    <task id="LOCAL-00097" summary="### TÍTULO  &#10;Adicionar timestamp ao envio de DTMF e novo logotipo&#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** O envio de DTMF não incluía informações de timestamp, dificultando a rastreabilidade dos eventos no fluxo de chamadas.  &#10;- **Problema 2:** O logotipo do projeto era inexistente, o que impactava na identidade visual da aplicação.  &#10;&#10;- **Solução:**  &#10;  - Adicionado um campo `timestamp` com o horário atual (`Date.now()`) ao enviar DTMFs no método `sendRecByToken` no arquivo `plugins/Request/pages/default.html`.  &#10;  - Inserido novo logotipo no formato SVG para utilização no sistema.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Campo `timestamp` no envio de DTMF em `sendRecByToken` (`plugins/Request/pages/default.html`).  &#10;- **Adicionado:** Arquivo `logo.svg` como novo logotipo do projeto.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1773455485288</created>
+      <option name="number" value="00097" />
+      <option name="presentableId" value="LOCAL-00097" />
+      <option name="project" value="LOCAL" />
+      <updated>1773455485289</updated>
+    </task>
+    <option name="localTasksCounter" value="98" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
