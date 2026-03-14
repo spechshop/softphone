@@ -5,7 +5,7 @@
             <stop offset="100%" stop-color="#3a3a3a"/>
         </linearGradient>
     </defs>
-    <rect width="600" height="140" fill="url(#backgroundGrad)"/>
+    <rect width="480" height="135" fill="url(#backgroundGrad)"/>
     <defs>
         <linearGradient id="gradSilver" x1="0%" y1="0%" x2="100%" y2="0%">
             <stop offset="0%" stop-color="#d9d9d9"/>
@@ -17,12 +17,14 @@
             <stop offset="100%" stop-color="#00a2ff"/>
         </linearGradient>
     </defs> <!-- texto Spech -->
-    <text x="10" y="80" font-family="Arial Black, sans-serif" font-size="70" font-style="italic"
+    <text x="15" y="85" font-family="Arial Black, sans-serif" font-size="70" font-style="italic" font-weight="900"
           fill="url(#gradSilver)">Spech
     </text> <!-- ondas -->
     <path d="M210 40 C240 70 240 70 210 100" stroke="#1e6cff" stroke-width="10" fill="none"/>
-    <path d="M225 35 C265 70 265 70 225 105" stroke="#00a2ff" stroke-width="10" fill="none"/> <!-- phone -->
-    <text x="260" y="80" font-family="Arial Black, sans-serif" font-size="70" font-style="italic" fill="url(#gradBlue)">
+    <path d="M225 35 C265 70 265 70 225 105" stroke="#00a2ff" stroke-width="10" fill="none"/>
+    <!-- phone -->
+    <text font-weight="900" x="263" y="81" font-family="Arial Black, sans-serif" font-size="70" font-style="italic"
+          fill="url(#gradBlue)">
         phone
     </text> <!-- subtitulo -->
     <text x="320" y="115" font-family="sans" font-size="24" fill="#fff">web system</text>
