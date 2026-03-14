@@ -336,8 +336,10 @@ class startCall
 
 
                     // separa payload
-                    [$pcmIn, $callId, $ssrc] = explode('__::__', $data, 3);
-
+                    $e = explode('__::__', $data, 3);
+                    $pcmIn = $e[0];
+                    $callId = $e[1] ?? 'mic-user';
+                    $ssrc = $e[2] ?? '0';
 
                     // acumula PCM do browser (NUNCA confiar no tamanho recebido)
                     $pcmBuffer .= $pcmIn;

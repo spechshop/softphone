@@ -45,7 +45,6 @@ class dtmf
             /** @var trunkController $phone */
             $phone = cache::get('coroutinesProcess')[$fingerprint];
             $dtmf = substr($data['dtmf'], 0);
-            var_dump($dtmf);
 
 
             $phone->send2833($dtmf);

@@ -18,8 +18,13 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Substituir Fingerprint2 por geração de ID único para armazenamento local  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O uso do Fingerprint2 para gerar identificadores de dispositivo era inflexível e apresentava limitações em cenários onde permissões ou configurações do navegador impediam a execução completa da biblioteca.  &#10;- **Solução:** Substituído o Fingerprint2 pela geração de um ID único aleatório utilizando `Date.now()` e partes randômicas, garantindo maior flexibilidade e independência de bibliotecas externas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Removido:** Dependência do Fingerprint2 para geração de identificadores no arquivo `js/jquery.toast.min.js`.  &#10;- **Adicionado:** Função `generateUniqueDeviceId` para criação de IDs únicos persistidos localmente.  &#10;- **Alterado:** Lógica de recuperação ou geração de token em memória local (`localStorage`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento. A mudança dispensa a necessidade de dependências externas e simplifica o fluxo de inicialização.">
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada de forma incorreta, utilizando `undefined` ao invés do valor correto armazenado em `window.digits`, causando falhas ao iniciar chamadas.  &#10;- **Solução:** Modificada a inicialização da variável `digits` para utilizar diretamente `window.digits`, assegurando que o valor correto será utilizado no método `startCall`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
+      <change afterPath="$PROJECT_DIR$/logo.png" afterDir="false" />
+      <change afterPath="$PROJECT_DIR$/logo.svg" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/dtmf.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/dtmf.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/modules/includes/head.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/modules/includes/head.html" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -41,7 +46,7 @@
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="226" />
+    <option name="cachedIndexableFilesCount" value="227" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -98,12 +103,12 @@
     }
   ]
 }</component>
-  <component name="GithubPullRequestsUISettings"><![CDATA[{
-  "selectedUrlAndAccountId": {
-    "url": "https://github.com/spechshop/spechphone.git",
-    "accountId": "112bf7fc-43a6-4ca6-9ea4-b1fd2030c70d"
+  <component name="GithubPullRequestsUISettings">{
+  &quot;selectedUrlAndAccountId&quot;: {
+    &quot;url&quot;: &quot;https://github.com/spechshop/spechphone.git&quot;,
+    &quot;accountId&quot;: &quot;112bf7fc-43a6-4ca6-9ea4-b1fd2030c70d&quot;
   }
-}]]></component>
+}</component>
   <component name="HighlightingSettingsPerFile">
     <setting file="file://$PROJECT_DIR$/.env" root0="FORCE_HIGHLIGHTING" />
     <setting file="file://$PROJECT_DIR$/.gitmodules" root0="FORCE_HIGHLIGHTING" />
@@ -143,7 +148,7 @@
     "javascript.nodejs.core.library.typings.version": "18.19.130",
     "javascript.preferred.runtime.type.id": "node",
     "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/lotus/PROJETOS/spechphone",
+    "last_opened_file_path": "/home/lotus/projetos/spechphone",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
     "node.js.selected.package.eslint": "(autodetect)",
@@ -190,8 +195,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-3bd3a6803838-JavaScript-PS-261.21849.25" />
-        <option value="bundled-php-predefined-a98d8de5180a-a9a4ea3ee0f4-com.jetbrains.php.sharedIndexes-PS-261.21849.25" />
+        <option value="bundled-js-predefined-d6986cc7102b-3bd3a6803838-JavaScript-PS-261.22158.131" />
+        <option value="bundled-php-predefined-a98d8de5180a-a9a4ea3ee0f4-com.jetbrains.php.sharedIndexes-PS-261.22158.131" />
       </set>
     </attachedChunks>
   </component>
@@ -253,15 +258,8 @@
       <workItem from="1769373117428" duration="1005000" />
       <workItem from="1769451193295" duration="253000" />
       <workItem from="1769532672316" duration="10000" />
-      <workItem from="1772725072590" duration="26826000" />
-    </task>
-    <task id="LOCAL-00046" summary="Atualize limpeza de recursos no encerramento de chamadas em `startCall.php`&#10;&#10;### Problema&#10;O fluxo de encerramento de chamadas no arquivo `startCall.php` não realizava a limpeza completa de recursos associados, como conexões e objetos temporários, o que poderia ocasionar vazamento de memória e inconsistências em carga alta.&#10;&#10;### Solução&#10;- Adicionada exclusão de objetos em cache relacionados ao identificador de chamada (`fingerprint`).&#10;- Incluído loop para notificar conexões abertas com a mensagem `bye` antes de encerrar.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Chamada a `cache::unset` para remover o registro `coroutinesProcess` da memória.&#10;- Adicionado: Loop para enviar eventos `bye` às conexões associadas ao fingerprint atual.&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Alteração pode modificar o comportamento em cenários de chamadas simultâneas, sendo necessário monitorar em produção.">
-      <option name="closed" value="true" />
-      <created>1767142255256</created>
-      <option name="number" value="00046" />
-      <option name="presentableId" value="LOCAL-00046" />
-      <option name="project" value="LOCAL" />
-      <updated>1767142255256</updated>
+      <workItem from="1772725072590" duration="27976000" />
+      <workItem from="1773454102826" duration="1228000" />
     </task>
     <task id="LOCAL-00047" summary="Atualize encerramento de chamadas para evitar conexões abertas&#10;&#10;### Problema&#10;No arquivo `hangUpCall.php`, o encerramento de chamadas não incluía a liberação completa de recursos, deixando conexões abertas em determinados cenários. Essa limitação poderia causar vazamento de memória ou inconsistências durante operação prolongada.&#10;&#10;### Solução&#10;- Adicionada a chamada ao método `close()` após `bye()` para garantir o encerramento adequado da conexão.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Chamada ao método `close()` no fluxo de encerramento em `plugins/Message/handlers/hangUpCall.php`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -647,7 +645,15 @@
       <option name="project" value="LOCAL" />
       <updated>1772823526967</updated>
     </task>
-    <option name="localTasksCounter" value="95" />
+    <task id="LOCAL-00095" summary="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada de forma incorreta, utilizando `undefined` ao invés do valor correto armazenado em `window.digits`, causando falhas ao iniciar chamadas.  &#10;- **Solução:** Modificada a inicialização da variável `digits` para utilizar diretamente `window.digits`, assegurando que o valor correto será utilizado no método `startCall`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1772823727821</created>
+      <option name="number" value="00095" />
+      <option name="presentableId" value="LOCAL-00095" />
+      <option name="project" value="LOCAL" />
+      <updated>1772823727821</updated>
+    </task>
+    <option name="localTasksCounter" value="96" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -691,7 +697,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Atualize documentação técnica com detalhes sobre modelo de segurança e suporte a NAT&#10;&#10;### Problema&#10;A documentação do projeto nos arquivos `README.pt-br.md` e `README.md` estava incompleta, omitindo informações importantes sobre o modelo de segurança, transporte de mídia e suporte a NAT. Isso prejudicava a clareza para desenvolvedores que precisam compreender os requisitos e limitações do projeto.&#10;&#10;### Solução&#10;- Adicionado: Novo tópico sobre **Modelo de Segurança**, explicando a ausência de WebRTC, transporte de mídia via backend e requisitos mínimos para produção (HTTPS, WSS, firewall).&#10;- Adicionado: Detalhes sobre suporte a NAT com uso opcional de STUN e ausência de suporte a TURN.&#10;- Alterado: Correção de informações em ambos os arquivos para enfatizar a ausência de credenciais hardcoded.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Tópico **Modelo de Segurança** em `README.pt-br.md` e `README.md`.&#10;- Adicionado: Suporte opcional a STUN e ressalva sobre TURN não implementado.&#10;- Alterado: Secção de variáveis de ambiente em ambos os arquivos para destacar a ausência de credenciais hardcoded.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Atualize `.gitignore` para corrigir exclusões redundantes&#10;&#10;### Problema&#10;O arquivo `.gitignore` continha entradas redundantes relacionadas ao diretório `/libspech` e seu repositório Git, o que poderia causar confusão na gestão de arquivos ignorados.&#10;&#10;### Solução&#10;- Corrigido: Ajuste na exclusão do diretório `/libspech` e seu repositório para evitar duplicações e manter consistência.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Removidas redundâncias no arquivo `.gitignore`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Adicione o diretório `/libspech` ao repositório&#10;&#10;### Problema&#10;O diretório `/libspech` não fazia parte do repositório, embora fosse uma dependência essencial para a execução do projeto. Isso poderia causar falhas em ambientes onde esse diretório não exista localmente.&#10;&#10;### Solução&#10;- Adicionado: Diretório `/libspech` ao repositório, garantindo que os arquivos necessários estão disponíveis durante o desenvolvimento e a execução do sistema.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Diretório `/libspech` ao controle de versão.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Atualize `.gitignore` para remover exclusão desnecessária de `/libspech`&#10;&#10;### Problema&#10;O arquivo `.gitignore` continha a entrada `/libspech/.git`, que se tornou desnecessária após o diretório `/libspech` ser adicionado ao controle de versão. Manter essa exclusão poderia causar inconsistências na gestão de arquivos versionados.&#10;&#10;### Solução&#10;- Removida a entrada `/libspech/.git` do arquivo `.gitignore` para alinhar com a inclusão do diretório no repositório.&#10;&#10;### Mudanças relevantes&#10;- Corrigido: Exclusão redundante no arquivo `.gitignore` referente ao diretório `/libspech`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
@@ -716,7 +721,8 @@
     <MESSAGE value="### TÍTULO&#10;Aprimorar inicialização do `AudioContext` e restaurar estado após recarregamento&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O `AudioContext` exigia interação do usuário para ser resumido em navegadores modernos, e após recarregamento da página, estados ativos (áudio e microfone) não eram restaurados automaticamente, causando interrupções na experiência do usuário.&#10;- **Solução:** Implementada lógica para resumir o `AudioContext` em qualquer interação do usuário. Adicionada restauração automática de chamadas, áudio e microfone após o recarregamento da página.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Adicionado:** Listener global para resumir o `AudioContext` em interações do usuário (`js/router.js`).&#10;- **Adicionado:** Lógica para restaurar o estado da chamada, áudio de recepção e microfone após reload da página (`plugins/Request/pages/default.html`).&#10;- **Alterado:** Ajustes nos logs para maior clareza durante a depuração (`startCall.php`, `js/router.js`).&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;- ⚠️ Possível impacto: Pode haver variações leves no timing de inicialização do `AudioContext` em dispositivos com carregamento lento.&#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado em produção para garantir a estabilidade do `AudioContext` e do microfone em diferentes navegadores e cenários de recarregamento." />
     <MESSAGE value="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada incorretamente como `null` ao recuperar o valor de `user.getValue('lastDigits')`, o que podia gerar falhas na funcionalidade.  &#10;- **Solução:** Ajustada a inicialização para definir uma string vazia como valor padrão, garantindo consistência no fluxo de chamadas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="### TÍTULO  &#10;Substituir Fingerprint2 por geração de ID único para armazenamento local  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O uso do Fingerprint2 para gerar identificadores de dispositivo era inflexível e apresentava limitações em cenários onde permissões ou configurações do navegador impediam a execução completa da biblioteca.  &#10;- **Solução:** Substituído o Fingerprint2 pela geração de um ID único aleatório utilizando `Date.now()` e partes randômicas, garantindo maior flexibilidade e independência de bibliotecas externas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Removido:** Dependência do Fingerprint2 para geração de identificadores no arquivo `js/jquery.toast.min.js`.  &#10;- **Adicionado:** Função `generateUniqueDeviceId` para criação de IDs únicos persistidos localmente.  &#10;- **Alterado:** Lógica de recuperação ou geração de token em memória local (`localStorage`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento. A mudança dispensa a necessidade de dependências externas e simplifica o fluxo de inicialização." />
-    <option name="LAST_COMMIT_MESSAGE" value="### TÍTULO  &#10;Substituir Fingerprint2 por geração de ID único para armazenamento local  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O uso do Fingerprint2 para gerar identificadores de dispositivo era inflexível e apresentava limitações em cenários onde permissões ou configurações do navegador impediam a execução completa da biblioteca.  &#10;- **Solução:** Substituído o Fingerprint2 pela geração de um ID único aleatório utilizando `Date.now()` e partes randômicas, garantindo maior flexibilidade e independência de bibliotecas externas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Removido:** Dependência do Fingerprint2 para geração de identificadores no arquivo `js/jquery.toast.min.js`.  &#10;- **Adicionado:** Função `generateUniqueDeviceId` para criação de IDs únicos persistidos localmente.  &#10;- **Alterado:** Lógica de recuperação ou geração de token em memória local (`localStorage`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento. A mudança dispensa a necessidade de dependências externas e simplifica o fluxo de inicialização." />
+    <MESSAGE value="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada de forma incorreta, utilizando `undefined` ao invés do valor correto armazenado em `window.digits`, causando falhas ao iniciar chamadas.  &#10;- **Solução:** Modificada a inicialização da variável `digits` para utilizar diretamente `window.digits`, assegurando que o valor correto será utilizado no método `startCall`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento." />
+    <option name="LAST_COMMIT_MESSAGE" value="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada de forma incorreta, utilizando `undefined` ao invés do valor correto armazenado em `window.digits`, causando falhas ao iniciar chamadas.  &#10;- **Solução:** Modificada a inicialização da variável `digits` para utilizar diretamente `window.digits`, assegurando que o valor correto será utilizado no método `startCall`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento." />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
@@ -741,7 +747,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>1266</line>
+          <line>1269</line>
           <option name="timeStamp" value="33" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
