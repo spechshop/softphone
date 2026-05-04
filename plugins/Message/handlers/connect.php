@@ -184,38 +184,33 @@ class connect
             return false;
         }
         $modelRegister = $phone->modelRegister();
-        $uriContact = sip::extractURI($modelRegister['headers']['Contact'][0]);
-        $uriContact['peer']['host'] = network::getLocalIp();
-        $uriContact['peer']['port'] = 4000;
-        $modelRegister['headers']['Contact'][0] = sip::renderURI($uriContact);
-        $modelRegister['headers']['Via'][0] .= ';rport';
-        $modelRegister['headers']['Expires'][0] = '3600';
-        $modelRegister['headers']['User-Agent'][0] = 'SPECHPHONE SERVER';
-
-        $phone->socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
-        for (; ;) {
+        $modelRegister['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":$phone->socketPortListen;branch=z9hG4bK$phone->callId;rport";
+        $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
+        for ($n = 3; $n--;) {
             $peer = [];
             $res = $phone->socket->recvfrom($peer, 5);
-
-
             $receive = sip::parse($res);
-            if ($receive['method'] !== 401) {
-                if ($receive['method'] == '200') {
-                    return true;
-                } else {
-                    return false;
-                }
+            if ($receive['method'] == '401') {
+                $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
+                $nonce = value($wwwAuthenticate, 'nonce="', '"');
+                $realm = value($wwwAuthenticate, 'realm="', '"');
+                $response = sip::generateAuthorizationHeader($phone->username, $realm, $phone->password, $nonce, 'sip:' . $phone->host, 'REGISTER');
+                $modelRegister['headers']['Authorization'][0] = $response;
+                $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
+            } elseif ($receive['method'] == '200') {
+                break;
+            } else {
+                $phone->close();
+                return $socket->push($fd, json_encode([
+                    'type' => 'notify',
+                    'data' => [
+                        'type' => 'bg-danger text-white',
+                        'message' => "Registro falhou [$receive[methodForParser], verifique as credenciais fornecidas"
+                    ]
+                ]));
             }
-
-
-            $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
-            $nonce = value($wwwAuthenticate, 'nonce="', '"');
-            $realm = value($wwwAuthenticate, 'realm="', '"');
-            $response = sip::generateAuthorizationHeader($phone->username, $realm, $phone->password, $nonce, 'sip:' . $phone->host, 'REGISTER');
-            $modelRegister['headers']['Authorization'][0] = $response;
-            $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
-            break;
         }
+
         $phone->close();
         return true;
     }

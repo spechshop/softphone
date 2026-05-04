@@ -5,6 +5,7 @@
 
 
 use libspech\Cache\cache as cacheLibSpech;
+use libspech\Network\network;
 use plugins\Start\cache;
 use Swoole\WebSocket\Server;
 
@@ -73,6 +74,7 @@ $server->listen(cache::global()['interface']['host'], 4000, SWOOLE_SOCK_UDP);
 
 
 cache::define('server', $server);
+cache::define('routes', []);
 $server->set($serverSettings);
 $server->on('open', '\plugins\server::open');
 $server->on('message', '\plugins\server::message');
@@ -93,6 +95,21 @@ $server->on('close', function ($server, $fd) {
 
 $server->on('packet', function (Server $socket, string $data, array $info) {
     $parse = \libspech\Sip\sip::parse($data);
+    if (empty($parse['method'])) {
+        return;
+    }
+    if (count($parse['headers']['Via']) > 1) {
+        $localIp = network::getLocalIp();
+        $localPort = 4000;
+        foreach ($parse['headers']['Via'] as $via) {
+            $parseVia = \libspech\Sip\sip::extractVia($via);
+            if ($parseVia['address'] === $localIp && $parseVia['port'] === $localPort) continue;
+            $socket->sendto($parseVia['address'], $parseVia['port'], $data);
+            cli::pcl("Sending packet $parse[methodForParser] to {$parseVia['address']}:{$parseVia['port']}");
+        }
+    }
+    cli::pcl($data, 'cyan');
+
     if ($parse['method'] === 'OPTIONS') {
         $respondOk = \libspech\Packet\renderMessages::respondOptions($parse['headers']);
         $socket->sendto($info['address'], $info['port'], $respondOk);

@@ -3,6 +3,7 @@
 namespace handlers;
 
 
+use libspech\Network\network;
 use libspech\Sip\sip;
 use libspech\Sip\trunkController;
 use Swoole\Timer;
@@ -88,7 +89,7 @@ class saveConfig
         $sipUser = $data['sipUser'];
         $sipPass = $data['sipPass'];
         try {
-            $trunkController = new trunkController($sipUser, $sipPass, $sipServer);
+            $phone = new trunkController($sipUser, $sipPass, $sipServer);
         } catch (\Exception $e) {
             return $socket->push($fd, json_encode([
                 'type' => 'notify',
@@ -98,21 +99,42 @@ class saveConfig
                 ]
             ]));
         }
-        $trunkController->expires = 1800;
-
-        if (!$trunkController->register(5)) {
-            return $socket->push($fd, json_encode([
-                'type' => 'notify',
-                'data' => [
-                    'type' => 'bg-danger text-white',
-                    'message' => "Registro falhou, verifique as credenciais fornecidas"
-                ]
-            ]));
+        $modelRegister = $phone->modelRegister();
+        $modelRegister['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":$phone->socketPortListen;branch=z9hG4bK$phone->callId;rport";
+        $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
+        for ($n = 3; $n--;) {
+            $peer = [];
+            $res = $phone->socket->recvfrom($peer, 5);
+            $receive = sip::parse($res);
+            if ($receive['method'] == '401') {
+                $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
+                $nonce = value($wwwAuthenticate, 'nonce="', '"');
+                $realm = value($wwwAuthenticate, 'realm="', '"');
+                $response = sip::generateAuthorizationHeader($phone->username, $realm, $phone->password, $nonce, 'sip:' . $phone->host, 'REGISTER');
+                $modelRegister['headers']['Authorization'][0] = $response;
+                $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
+            } elseif ($receive['method'] == '200') {
+                break;
+            } else {
+                $phone->close();
+                return $socket->push($fd, json_encode([
+                    'type' => 'notify',
+                    'data' => [
+                        'type' => 'bg-danger text-white',
+                        'message' => "Registro falhou [$receive[methodForParser], verifique as credenciais fornecidas"
+                    ]
+                ]));
+            }
         }
-        $modelOptions = $trunkController->modelOptions();
-        $trunkController->socket->sendto($trunkController->host, $trunkController->port, sip::renderSolution($modelOptions));
-        $res = $trunkController->socket->recvPacket(5);
-        $trunkController->close();
+
+
+        $modelOptions = $phone->modelOptions();
+        $modelOptions['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":$phone->socketPortListen;branch=z9hG4bK$phone->callId;rport";
+
+
+        $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelOptions));
+        $res = $phone->socket->recvPacket(5);
+        $phone->close();
         if (!$res) {
             $socket->push($fd, json_encode([
                 'type' => 'notify',

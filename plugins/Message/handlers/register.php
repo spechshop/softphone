@@ -3,6 +3,7 @@
 namespace handlers;
 
 
+use libspech\Cli\cli;
 use libspech\Network\network;
 use libspech\Sip\sip;
 use Random\RandomException;
@@ -32,13 +33,6 @@ class register
         foreach ($needInputs as $input) {
             if (empty($userDatas[$input])) {
                 return false;
-                return $socket->push($fd, json_encode([
-                    'type' => 'notify',
-                    'data' => [
-                        'type' => 'bg-danger text-white',
-                        'message' => 'Campo obrigatório não preenchido: ' . $input
-                    ]
-                ]));
             }
         }
 
@@ -47,27 +41,19 @@ class register
         } catch (RandomException $e) {
             return false;
         }
-        $modelRegister = $phone->modelRegister();
-        $uriContact = sip::extractURI($modelRegister['headers']['Contact'][0]);
-        $uriContact['peer']['host'] = network::getLocalIp();
-        $uriContact['peer']['port'] = 4000;
-        $modelRegister['headers']['Contact'][0] = sip::renderURI($uriContact);
-        $modelRegister['headers']['Via'][0] .= ';rport';
-        $modelRegister['headers']['Expires'][0] = '3600';
-        $modelRegister['headers']['User-Agent'][0] = 'SPECHPHONE SERVER';
 
-        $phone->socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
+        cli::pcl("Registrando no servidor: $sipServer", 'blue');
+
+
+        $modelRegister = $phone->modelRegister();
+        $modelRegister['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":$phone->socketPortListen;branch=z9hG4bK$phone->callId;rport";
+
+
+        $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
         for (; ;) {
             $peer = [];
             $res = $phone->socket->recvfrom($peer, 5);
             $receive = sip::parse($res);
-            if ($receive['method'] !== 401) {
-                if ($receive['method'] == '200') {
-                    return true;
-                } else {
-                    return false;
-                }
-            }
 
 
             $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
