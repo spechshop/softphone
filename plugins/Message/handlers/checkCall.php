@@ -2,7 +2,7 @@
 
 namespace handlers;
 
-use cache;
+use libspech\Cache\cache;
 
 class checkCall
 {

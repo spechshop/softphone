@@ -155,58 +155,463 @@ window.stopCallTimer = function () {
     }
 }
 
+// ===== Inbound Call Engine =====
+
+window.inboundCallState = {
+    currentCallId: null,
+    status: 'idle', // idle | incoming | accepting | active | ending | ended
+    direction: null,
+    from: null,
+    to: null,
+    codec: null,
+    startedAt: null,
+    acceptSent: false,
+    rejectSent: false,
+    hangupSent: false,
+};
+
+window.formatSipUri = function (uri) {
+    if (!uri) return '';
+    const m = uri.match(/sip:([^@>\s]+)/);
+    return m ? m[1] : uri;
+};
+
+// Ringtone via WebAudio API with visual fallback
+let _ringtoneCtx = null;
+let _ringtoneGain = null;
+let _ringtoneOsc = null;
+let _ringtonePulse = null;
+
+window.startRingtone = function () {
+    stopRingtone();
+    try {
+        _ringtoneCtx = new (window.AudioContext || window.webkitAudioContext)();
+        _ringtoneOsc = _ringtoneCtx.createOscillator();
+        _ringtoneGain = _ringtoneCtx.createGain();
+        _ringtoneOsc.type = 'sine';
+        _ringtoneOsc.frequency.value = 440;
+        _ringtoneGain.gain.value = 0;
+        _ringtoneOsc.connect(_ringtoneGain);
+        _ringtoneGain.connect(_ringtoneCtx.destination);
+        _ringtoneOsc.start();
+        let on = false;
+        _ringtonePulse = setInterval(() => {
+            if (!_ringtoneGain) return;
+            on = !on;
+            _ringtoneGain.gain.setValueAtTime(on ? 0.25 : 0, _ringtoneCtx.currentTime);
+        }, 600);
+    } catch (e) {
+        console.warn('[CALL] ringtone audio bloqueado, usando visual', e);
+    }
+    _startRingtoneVisual();
+};
+
+window.stopRingtone = function () {
+    if (_ringtonePulse) {
+        clearInterval(_ringtonePulse);
+        _ringtonePulse = null;
+    }
+    if (_ringtoneOsc) {
+        try {
+            _ringtoneOsc.stop();
+        } catch (_) {
+        }
+        _ringtoneOsc = null;
+    }
+    if (_ringtoneCtx) {
+        try {
+            _ringtoneCtx.close();
+        } catch (_) {
+        }
+        _ringtoneCtx = null;
+    }
+    _ringtoneGain = null;
+    _stopRingtoneVisual();
+};
+
+function _startRingtoneVisual() {
+    const el = document.getElementById('inboundCallCard');
+    if (el) el.classList.add('ringing-pulse');
+}
+
+function _stopRingtoneVisual() {
+    const el = document.getElementById('inboundCallCard');
+    if (el) el.classList.remove('ringing-pulse');
+}
+
+// Inbound call timer (separate from outbound timer)
+let _inboundTimerInterval = null;
+
+function _startInboundTimer() {
+    const start = Date.now();
+    _inboundTimerInterval = setInterval(() => {
+        const el = document.getElementById('inboundCallTimer');
+        if (!el) return;
+        const s = Math.floor((Date.now() - start) / 1000);
+        el.textContent = String(Math.floor(s / 60)).padStart(2, '0') + ':' + String(s % 60).padStart(2, '0');
+    }, 1000);
+}
+
+function _stopInboundTimer() {
+    if (_inboundTimerInterval) {
+        clearInterval(_inboundTimerInterval);
+        _inboundTimerInterval = null;
+    }
+}
+
+window.renderCallWidget = function () {
+    if (document.getElementById('inboundCallCard')) return;
+    const s = window.inboundCallState;
+    const card = document.createElement('div');
+    card.id = 'inboundCallCard';
+    card.innerHTML = `
+<style>
+#inboundCallCard{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+width:min(420px,96vw);background:#12121e;border:1px solid rgba(255,255,255,.13);
+border-radius:20px;padding:20px 20px 16px;z-index:9999;
+box-shadow:0 8px 40px rgba(0,0,0,.7);color:#fff;font-family:inherit;}
+#inboundCallCard.ringing-pulse{animation:ibRingPulse 1.2s ease-in-out infinite;}
+@keyframes ibRingPulse{0%,100%{box-shadow:0 8px 40px rgba(0,0,0,.7),0 0 0 0 rgba(34,197,94,.45);}
+50%{box-shadow:0 8px 40px rgba(0,0,0,.7),0 0 0 14px rgba(34,197,94,0);}}
+#inboundCallCard .ib-avatar{width:52px;height:52px;border-radius:50%;background:rgba(255,255,255,.08);
+display:flex;align-items:center;justify-content:center;font-size:22px;flex-shrink:0;}
+#inboundCallCard .ib-name{font-size:19px;font-weight:700;letter-spacing:.3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+#inboundCallCard .ib-sub{font-size:11px;opacity:.5;margin-top:2px;}
+#inboundCallCard .ib-status{font-size:13px;opacity:.65;margin-top:10px;}
+#inboundCallCard .ib-timer{font-size:13px;font-weight:700;font-family:'Courier New',monospace;color:#22c55e;margin-top:6px;display:none;}
+#inboundCallCard .ib-btns{display:flex;gap:10px;margin-top:16px;}
+#inboundCallCard .ib-btn{flex:1;padding:13px 8px;border:none;border-radius:12px;font-weight:700;
+font-size:14px;cursor:pointer;transition:opacity .15s;}
+#inboundCallCard .ib-btn:disabled{opacity:.45;cursor:not-allowed;}
+#inboundCallCard .ib-btn-accept{background:#22c55e;color:#fff;}
+#inboundCallCard .ib-btn-reject{background:#ef4444;color:#fff;}
+#inboundCallCard .ib-btn-hangup{background:#ef4444;color:#fff;display:none;}
+</style>
+<div style="display:flex;align-items:center;gap:14px;margin-bottom:2px">
+  <div class="ib-avatar"><i class="fa-solid fa-phone-volume"></i></div>
+  <div style="min-width:0">
+    <div class="ib-name" id="ib-from">${formatSipUri(s.from) || 'Desconhecido'}</div>
+    <div class="ib-sub" id="ib-codec">${s.codec || ''}</div>
+  </div>
+</div>
+<div class="ib-status" id="ib-status">Chamando...</div>
+<div class="ib-timer" id="inboundCallTimer">00:00</div>
+<div class="ib-btns">
+  <button class="ib-btn ib-btn-accept" id="ib-btn-accept" onclick="acceptIncomingCall()">
+    <i class="fa-solid fa-phone me-1"></i>Atender
+  </button>
+  <button class="ib-btn ib-btn-reject" id="ib-btn-reject" onclick="rejectIncomingCall()">
+    <i class="fa-solid fa-phone-slash me-1"></i>Recusar
+  </button>
+  <button class="ib-btn ib-btn-hangup" id="ib-btn-hangup" onclick="hangupCurrentCall()">
+    <i class="fa-solid fa-phone-slash me-1"></i>Desligar
+  </button>
+</div>`;
+    document.body.appendChild(card);
+};
+
+window.closeCallWidget = function () {
+    const el = document.getElementById('inboundCallCard');
+    if (el) el.remove();
+};
+
+window.setCallState = function (status, patch) {
+    Object.assign(window.inboundCallState, {status}, patch || {});
+    _updateCallWidgetUI();
+};
+
+function _updateCallWidgetUI() {
+    const s = window.inboundCallState;
+    const statusEl = document.getElementById('ib-status');
+    const acceptBtn = document.getElementById('ib-btn-accept');
+    const rejectBtn = document.getElementById('ib-btn-reject');
+    const hangupBtn = document.getElementById('ib-btn-hangup');
+    const timerEl = document.getElementById('inboundCallTimer');
+    if (!statusEl) return;
+    const labels = {
+        incoming: 'Chamando...', accepting: 'Atendendo...', active: 'Chamada ativa',
+        ending: 'Encerrando...', ended: 'Encerrado', failed: 'Falhou'
+    };
+    statusEl.textContent = labels[s.status] || s.status;
+    if (s.status === 'active') {
+        if (acceptBtn) acceptBtn.style.display = 'none';
+        if (rejectBtn) rejectBtn.style.display = 'none';
+        if (hangupBtn) hangupBtn.style.display = '';
+        if (timerEl) timerEl.style.display = '';
+    } else if (s.status === 'accepting') {
+        if (acceptBtn) {
+            acceptBtn.disabled = true;
+        }
+        if (rejectBtn) {
+            rejectBtn.disabled = true;
+        }
+    } else if (s.status === 'incoming') {
+        if (acceptBtn) {
+            acceptBtn.style.display = '';
+            acceptBtn.disabled = false;
+        }
+        if (rejectBtn) {
+            rejectBtn.style.display = '';
+            rejectBtn.disabled = false;
+        }
+        if (hangupBtn) hangupBtn.style.display = 'none';
+        if (timerEl) timerEl.style.display = 'none';
+    }
+}
+
+window.handleIncomingCall = function (data) {
+    const callId = data.callId;
+    if (window.inboundCallState.currentCallId === callId) {
+        console.log('[CALL] chamada duplicada ignorada', callId);
+        return;
+    }
+    const busy = window.inboundCallState.status !== 'idle' && window.inboundCallState.status !== 'ended';
+    if (busy) {
+        console.log('[CALL] ocupado, recusando automaticamente', callId);
+        sendRecByToken({callId}, 'callReject');
+        return;
+    }
+    console.log('[CALL] incomingCall recebido', callId);
+    window.inboundCallState = {
+        currentCallId: callId,
+        status: 'incoming',
+        direction: 'inbound',
+        from: data.from,
+        to: data.to,
+        codec: data.codec,
+        startedAt: null,
+        acceptSent: false,
+        rejectSent: false,
+        hangupSent: false,
+    };
+    renderCallWidget();
+    startRingtone();
+};
+
+window.handleCallActive = function () {
+    if (window.inboundCallState.direction !== 'inbound') return;
+    if (!['accepting', 'incoming'].includes(window.inboundCallState.status)) return;
+    console.log('[CALL] chamada ativa');
+    stopRingtone();
+    setCallState('active', {startedAt: Date.now()});
+    _startInboundTimer();
+    playAudio(window.inboundCallState.currentCallId);
+    if (typeof window.startAudioCapture === 'function') {
+        window.startAudioCapture();
+    }
+};
+
+window.handleCallEnded = function () {
+    if (window.inboundCallState.status === 'idle') return;
+    console.log('[CALL] chamada encerrada');
+    stopRingtone();
+    _stopInboundTimer();
+    if (typeof window.stopAudio === 'function') window.stopAudio();
+    setCallState('ended');
+    setTimeout(() => {
+        closeCallWidget();
+        window.inboundCallState.status = 'idle';
+        window.inboundCallState.currentCallId = null;
+    }, 1200);
+};
+
+window.acceptIncomingCall = function () {
+    const s = window.inboundCallState;
+    if (s.status !== 'incoming') return;
+    if (s.acceptSent) return;
+    s.acceptSent = true;
+    console.log('[CALL] enviando callAccept');
+    stopRingtone();
+    setCallState('accepting');
+    sendRecByToken({callId: s.currentCallId}, 'callAccept');
+};
+
+window.rejectIncomingCall = function () {
+    const s = window.inboundCallState;
+    if (s.status !== 'incoming') return;
+    if (s.rejectSent) return;
+    s.rejectSent = true;
+    console.log('[CALL] enviando callReject');
+    stopRingtone();
+    setCallState('ending');
+    sendRecByToken({callId: s.currentCallId}, 'callReject').then(() => handleCallEnded());
+};
+
+window.hangupCurrentCall = function () {
+    const s = window.inboundCallState;
+    if (!['accepting', 'active'].includes(s.status)) return;
+    if (s.hangupSent) return;
+    s.hangupSent = true;
+    console.log('[CALL] enviando callHangup');
+    setCallState('ending');
+    sendRecByToken({hangup: true, callId: s.currentCallId}, 'HangUpCall');
+};
+
+// ===== Real-time Chat Store =====
+
+window.chatStore = {
+    renderedIds: new Set(), // message id → already rendered
+    unread: {},             // sipUser → pending unread count (not yet opened)
+};
+
+// Normalize SIP URI or plain username to lowercase username for comparison
+function _normSip(s) {
+    if (!s) return '';
+    const m = String(s).match(/sip:([^@>\s]+)/i);
+    return (m ? m[1] : String(s)).trim().toLowerCase();
+}
+
+window.handleMessageNew = function (message) {
+    if (!message) return;
+    const key = message.id || [message.from, message.to, message.timestamp, message.body].join('|');
+    if (window.chatStore.renderedIds.has(key)) {
+        console.log('[MESSAGE] duplicado ignorado', key);
+        return;
+    }
+    window.chatStore.renderedIds.add(key);
+    console.log('[MESSAGE] messageNew recebido', message);
+
+    const partner = message.from;
+    const partnerNorm = _normSip(partner);
+    const chatNorm = _normSip(window.currentChatUser || '');
+
+    console.log('[MESSAGE] partner:', partnerNorm, '| currentChatUser:', chatNorm, '| match:', chatNorm && chatNorm === partnerNorm);
+
+    if (chatNorm && chatNorm === partnerNorm) {
+        console.log('[MESSAGE] conversa aberta, renderizando direto');
+        if (typeof window.appendMessageToChat === 'function') window.appendMessageToChat(message, true);
+        if (typeof window.markAsRead === 'function') window.markAsRead([message.id]);
+    } else {
+        console.log('[MESSAGE] conversa fechada, incrementando unread');
+        window.chatStore.unread[partner] = (window.chatStore.unread[partner] || 0) + 1;
+        window._updateConvPreview(partner, message);
+        window._updateMsgTabBadge();
+    }
+};
+
+window._updateConvPreview = function (fromUser, msg) {
+    const list = document.getElementById('convList');
+    if (!list) return;
+    const item = list.querySelector('[data-conv-user="' + CSS.escape(fromUser) + '"]');
+    if (item) {
+        const preview = item.querySelector('.conv-preview');
+        if (preview) preview.textContent = msg.body;
+        const wrap = item.querySelector('.conv-badge-wrap');
+        if (wrap) {
+            let badge = wrap.querySelector('.conv-badge');
+            if (!badge) {
+                badge = document.createElement('span');
+                badge.className = 'badge bg-danger rounded-pill conv-badge';
+                wrap.innerHTML = '';
+                wrap.appendChild(badge);
+            }
+            badge.textContent = (parseInt(badge.textContent) || 0) + 1;
+        }
+        list.insertBefore(item, list.firstChild);
+    } else {
+        if (typeof window.loadConversations === 'function') window.loadConversations();
+    }
+};
+
+window._updateMsgTabBadge = function () {
+    const tabBtn = document.querySelector('[data-tab="messages"]');
+    if (!tabBtn) return;
+    let badge = tabBtn.querySelector('.msg-global-badge');
+    if (!badge) {
+        badge = document.createElement('span');
+        badge.className = 'badge bg-danger rounded-pill msg-global-badge';
+        badge.style.cssText = 'position:absolute;top:0;right:0;font-size:9px;padding:2px 5px;min-width:15px;line-height:1.2;pointer-events:none;';
+        tabBtn.style.position = 'relative';
+        tabBtn.appendChild(badge);
+    }
+    const total = Object.values(window.chatStore.unread).reduce((s, n) => s + n, 0);
+    badge.textContent = total > 0 ? String(total) : '';
+    badge.style.display = total > 0 ? '' : 'none';
+};
+
+// ===== WebSocket Message Handler =====
+
 const onMessageSocket = (event, socket) => {
     const data = JSON.parse(event.data);
     const user = new UserManager();
     if (Object.keys(data).includes('byToken')) {
-        window.waitTokens[data['byToken']] = {data: data.data}
+        window.waitTokens[data['byToken']] = {data: data.data};
     }
 
+    switch (data.type) {
+        case 'incomingCall':
+            handleIncomingCall(data.data);
+            break;
 
-    if (data.type === 'event') {
-        if (data.data === 'bye') {
-            $('#btnHangup').css('display', 'none');
-            $('#btnCall').css('display', '');
-            if (typeof window.stopCallTimer === 'function') {
-                window.stopCallTimer();
+        case 'callActive':
+        case 'callAnswered':
+            handleCallActive();
+            break;
+
+        case 'callEnded':
+            handleCallEnded();
+            break;
+
+        case 'event':
+            if (data.data === 'bye') {
+                // Outbound UI cleanup
+                $('#btnHangup').css('display', 'none');
+                $('#btnCall').css('display', '');
+                if (typeof window.stopCallTimer === 'function') window.stopCallTimer();
+                // Inbound call teardown
+                handleCallEnded();
             }
-        }
-        if (data.data === 'callAccept') {
-            $('#btnHangup').css('display', '');
-            $('#btnCall').css('display', 'none');
+            if (data.data === 'callAccept') {
+                // Outbound call confirmed (inbound path uses callActive/ACK)
+                if (window.inboundCallState.direction !== 'inbound') {
+                    $('#btnHangup').css('display', '');
+                    $('#btnCall').css('display', 'none');
+                    if (typeof window.startCallTimer === 'function') window.startCallTimer();
+                    playAudio(window.currentCallId);
+                }
+            }
+            if (data.data === 'callActive') {
+                handleCallActive();
+            }
+            break;
 
+        case 'setPage':
+            user.updateUserData('currentPage', data.page);
+            template.setPage(data.page);
+            break;
 
-            if (typeof window.startCallTimer === 'function') window.startCallTimer();
+        case 'setKey':
+            user.updateUserData(data.key, data.value);
+            break;
+
+        case 'notify':
+            bootstrap.showToast({
+                header: 'Notificação',
+                body: data.data.message,
+                toastClass: data.data.type,
+                colorHeader: 'text-white',
+            });
+            sendRecByToken({}, 'register');
+            break;
+
+        case 'brand':
+            document.getElementById('branded').innerText = data.data;
+            break;
+
+        case 'changeCallId':
+            if (window.currentCallId === data.data) return;
+            window.currentCallId = data.data;
             playAudio(window.currentCallId);
+            break;
+
+        case 'messageNew': {
+            const _msg = (data.data && data.data.message) ? data.data.message : (data.data || null);
+            handleMessageNew(_msg);
+            // Also dispatch for any page-level listeners
+            window.dispatchEvent(new CustomEvent('spechMessageNew', {detail: _msg}));
+            break;
         }
     }
-
-    if (data.type === 'setPage') {
-        user.updateUserData('currentPage', data.page);
-        template.setPage(data.page);
-    } else if (data.type === 'setKey') {
-        user.updateUserData(data.key, data.value);
-    } else if (data.type === 'notify') {
-        bootstrap.showToast({
-            header: 'Notificação',
-            body: data.data.message,
-            toastClass: data.data.type,
-            colorHeader: 'text-white',
-        });
-        sendRecByToken({}, 'register');
-
-
-    } else if (data.type === 'brand') {
-        document.getElementById('branded').innerText = data.data;
-    } else if (data.type === 'changeCallId') {
-        if (window.currentCallId === data.data) return;
-        window.currentCallId = data.data;
-        playAudio(window.currentCallId)
-    } else if (data.type === 'messageNew') {
-        window.dispatchEvent(new CustomEvent('spechMessageNew', {detail: data.data.message}));
-    }
-
-
 }
 
 // WebSocket Audio Player

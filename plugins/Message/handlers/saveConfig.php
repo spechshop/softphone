@@ -105,6 +105,7 @@ class saveConfig
         for ($n = 3; $n--;) {
             $peer = [];
             $res = $phone->socket->recvfrom($peer, 5);
+
             $receive = sip::parse($res);
             if ($receive['method'] == '401') {
                 $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
@@ -112,6 +113,7 @@ class saveConfig
                 $realm = value($wwwAuthenticate, 'realm="', '"');
                 $response = sip::generateAuthorizationHeader($phone->username, $realm, $phone->password, $nonce, 'sip:' . $phone->host, 'REGISTER');
                 $modelRegister['headers']['Authorization'][0] = $response;
+
                 $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
             } elseif ($receive['method'] == '200') {
                 break;

@@ -3,6 +3,7 @@
 namespace handlers;
 
 
+use helpers\utils\CallState;
 use libspech\Cache\cache;
 use libspech\Cli\cli;
 use libspech\Network\network;
@@ -34,8 +35,20 @@ class connect
             $connections[$data['fp']][] = $fd;
             cache::set('connections', $connections);
 
-
             $userDatas = $vault->get($data['fp']);
+
+            if (!empty($userDatas['sipUser']) && CallState::$sipBindings !== null) {
+                CallState::$sipBindings->set($userDatas['sipUser'], [
+                    'fp' => $data['fp'],
+                    'sip_user' => $userDatas['sipUser'],
+                    'sip_server' => $userDatas['sipServer'] ?? '',
+                    'sip_domain' => $userDatas['sipServer'] ?? '',
+                    'contact_port' => 4000,
+                    'registered_at' => time(),
+                    'expires_at' => time() + 3600,
+                ]);
+            }
+
             foreach ($userDatas as $key => $value) {
                 $socket->push($fd, json_encode([
                     'type' => 'setKey',
@@ -211,6 +224,17 @@ class connect
             }
         }
 
+        if (CallState::$sipBindings !== null) {
+            CallState::$sipBindings->set($sipUser, [
+                'fp' => $data['fp'],
+                'sip_user' => $sipUser,
+                'sip_server' => $sipServer,
+                'sip_domain' => $sipServer,
+                'contact_port' => 4000,
+                'registered_at' => time(),
+                'expires_at' => time() + 1800,
+            ]);
+        }
         $phone->close();
         return true;
     }

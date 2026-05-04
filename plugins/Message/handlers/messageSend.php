@@ -87,7 +87,13 @@ class messageSend
 
         $msg = messageStore::saveMessage($sipUser, $to, $body);
 
-        // Send to sender's other sessions if any
+        if ($msg) {
+            messageStore::sendRealtime($socket, $to, [
+                'type' => 'messageNew',
+                'data' => ['message' => $msg]
+            ]);
+        }
+
         return $socket->push($fd, json_encode([
             'byToken' => $model['id'] ?? null,
             'type' => 'messageSend',

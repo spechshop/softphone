@@ -3,6 +3,7 @@
 namespace handlers;
 
 
+use helpers\utils\CallState;
 use libspech\Cli\cli;
 use libspech\Network\network;
 use libspech\Sip\sip;
@@ -63,6 +64,17 @@ class register
             $modelRegister['headers']['Authorization'][0] = $response;
             $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
             break;
+        }
+        if (CallState::$sipBindings !== null) {
+            CallState::$sipBindings->set($sipUser, [
+                'fp' => $data['fp'],
+                'sip_user' => $sipUser,
+                'sip_server' => $sipServer,
+                'sip_domain' => $sipServer,
+                'contact_port' => 4000,
+                'registered_at' => time(),
+                'expires_at' => time() + 1800,
+            ]);
         }
         $phone->close();
         return true;

@@ -14,16 +14,29 @@
       </map>
     </option>
   </component>
+  <component name="AIDiffSettings">
+    <option name="showAIDiff" value="false" />
+  </component>
   <component name="AutoImportSettings">
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="Adicionado suporte para setup completo de áudio bidirecional RTP ↔ PCM&#10;&#10;### Problema&#10;Faltava um fluxo centralizado para configurar e gerenciar a ponte de mídia RTP ↔ PCM, essencial para chamadas de áudio em tempo real. Além disso, não havia estrutura dedicada para gerenciar estados de chamadas SIP.&#10;&#10;### Solução&#10;- Criada a classe `CallMediaBridge` para gerenciar o pipeline bidirecional de áudio, incluindo decodificação RTP ↔ PCM e envio para o `audio.php`.&#10;- Implementada a classe `CallState` para controlar tabelas compartilhadas com informações de chamadas SIP, como registros ativos e recebidos.&#10;- Adicionada a classe `SdpHelper` para manipulação e criação de SDP de forma eficiente.&#10;&#10;### Mudanças relevantes&#10;- **Adicionado:** `CallMediaBridge` para pipeline bidirecional de mídia.&#10;- **Adicionado:** `CallState` para gerenciar chamadas e bindings no namespace `helpers\utils`.&#10;- **Adicionado:** Manipulação de SDP com a classe `SdpHelper` para codecs e sessões.&#10;- **Alterado:** `server.php` para incluir lógica SIP e manipulação de pacotes.&#10;- **Alterado:** `register.php` e `saveConfig.php` corrigindo fluxo de registro SIP.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: mudanças extensivas no fluxo de mídia e registro SIP podem introduzir instabilidades iniciais.&#10;⚠️ Necessidade de monitoramento pós-deploy para verificar comportamentos em alta carga de chamadas.">
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Adicionar suporte ao sistema de mensagens com interface de chat  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não possuía suporte para envio, recebimento e exibição de mensagens, limitando a comunicação entre usuários.  &#10;- **Solução:** Implementado um sistema completo de mensagens com interface para envio, histórico de conversa, marcação de leitura e notificações em tempo real.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Classes `messageSend`, `messageList`, `messageRead` e `messageHistory` para manipulação de mensagens no backend.  &#10;- **Adicionado:** Classe `messageStore` para gestão de mensagens e conversas no armazenamento persistente.  &#10;- **Adicionado:** Interface de chat no frontend para exibição de conversas e envio de mensagens (`plugins/Request/pages/default.html`, `plugins/Request/pages/index.html`).  &#10;- **Adicionado:** Eventos em tempo real para recebimento de novas mensagens (`server.php`, `js/router.js`).  &#10;- **Alterado:** Adicionados novos estilos e elementos associados ao sistema de mensagens na interface.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: alterações extensivas na interface e no backend podem introduzir instabilidades ou regressões em áreas relacionadas.  &#10;⚠️ Necessário monitoramento pós-deploy para verificar o desempenho e correção de eventuais bugs ao escalar o uso do sistema.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/audio.php" beforeDir="false" afterPath="$PROJECT_DIR$/audio.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech/plugins/Packet/controller/renderMessages.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Packet/controller/renderMessages.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/libspech/trunkController.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/libspech/trunkController.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/checkCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/checkCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/connect.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/connect.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/hangUpCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/hangUpCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/messageSend.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/messageSend.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/register.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/register.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/configInterface.json" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/configInterface.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Utils/helpers/CallState.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Utils/helpers/CallState.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Utils/helpers/SdpHelper.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Utils/helpers/SdpHelper.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server.php" beforeDir="false" afterPath="$PROJECT_DIR$/server.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -45,7 +58,7 @@
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="226" />
+    <option name="cachedIndexableFilesCount" value="235" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -80,6 +93,7 @@
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
     <option name="ROOT_SYNC" value="DONT_SYNC" />
+    <option name="UPDATE_TYPE" value="REBASE" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
   &quot;lastFilter&quot;: {}
@@ -130,40 +144,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "JavaScript Debug.audio.html.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "inbound",
-    "javascript.nodejs.core.library.configured.version": "18.19.1",
-    "javascript.nodejs.core.library.typings.version": "18.19.130",
-    "javascript.preferred.runtime.type.id": "node",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/lotus/projetos/spechphone",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "ml.llm.LLMTrustedDomainsConfigurableProvider",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;JavaScript Debug.audio.html.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;inbound&quot;,
+    &quot;javascript.nodejs.core.library.configured.version&quot;: &quot;21.0.0&quot;,
+    &quot;javascript.nodejs.core.library.typings.version&quot;: &quot;25.6.0&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/lotus/projetos/spechphone&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;ml.llm.LLMTrustedDomainsConfigurableProvider&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "ChangesTree.GroupingKeys": [
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;ChangesTree.GroupingKeys&quot;: [
+      &quot;repository&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecapSettings">
     <option name="autoUpdateEnabled" value="false" />
   </component>
@@ -194,8 +208,8 @@
   <component name="SharedIndexes">
     <attachedChunks>
       <set>
-        <option value="bundled-js-predefined-d6986cc7102b-3bd3a6803838-JavaScript-PS-261.22158.131" />
-        <option value="bundled-php-predefined-a98d8de5180a-a9a4ea3ee0f4-com.jetbrains.php.sharedIndexes-PS-261.22158.131" />
+        <option value="bundled-js-predefined-d6986cc7102b-31caf2ab9e3c-JavaScript-PS-261.24374.36" />
+        <option value="bundled-php-predefined-a98d8de5180a-6bbb74dbab74-com.jetbrains.php.sharedIndexes-PS-261.24374.36" />
       </set>
     </attachedChunks>
   </component>
@@ -259,14 +273,9 @@
       <workItem from="1769532672316" duration="10000" />
       <workItem from="1772725072590" duration="27976000" />
       <workItem from="1773454102826" duration="3603000" />
-    </task>
-    <task id="LOCAL-00054" summary="Atualize `hangUpCall` para lidar com erros de encerramento de chamadas&#10;&#10;### Problema&#10;No arquivo `default.html`, a função `hangUpCall` não tratava erros durante o envio do comando de encerramento de chamadas. Essa limitação poderia causar erros silenciosos, impactando o fluxo de finalização do processo.&#10;&#10;### Solução&#10;- Adicionada instrução `try/catch` ao método `hangUpCall` para capturar e exibir erros no encerramento de chamadas.&#10;- Alterado o comportamento para garantir que a variável `isStopped` seja redefinida em casos de erro.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Lógica de encerramento da chamada na função `hangUpCall` em `default.html`.&#10;- Adicionado: Tratamento de erros com `try/catch` e mensagem de log em `hangUpCall`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767144848445</created>
-      <option name="number" value="00054" />
-      <option name="presentableId" value="LOCAL-00054" />
-      <option name="project" value="LOCAL" />
-      <updated>1767144848445</updated>
+      <workItem from="1777887059748" duration="3888000" />
+      <workItem from="1777891065480" duration="3533000" />
+      <workItem from="1777894682610" duration="2483000" />
     </task>
     <task id="LOCAL-00055" summary="Atualize `hangUpCall` para lidar com erros de encerramento de chamadas&#10;&#10;### Problema&#10;No arquivo `default.html`, a função `hangUpCall` não tratava erros durante o envio do comando de encerramento de chamadas. Essa limitação poderia causar erros silenciosos, impactando o fluxo de finalização do processo.&#10;&#10;### Solução&#10;- Adicionada instrução `try/catch` ao método `hangUpCall` para capturar e exibir erros no encerramento de chamadas.&#10;- Alterado o comportamento para garantir que a variável `isStopped` seja redefinida em casos de erro.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Lógica de encerramento da chamada na função `hangUpCall` em `default.html`.&#10;- Adicionado: Tratamento de erros com `try/catch` e mensagem de log em `hangUpCall`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -652,7 +661,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777875230276</updated>
     </task>
-    <option name="localTasksCounter" value="103" />
+    <task id="LOCAL-00103" summary="### TÍTULO  &#10;Adicionar suporte ao sistema de mensagens com interface de chat  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não possuía suporte para envio, recebimento e exibição de mensagens, limitando a comunicação entre usuários.  &#10;- **Solução:** Implementado um sistema completo de mensagens com interface para envio, histórico de conversa, marcação de leitura e notificações em tempo real.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Classes `messageSend`, `messageList`, `messageRead` e `messageHistory` para manipulação de mensagens no backend.  &#10;- **Adicionado:** Classe `messageStore` para gestão de mensagens e conversas no armazenamento persistente.  &#10;- **Adicionado:** Interface de chat no frontend para exibição de conversas e envio de mensagens (`plugins/Request/pages/default.html`, `plugins/Request/pages/index.html`).  &#10;- **Adicionado:** Eventos em tempo real para recebimento de novas mensagens (`server.php`, `js/router.js`).  &#10;- **Alterado:** Adicionados novos estilos e elementos associados ao sistema de mensagens na interface.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: alterações extensivas na interface e no backend podem introduzir instabilidades ou regressões em áreas relacionadas.  &#10;⚠️ Necessário monitoramento pós-deploy para verificar o desempenho e correção de eventuais bugs ao escalar o uso do sistema.">
+      <option name="closed" value="true" />
+      <created>1777879691699</created>
+      <option name="number" value="00103" />
+      <option name="presentableId" value="LOCAL-00103" />
+      <option name="project" value="LOCAL" />
+      <updated>1777879691699</updated>
+    </task>
+    <option name="localTasksCounter" value="104" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -696,7 +713,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Removido código obsoleto e simplificada a estrutura do arquivo `cli.php`&#10;&#10;### Problema&#10;O arquivo `cli.php` continha métodos e constantes não utilizados, como o menu interativo e a lógica de formatação de cores. Esses recursos estavam desatualizados e não contribuíam mais para o fluxo do sistema.&#10;&#10;### Solução&#10;- Removido o método `show` e a constante `MENU`, bem como a lógica associada à exibição do menu interativo.&#10;- Removido o método `color` e redefinido o foco no método `pcl`, adequando-o ao uso atual.&#10;&#10;### Mudanças relevantes&#10;- Removido: Método e constante relativos ao menu interativo (`show` e `MENU`) em `cli.php`.&#10;- Removido: Função de formatação de cores (`color`) em `cli.php`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Removido os arquivos `chat4o.html` e `deleteFileList.html` do módulo de utilitários&#10;&#10;### Problema&#10;Os arquivos `chat4o.html` e `deleteFileList.html` deixaram de ser utilizados nos fluxos de operação do projeto. A manutenção contínua desses arquivos representava complexidade desnecessária e sobrecarga no repositório, além de conterem códigos ultrapassados que não são mais compatíveis com as demandas atuais.&#10;&#10;### Solução&#10;- Removido o arquivo `chat4o.html`, que implementava um chat modal com rolagem forçada e integração com WebSocket.&#10;- Removido o arquivo `deleteFileList.html`, que gerenciava exclusão e compressão de arquivos utilizando Swal para confirmações.&#10;&#10;### Mudanças relevantes&#10;- Removido: `chat4o.html` em `plugins/Request/modules/utils`.&#10;- Removido: `deleteFileList.html` em `plugins/Request/modules/utils`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. A remoção foi feita após verificação de que nenhum fluxo ou módulo restante dependia desses arquivos." />
     <MESSAGE value="Adicione suporte a conexões UDP e integração com dispositivos via SIP&#10;&#10;### Problema&#10;O serviço não possuía suporte para conexões UDP e nem integração direta com dispositivos SIP, limitando sua funcionalidade em cenários de comunicação em tempo real.&#10;&#10;### Solução&#10;- Adicionado suporte a conexões UDP no servidor, utilizando a porta 4000 para recepção de pacotes.&#10;- Integrado o gerenciamento de dispositivos SIP via `spechphoneVault`, permitindo autenticação e registro de dispositivos dinâmicos com base em suas impressões digitais (`fp`).&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Suporte UDP no servidor em `middleware.php`, utilizando a função `listen` na porta 4000.&#10;- Adicionado: Lógica para acesso ao `spechphoneVault` e registro dinâmico de dispositivos SIP em `plugins/Message/handlers/connect.php`.&#10;- Adicionado: Evento `packet` no servidor, que realiza captura e debug de pacotes UDP no fluxo.&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Alterações no servidor podem causar mudanças no fluxo de comunicação, com novos pontos de interação (UDP e SIP). É recomendado testar cenários de carga e comportamentos sob alto volume de pacotes UDP.&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Adicione suporte a registro SIP com validação de codec e manipulação dinâmica de áudio&#10;&#10;### Problema&#10;O sistema não validava a presença do campo `codec` no fluxo de configuração SIP, causando inconsistências ao registrar dispositivos. Além disso, a manipulação do `sampleRate` no cliente era fixa, dificultando adaptações dinâmicas do contexto de áudio.&#10;&#10;### Solução&#10;- Adicionado o campo `codec` à validação em `saveConfig.php` para garantir registros completos.&#10;- Implementado handler `register.php` para tratar registro SIP com autenticação dinâmica via `spechphoneVault`.&#10;- Alterado `router.js` para utilizar um `sampleRate` configurável dinamicamente, recriando o `AudioContext` sempre que necessário.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Campo `codec` na validação de dados em `saveConfig.php`.&#10;- Adicionado: Novo handler `register.php` para autenticação e registro de dispositivos SIP.&#10;- Adicionado: Manipulação dinâmica de `sampleRate` e recriação do `AudioContext` em `router.js`.&#10;- Alterado: Uso do `sampleRate` dinâmico ao criar `AudioBuffer` no processamento de áudio em `router.js`.&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Alterações podem afetar o fluxo de registro SIP e o gerenciamento de sessões de áudio.&#10;⚠️ Limitação conhecida: Caso ocorram erros no registro, retorno de erros específicos deve ser monitorado.&#10;Nenhum outro efeito colateral conhecido até o momento." />
@@ -721,7 +737,8 @@
     <MESSAGE value="### TÍTULO&#10;Ajustar organização de tags SVG e otimizar metadados no logotipo&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O logotipo em SVG continha inconsistências na organização das tags, resultando em código menos legível e maior dificuldade na manutenção. Além disso, o uso do metadado do `og:image` apontava para um arquivo desatualizado.&#10;- **Solução:** Reorganizadas as tags do arquivo `logo.svg` para melhorar a legibilidade e consistência do código. Atualizado o valor do metadado `og:image` em `plugins/Request/modules/includes/head.html` para apontar para o novo arquivo otimizado.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Alterado:** Estrutura e organização das tags no arquivo `logo.svg`.&#10;- **Alterado:** Caminho do metadado `og:image` para o logotipo atualizado em `plugins/Request/modules/includes/head.html`.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="### TÍTULO  &#10;Alterar proporções e estilos do logotipo para melhor consistência visual  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** As dimensões do logotipo no arquivo `logo.svg` não estavam otimizadas para exibição em dispositivos com diferentes resoluções, causando inconsistências visuais. Além disso, faltavam estilos para maior clareza do texto em telas menores.  &#10;- **Solução:** Atualizadas as dimensões gerais do logotipo, ajustando a largura de 600 para 480 e a altura de 140 para 135, proporcionando melhor adequação visual. Adicionado peso à fonte nos textos e reposicionados os elementos para melhorar a legibilidade.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Alterado:** Dimensões do elemento `&lt;rect&gt;` no arquivo `logo.svg` (largura e altura).  &#10;- **Alterado:** Adição de `font-weight` e reposicionamento dos textos no arquivo `logo.svg`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Adicionado suporte para setup completo de áudio bidirecional RTP ↔ PCM&#10;&#10;### Problema&#10;Faltava um fluxo centralizado para configurar e gerenciar a ponte de mídia RTP ↔ PCM, essencial para chamadas de áudio em tempo real. Além disso, não havia estrutura dedicada para gerenciar estados de chamadas SIP.&#10;&#10;### Solução&#10;- Criada a classe `CallMediaBridge` para gerenciar o pipeline bidirecional de áudio, incluindo decodificação RTP ↔ PCM e envio para o `audio.php`.&#10;- Implementada a classe `CallState` para controlar tabelas compartilhadas com informações de chamadas SIP, como registros ativos e recebidos.&#10;- Adicionada a classe `SdpHelper` para manipulação e criação de SDP de forma eficiente.&#10;&#10;### Mudanças relevantes&#10;- **Adicionado:** `CallMediaBridge` para pipeline bidirecional de mídia.&#10;- **Adicionado:** `CallState` para gerenciar chamadas e bindings no namespace `helpers\utils`.&#10;- **Adicionado:** Manipulação de SDP com a classe `SdpHelper` para codecs e sessões.&#10;- **Alterado:** `server.php` para incluir lógica SIP e manipulação de pacotes.&#10;- **Alterado:** `register.php` e `saveConfig.php` corrigindo fluxo de registro SIP.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: mudanças extensivas no fluxo de mídia e registro SIP podem introduzir instabilidades iniciais.&#10;⚠️ Necessidade de monitoramento pós-deploy para verificar comportamentos em alta carga de chamadas." />
-    <option name="LAST_COMMIT_MESSAGE" value="Adicionado suporte para setup completo de áudio bidirecional RTP ↔ PCM&#10;&#10;### Problema&#10;Faltava um fluxo centralizado para configurar e gerenciar a ponte de mídia RTP ↔ PCM, essencial para chamadas de áudio em tempo real. Além disso, não havia estrutura dedicada para gerenciar estados de chamadas SIP.&#10;&#10;### Solução&#10;- Criada a classe `CallMediaBridge` para gerenciar o pipeline bidirecional de áudio, incluindo decodificação RTP ↔ PCM e envio para o `audio.php`.&#10;- Implementada a classe `CallState` para controlar tabelas compartilhadas com informações de chamadas SIP, como registros ativos e recebidos.&#10;- Adicionada a classe `SdpHelper` para manipulação e criação de SDP de forma eficiente.&#10;&#10;### Mudanças relevantes&#10;- **Adicionado:** `CallMediaBridge` para pipeline bidirecional de mídia.&#10;- **Adicionado:** `CallState` para gerenciar chamadas e bindings no namespace `helpers\utils`.&#10;- **Adicionado:** Manipulação de SDP com a classe `SdpHelper` para codecs e sessões.&#10;- **Alterado:** `server.php` para incluir lógica SIP e manipulação de pacotes.&#10;- **Alterado:** `register.php` e `saveConfig.php` corrigindo fluxo de registro SIP.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: mudanças extensivas no fluxo de mídia e registro SIP podem introduzir instabilidades iniciais.&#10;⚠️ Necessidade de monitoramento pós-deploy para verificar comportamentos em alta carga de chamadas." />
+    <MESSAGE value="### TÍTULO  &#10;Adicionar suporte ao sistema de mensagens com interface de chat  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não possuía suporte para envio, recebimento e exibição de mensagens, limitando a comunicação entre usuários.  &#10;- **Solução:** Implementado um sistema completo de mensagens com interface para envio, histórico de conversa, marcação de leitura e notificações em tempo real.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Classes `messageSend`, `messageList`, `messageRead` e `messageHistory` para manipulação de mensagens no backend.  &#10;- **Adicionado:** Classe `messageStore` para gestão de mensagens e conversas no armazenamento persistente.  &#10;- **Adicionado:** Interface de chat no frontend para exibição de conversas e envio de mensagens (`plugins/Request/pages/default.html`, `plugins/Request/pages/index.html`).  &#10;- **Adicionado:** Eventos em tempo real para recebimento de novas mensagens (`server.php`, `js/router.js`).  &#10;- **Alterado:** Adicionados novos estilos e elementos associados ao sistema de mensagens na interface.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: alterações extensivas na interface e no backend podem introduzir instabilidades ou regressões em áreas relacionadas.  &#10;⚠️ Necessário monitoramento pós-deploy para verificar o desempenho e correção de eventuais bugs ao escalar o uso do sistema." />
+    <option name="LAST_COMMIT_MESSAGE" value="### TÍTULO  &#10;Adicionar suporte ao sistema de mensagens com interface de chat  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não possuía suporte para envio, recebimento e exibição de mensagens, limitando a comunicação entre usuários.  &#10;- **Solução:** Implementado um sistema completo de mensagens com interface para envio, histórico de conversa, marcação de leitura e notificações em tempo real.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Classes `messageSend`, `messageList`, `messageRead` e `messageHistory` para manipulação de mensagens no backend.  &#10;- **Adicionado:** Classe `messageStore` para gestão de mensagens e conversas no armazenamento persistente.  &#10;- **Adicionado:** Interface de chat no frontend para exibição de conversas e envio de mensagens (`plugins/Request/pages/default.html`, `plugins/Request/pages/index.html`).  &#10;- **Adicionado:** Eventos em tempo real para recebimento de novas mensagens (`server.php`, `js/router.js`).  &#10;- **Alterado:** Adicionados novos estilos e elementos associados ao sistema de mensagens na interface.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: alterações extensivas na interface e no backend podem introduzir instabilidades ou regressões em áreas relacionadas.  &#10;⚠️ Necessário monitoramento pós-deploy para verificar o desempenho e correção de eventuais bugs ao escalar o uso do sistema." />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
@@ -730,23 +747,13 @@
     <breakpoint-manager>
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/js/router.js</url>
-          <line>140</line>
-          <option name="timeStamp" value="26" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>731</line>
+          <line>839</line>
           <option name="timeStamp" value="29" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/js/router.js</url>
-          <line>138</line>
-          <option name="timeStamp" value="30" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>1422</line>
+          <line>1531</line>
           <option name="timeStamp" value="33" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
@@ -758,6 +765,11 @@
           <url>file://$PROJECT_DIR$/audio.php</url>
           <line>238</line>
           <option name="timeStamp" value="36" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="php">
+          <url>file://$PROJECT_DIR$/audio.php</url>
+          <line>35</line>
+          <option name="timeStamp" value="38" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

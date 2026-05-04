@@ -257,6 +257,8 @@ $server->on("open", function (Server $server, Request $req) use (&$clients, &$cl
  * Formato: PCM binário puro (Int16Array)
  */
 $server->on("message", function (Server $server, Frame $frame) use (&$clientInfo, &$udpPeers) {
+
+
     if (!isset($clientInfo[$frame->fd])) {
         echo "⚠️ Conexão sem info registrada - FD: {$frame->fd}\n";
         return;
@@ -273,10 +275,12 @@ $server->on("message", function (Server $server, Frame $frame) use (&$clientInfo
             go(function () use ($packet, $pcmData, $callId, $ssrc, &$udpPeers) {
                 $udp = new Swoole\Coroutine\Socket(AF_INET, SOCK_DGRAM, 0);
                 foreach ($udpPeers[$callId] as $peerSsrc => $peerInfo) {
+                    \libspech\Cli\cli::pcl("Enviando audio para peer: {$peerSsrc} - SSRC: {$ssrc}", 'bold_green');
+
                     if ($peerSsrc === $ssrc) {
                         continue;
                     }
-                    //\libspech\Cli\cli::pcl(strlen($pcmData)."bytes to {$peerInfo['host']}:{$peerInfo['port']}");
+
                     $udp->sendto($peerInfo['host'], $peerInfo['port'], $packet);
                 }
                 $udp->close();

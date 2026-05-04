@@ -28,6 +28,11 @@ class CallState
         $incomingCalls->column('owner_worker_id', Table::TYPE_INT);
         $incomingCalls->column('invite_headers_json', Table::TYPE_STRING, 8192);
         $incomingCalls->column('invite_sdp_json', Table::TYPE_STRING, 4096);
+        $incomingCalls->column('tx_key', Table::TYPE_STRING, 64);
+        $incomingCalls->column('to_tag', Table::TYPE_STRING, 64);
+        $incomingCalls->column('from_tag', Table::TYPE_STRING, 64);
+        $incomingCalls->column('invite_cseq', Table::TYPE_STRING, 32);
+        $incomingCalls->column('last_response_code', Table::TYPE_INT);
         $incomingCalls->column('created_at', Table::TYPE_INT);
         $incomingCalls->column('updated_at', Table::TYPE_INT);
         $incomingCalls->create();

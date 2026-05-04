@@ -141,7 +141,7 @@ class SdpHelper
         if ($channels > 1) $codecLine .= "/{$channels}";
 
         $sdp = "v=0\r\n";
-        $sdp .= "o=spechphone {$ts} {$ts} IN IP4 {$localIp}\r\n";
+        $sdp .= "o=- {$ts} 0 IN IP4 {$localIp}\r\n";
         $sdp .= "s=SpechPhone\r\n";
         $sdp .= "c=IN IP4 {$localIp}\r\n";
         $sdp .= "t=0 0\r\n";
