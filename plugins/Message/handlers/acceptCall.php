@@ -64,6 +64,7 @@ class callAccept
         $localIp = network::getLocalIp();
 
         $localSdp = SdpHelper::buildLocalSdp($localIp, $localRtpPort, $chosenCodec, $sdpParsed['telephone_event']);
+        var_dump($localSdp);
         cli::pcl("[ACCEPT] SDP local — porta RTP:{$localRtpPort} (" . strlen($localSdp) . " bytes)", 'yellow');
 
         $responseHeaders = [
