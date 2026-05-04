@@ -385,16 +385,12 @@
             mainButton.title = 'Trocar Tema';
             mainButton.innerHTML = '<i class="fa-solid fa-palette"></i>';
             Object.assign(mainButton.style, {
-                position: 'fixed',
-                bottom: '70px',
-                right: '10px',
-                zIndex: '9999',
                 padding: '10px',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 color: '#fff',
                 border: 'none',
                 borderRadius: '50%',
-                cursor: 'pointer',
+                cursor: 'grab',
                 fontSize: '18px',
                 width: '46px',
                 height: '46px',
@@ -402,18 +398,71 @@
                 alignItems: 'center',
                 justifyContent: 'center',
                 boxShadow: '0 4px 16px rgba(102,126,234,0.45), 0 2px 6px rgba(0,0,0,0.35)',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease'
+                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                touchAction: 'none',
+                userSelect: 'none'
             });
+
+            // Drag state
+            let isDragging = false, hasMoved = false;
+            let dragStartX = 0, dragStartY = 0;
+            let containerStartLeft = 0, containerStartTop = 0;
+            let containerW = 0, containerH = 0;
+
+            mainButton.addEventListener('pointerdown', (e) => {
+                if (e.pointerType === 'mouse' && e.button !== 0) return;
+                isDragging = true;
+                hasMoved = false;
+                mainButton.setPointerCapture(e.pointerId);
+                const rect = buttonContainer.getBoundingClientRect();
+                containerStartLeft = rect.left;
+                containerStartTop = rect.top;
+                containerW = rect.width;
+                containerH = rect.height;
+                dragStartX = e.clientX;
+                dragStartY = e.clientY;
+                buttonContainer.style.bottom = 'auto';
+                buttonContainer.style.right = 'auto';
+                buttonContainer.style.left = containerStartLeft + 'px';
+                buttonContainer.style.top = containerStartTop + 'px';
+                mainButton.style.cursor = 'grabbing';
+                mainButton.style.transition = 'box-shadow 0.2s ease';
+            });
+
+            mainButton.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - dragStartX;
+                const dy = e.clientY - dragStartY;
+                if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved = true;
+                let newLeft = Math.max(0, Math.min(window.innerWidth - containerW, containerStartLeft + dx));
+                let newTop = Math.max(0, Math.min(window.innerHeight - containerH, containerStartTop + dy));
+                buttonContainer.style.left = newLeft + 'px';
+                buttonContainer.style.top = newTop + 'px';
+            });
+
+            mainButton.addEventListener('pointerup', () => {
+                if (!isDragging) return;
+                isDragging = false;
+                mainButton.style.cursor = 'grab';
+                mainButton.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
+                if (hasMoved) {
+                    const rect = buttonContainer.getBoundingClientRect();
+                    localStorage.setItem('themeBtnPos', JSON.stringify({left: rect.left, top: rect.top}));
+                }
+            });
+
             mainButton.addEventListener('mouseenter', () => {
-                mainButton.style.boxShadow = '0 6px 22px rgba(102,126,234,0.65), 0 3px 8px rgba(0,0,0,0.4)';
-                mainButton.style.transform = mainButton.style.transform.includes('180') ? 'rotate(180deg) scale(1.1)' : 'scale(1.1)';
+                if (!isDragging) mainButton.style.boxShadow = '0 6px 22px rgba(102,126,234,0.65), 0 3px 8px rgba(0,0,0,0.4)';
             });
             mainButton.addEventListener('mouseleave', () => {
-                mainButton.style.boxShadow = '0 4px 16px rgba(102,126,234,0.45), 0 2px 6px rgba(0,0,0,0.35)';
-                mainButton.style.transform = mainButton.style.transform.includes('180') ? 'rotate(180deg)' : '';
+                if (!isDragging) mainButton.style.boxShadow = '0 4px 16px rgba(102,126,234,0.45), 0 2px 6px rgba(0,0,0,0.35)';
             });
 
             mainButton.onclick = () => {
+                if (hasMoved) {
+                    hasMoved = false;
+                    return;
+                }
                 isMenuOpen = !isMenuOpen;
                 themeMenu.style.display = isMenuOpen ? 'flex' : 'none';
                 mainButton.style.transform = isMenuOpen ? 'rotate(180deg)' : '';
@@ -455,7 +504,7 @@
                 openThemeCreator();
                 isMenuOpen = false;
                 themeMenu.style.display = 'none';
-                mainButton.style.transform = 'rotate(0deg)';
+                mainButton.style.transform = '';
             };
 
             themeMenu.appendChild(createBtn);
@@ -508,7 +557,7 @@
                     applyTheme(key);
                     isMenuOpen = false;
                     themeMenu.style.display = 'none';
-                    mainButton.style.transform = 'rotate(0deg)';
+                    mainButton.style.transform = '';
 
                     // Atualiza visual dos botões
                     document.querySelectorAll('#theme-menu button').forEach(btn => {
@@ -564,7 +613,7 @@
                     openThemeEditor(key, theme);
                     isMenuOpen = false;
                     themeMenu.style.display = 'none';
-                    mainButton.style.transform = 'rotate(0deg)';
+                    mainButton.style.transform = '';
                 };
 
                 themeContainer.appendChild(editBtn);
@@ -628,12 +677,25 @@
             buttonContainer.appendChild(themeMenu);
             document.body.appendChild(buttonContainer);
 
+            // Restaura posição salva do drag
+            const _savedPos = localStorage.getItem('themeBtnPos');
+            if (_savedPos) {
+                try {
+                    const p = JSON.parse(_savedPos);
+                    buttonContainer.style.bottom = 'auto';
+                    buttonContainer.style.right = 'auto';
+                    buttonContainer.style.left = p.left + 'px';
+                    buttonContainer.style.top = p.top + 'px';
+                } catch (e) {
+                }
+            }
+
             // Fecha o menu ao clicar fora
             document.addEventListener('click', (e) => {
                 if (!buttonContainer.contains(e.target) && isMenuOpen) {
                     isMenuOpen = false;
                     themeMenu.style.display = 'none';
-                    mainButton.style.transform = 'rotate(0deg)';
+                    mainButton.style.transform = '';
                 }
             });
         }
