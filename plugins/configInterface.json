@@ -14,7 +14,9 @@
     "Message/server",
     "Message/handlers",
     "Request/apps",
-    "Utils/cache"
+    "Utils/cache",
+    "Utils/messages",
+    "Utils/helpers"
   ],
   "allowExtensions": {
     "css": "text/css",

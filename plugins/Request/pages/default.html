@@ -474,10 +474,165 @@
         </div>
     </section>
 
+    <!-- VIEW: MESSAGES -->
+    <section data-view="messages">
+        <div class="card bg-dark p-3 d-flex flex-column" style="height: calc(100vh - 220px)">
+            <div class="d-flex flex-column h-100" id="msgListView">
+                <div class="section-title d-flex justify-content-between align-items-center">
+                    <span>Mensagens</span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="showNewMsgDialog()">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                    </button>
+                </div>
+                <div class="divider"></div>
+                <div class="list-group list-group-flush flex-grow-1 overflow-auto" id="convList">
+                    <div class="text-center text-muted mt-3 mini">Carregando conversas...</div>
+                </div>
+            </div>
+
+            <div class="d-flex flex-column h-100" id="msgChatView" style="display: none !important;">
+                <div class="section-title d-flex align-items-center mb-2">
+                    <button class="btn btn-sm btn-link text-white me-2 p-0" onclick="closeChat()">
+                        <i class="fa-solid fa-arrow-left fs-4"></i>
+                    </button>
+                    <span class="fw-bold text-truncate" id="chatWithUser" style="flex: 1;"></span>
+                </div>
+                <div class="divider mb-2"></div>
+                <div class="flex-grow-1 overflow-auto mb-2 d-flex flex-column gap-2" id="chatHistory"
+                     style="background: rgba(0,0,0,0.2); border-radius: 8px; padding: 10px;">
+                </div>
+                <div class="d-flex gap-2">
+                    <input class="form-control bg-transparent text-white border-secondary" id="chatInput" placeholder="Digite uma mensagem..."
+                           type="text">
+                    <button class="btn btn-primary" onclick="sendChatMessage()">
+                        <i class="fa-solid fa-paper-plane"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </section>
+
 </div>
 
 
 <script>
+    // ===== MESSAGES SYSTEM =====
+    window.currentChatUser = null;
+
+    window.addEventListener('spechMessageNew', (e) => {
+        const msg = e.detail;
+        if (window.currentChatUser === msg.from || window.currentChatUser === msg.to) {
+            appendMessageToChat(msg);
+            markAsRead([msg.id]);
+        }
+        loadConversations();
+    });
+
+    window.loadConversations = function () {
+        sendRecByToken({limit: 50}, 'messageList').then(res => {
+            const list = document.getElementById('convList');
+            if (!list) return;
+            list.innerHTML = '';
+
+            if (!res.conversations || res.conversations.length === 0) {
+                list.innerHTML = '<div class="text-center text-muted mt-3 mini">Nenhuma conversa</div>';
+                return;
+            }
+            res.conversations.forEach(conv => {
+                const el = document.createElement('div');
+                el.className = 'list-group-item bg-transparent border-bottom border-secondary d-flex justify-content-between align-items-center px-0 py-2';
+                el.style.cursor = 'pointer';
+                const badge = conv.unread > 0 ? `<span class="badge bg-danger rounded-pill">${conv.unread}</span>` : '';
+                const lastMsg = conv.lastMessage ? conv.lastMessage.body : '';
+                el.innerHTML = `
+                    <div style="flex: 1; overflow: hidden;">
+                        <div class="fw-bold text-white">${conv.with}</div>
+                        <div class="mini text-muted text-truncate">${lastMsg}</div>
+                    </div>
+                    <div>${badge}</div>
+                `;
+                el.onclick = () => openChat(conv.with);
+                list.appendChild(el);
+            });
+        });
+    }
+
+    window.openChat = function (userStr) {
+        window.currentChatUser = userStr;
+        document.getElementById('msgListView').style.setProperty('display', 'none', 'important');
+        document.getElementById('msgChatView').style.setProperty('display', 'flex', 'important');
+        document.getElementById('chatWithUser').textContent = userStr;
+        document.getElementById('chatHistory').innerHTML = '<div class="text-center text-muted mt-3 mini">Carregando...</div>';
+
+        sendRecByToken({with: userStr, limit: 50}, 'messageHistory').then(res => {
+            const history = document.getElementById('chatHistory');
+            history.innerHTML = '';
+            const unreadIds = [];
+            if (res.messages) {
+                res.messages.forEach(msg => {
+                    appendMessageToChat(msg, false);
+                    if (msg.to !== userStr && !msg.read) {
+                        unreadIds.push(msg.id);
+                    }
+                });
+                history.scrollTop = history.scrollHeight;
+            }
+            if (unreadIds.length > 0) markAsRead(unreadIds);
+        });
+    }
+
+    window.appendMessageToChat = function (msg, scroll = true) {
+        const history = document.getElementById('chatHistory');
+        const el = document.createElement('div');
+        const isMine = msg.to === window.currentChatUser;
+        el.className = 'p-2 rounded w-75 ' + (isMine ? 'bg-primary text-white align-self-end' : 'bg-secondary text-white align-self-start');
+        el.textContent = msg.body;
+        history.appendChild(el);
+        if (scroll) history.scrollTop = history.scrollHeight;
+    }
+
+    window.closeChat = function () {
+        window.currentChatUser = null;
+        document.getElementById('msgChatView').style.setProperty('display', 'none', 'important');
+        document.getElementById('msgListView').style.setProperty('display', 'flex', 'important');
+        loadConversations();
+    }
+
+    window.showNewMsgDialog = () => {
+        const user = prompt("Digite o destinatário (sip/fp):");
+        if (user && user.trim()) {
+            openChat(user.trim());
+        }
+    };
+
+    window.sendChatMessage = function () {
+        const input = document.getElementById('chatInput');
+        const body = input.value.trim();
+        if (!body || !window.currentChatUser) return;
+        input.value = '';
+
+        sendRecByToken({to: window.currentChatUser, body: body}, 'messageSend').then(res => {
+            if (res.success) {
+                appendMessageToChat(res.message);
+            } else {
+                alert("Erro ao enviar: " + (res.error || "Desconhecido"));
+            }
+        });
+    }
+
+    window.markAsRead = function (ids) {
+        if (!window.currentChatUser || ids.length === 0) return;
+        sendRecByToken({with: window.currentChatUser, messageIds: ids}, 'messageRead');
+    }
+
+    setInterval(() => {
+        if (document.querySelector('[data-view="messages"]').classList.contains('show') && !window.currentChatUser) {
+            loadConversations();
+        }
+    }, 5000);
+
+    setTimeout(loadConversations, 1000);
+
     // ===== HISTORY SYSTEM =====
     // Inject Tab
     const footer = document.querySelector('.footer');

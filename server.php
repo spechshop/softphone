@@ -98,7 +98,7 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
     if (empty($parse['method'])) {
         return;
     }
-    if (count($parse['headers']['Via']) > 1) {
+    if ($info['address'] === '127.0.0.1' && count($parse['headers']['Via']) > 1) {
         $localIp = network::getLocalIp();
         $localPort = 4000;
         foreach ($parse['headers']['Via'] as $via) {
@@ -107,12 +107,32 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
             $socket->sendto($parseVia['address'], $parseVia['port'], $data);
             cli::pcl("Sending packet $parse[methodForParser] to {$parseVia['address']}:{$parseVia['port']}");
         }
+        return; // Retorna para não processar o pacote injetado localmente como se fosse recebido
     }
     cli::pcl($data, 'cyan');
 
     if ($parse['method'] === 'OPTIONS') {
         $respondOk = \libspech\Packet\renderMessages::respondOptions($parse['headers']);
         $socket->sendto($info['address'], $info['port'], $respondOk);
+    }
+
+    if ($parse['method'] === 'MESSAGE') {
+        $respondOk = \libspech\Packet\renderMessages::respond200OK($parse['headers'], '');
+        $socket->sendto($info['address'], $info['port'], $respondOk);
+
+        $fromUser = \libspech\Sip\sip::extractURI($parse['headers']['From'][0])['user'] ?? '';
+        $toUser = \libspech\Sip\sip::extractURI($parse['headers']['To'][0])['user'] ?? '';
+        $body = trim($parse['body'] ?? '');
+
+        if (!empty($fromUser) && !empty($toUser) && !empty($body)) {
+            $msg = \plugins\Utils\messages\messageStore::saveMessage($fromUser, $toUser, $body);
+            if ($msg) {
+                \plugins\Utils\messages\messageStore::sendRealtime($socket, $toUser, [
+                    'type' => 'messageNew',
+                    'data' => ['message' => $msg]
+                ]);
+            }
+        }
     }
 });
 

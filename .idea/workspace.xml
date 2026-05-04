@@ -18,12 +18,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Alterar proporções e estilos do logotipo para melhor consistência visual  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** As dimensões do logotipo no arquivo `logo.svg` não estavam otimizadas para exibição em dispositivos com diferentes resoluções, causando inconsistências visuais. Além disso, faltavam estilos para maior clareza do texto em telas menores.  &#10;- **Solução:** Atualizadas as dimensões gerais do logotipo, ajustando a largura de 600 para 480 e a altura de 140 para 135, proporcionando melhor adequação visual. Adicionado peso à fonte nos textos e reposicionados os elementos para melhorar a legibilidade.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Alterado:** Dimensões do elemento `&lt;rect&gt;` no arquivo `logo.svg` (largura e altura).  &#10;- **Alterado:** Adição de `font-weight` e reposicionamento dos textos no arquivo `logo.svg`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="Adicionado suporte para setup completo de áudio bidirecional RTP ↔ PCM&#10;&#10;### Problema&#10;Faltava um fluxo centralizado para configurar e gerenciar a ponte de mídia RTP ↔ PCM, essencial para chamadas de áudio em tempo real. Além disso, não havia estrutura dedicada para gerenciar estados de chamadas SIP.&#10;&#10;### Solução&#10;- Criada a classe `CallMediaBridge` para gerenciar o pipeline bidirecional de áudio, incluindo decodificação RTP ↔ PCM e envio para o `audio.php`.&#10;- Implementada a classe `CallState` para controlar tabelas compartilhadas com informações de chamadas SIP, como registros ativos e recebidos.&#10;- Adicionada a classe `SdpHelper` para manipulação e criação de SDP de forma eficiente.&#10;&#10;### Mudanças relevantes&#10;- **Adicionado:** `CallMediaBridge` para pipeline bidirecional de mídia.&#10;- **Adicionado:** `CallState` para gerenciar chamadas e bindings no namespace `helpers\utils`.&#10;- **Adicionado:** Manipulação de SDP com a classe `SdpHelper` para codecs e sessões.&#10;- **Alterado:** `server.php` para incluir lógica SIP e manipulação de pacotes.&#10;- **Alterado:** `register.php` e `saveConfig.php` corrigindo fluxo de registro SIP.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: mudanças extensivas no fluxo de mídia e registro SIP podem introduzir instabilidades iniciais.&#10;⚠️ Necessidade de monitoramento pós-deploy para verificar comportamentos em alta carga de chamadas.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/connect.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/connect.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/register.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/register.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/configInterface.json" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/configInterface.json" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/server.php" beforeDir="false" afterPath="$PROJECT_DIR$/server.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -74,7 +74,7 @@
     <option name="FILTER_BY_REPOSITORY_IN_POPUP" value="false" />
     <option name="RECENT_BRANCH_BY_REPOSITORY">
       <map>
-        <entry key="$PROJECT_DIR$" value="volume-draft" />
+        <entry key="$PROJECT_DIR$" value="volume-dev" />
         <entry key="$PROJECT_DIR$/libspech" value="master" />
       </map>
     </option>
@@ -130,40 +130,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;JavaScript Debug.audio.html.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;volume-dev&quot;,
-    &quot;javascript.nodejs.core.library.configured.version&quot;: &quot;18.19.1&quot;,
-    &quot;javascript.nodejs.core.library.typings.version&quot;: &quot;18.19.130&quot;,
-    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/lotus/projetos/spechphone&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;editor.stickyLines&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "JavaScript Debug.audio.html.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "inbound",
+    "javascript.nodejs.core.library.configured.version": "18.19.1",
+    "javascript.nodejs.core.library.typings.version": "18.19.130",
+    "javascript.preferred.runtime.type.id": "node",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/lotus/projetos/spechphone",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "ml.llm.LLMTrustedDomainsConfigurableProvider",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;ChangesTree.GroupingKeys&quot;: [
-      &quot;repository&quot;
+  "keyToStringList": {
+    "ChangesTree.GroupingKeys": [
+      "repository"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecapSettings">
     <option name="autoUpdateEnabled" value="false" />
   </component>
@@ -259,14 +259,6 @@
       <workItem from="1769532672316" duration="10000" />
       <workItem from="1772725072590" duration="27976000" />
       <workItem from="1773454102826" duration="3603000" />
-    </task>
-    <task id="LOCAL-00053" summary="Atualize encerramento de chamadas para evitar conexões abertas&#10;&#10;### Problema&#10;No arquivo `hangUpCall.php`, o encerramento de chamadas não incluía a liberação completa de recursos, deixando conexões abertas em determinados cenários. Essa limitação poderia causar vazamento de memória ou inconsistências durante operação prolongada.&#10;&#10;### Solução&#10;- Adicionada a chamada ao método `close()` após `bye()` para garantir o encerramento adequado da conexão.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Chamada ao método `close()` no fluxo de encerramento em `plugins/Message/handlers/hangUpCall.php`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767144162308</created>
-      <option name="number" value="00053" />
-      <option name="presentableId" value="LOCAL-00053" />
-      <option name="project" value="LOCAL" />
-      <updated>1767144162308</updated>
     </task>
     <task id="LOCAL-00054" summary="Atualize `hangUpCall` para lidar com erros de encerramento de chamadas&#10;&#10;### Problema&#10;No arquivo `default.html`, a função `hangUpCall` não tratava erros durante o envio do comando de encerramento de chamadas. Essa limitação poderia causar erros silenciosos, impactando o fluxo de finalização do processo.&#10;&#10;### Solução&#10;- Adicionada instrução `try/catch` ao método `hangUpCall` para capturar e exibir erros no encerramento de chamadas.&#10;- Alterado o comportamento para garantir que a variável `isStopped` seja redefinida em casos de erro.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Lógica de encerramento da chamada na função `hangUpCall` em `default.html`.&#10;- Adicionado: Tratamento de erros com `try/catch` e mensagem de log em `hangUpCall`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -652,7 +644,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773457582315</updated>
     </task>
-    <option name="localTasksCounter" value="102" />
+    <task id="LOCAL-00102" summary="Adicionado suporte para setup completo de áudio bidirecional RTP ↔ PCM&#10;&#10;### Problema&#10;Faltava um fluxo centralizado para configurar e gerenciar a ponte de mídia RTP ↔ PCM, essencial para chamadas de áudio em tempo real. Além disso, não havia estrutura dedicada para gerenciar estados de chamadas SIP.&#10;&#10;### Solução&#10;- Criada a classe `CallMediaBridge` para gerenciar o pipeline bidirecional de áudio, incluindo decodificação RTP ↔ PCM e envio para o `audio.php`.&#10;- Implementada a classe `CallState` para controlar tabelas compartilhadas com informações de chamadas SIP, como registros ativos e recebidos.&#10;- Adicionada a classe `SdpHelper` para manipulação e criação de SDP de forma eficiente.&#10;&#10;### Mudanças relevantes&#10;- **Adicionado:** `CallMediaBridge` para pipeline bidirecional de mídia.&#10;- **Adicionado:** `CallState` para gerenciar chamadas e bindings no namespace `helpers\utils`.&#10;- **Adicionado:** Manipulação de SDP com a classe `SdpHelper` para codecs e sessões.&#10;- **Alterado:** `server.php` para incluir lógica SIP e manipulação de pacotes.&#10;- **Alterado:** `register.php` e `saveConfig.php` corrigindo fluxo de registro SIP.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: mudanças extensivas no fluxo de mídia e registro SIP podem introduzir instabilidades iniciais.&#10;⚠️ Necessidade de monitoramento pós-deploy para verificar comportamentos em alta carga de chamadas.">
+      <option name="closed" value="true" />
+      <created>1777875230275</created>
+      <option name="number" value="00102" />
+      <option name="presentableId" value="LOCAL-00102" />
+      <option name="project" value="LOCAL" />
+      <updated>1777875230276</updated>
+    </task>
+    <option name="localTasksCounter" value="103" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -696,7 +696,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="Adicione arquivos de configuração do IDE ao repositório&#10;&#10;### Problema&#10;Novos arquivos de configuração do IDE JetBrains foram criados localmente, mas ainda não estavam no controle de versão. A ausência desses arquivos poderia causar inconsistência no ambiente de desenvolvimento compartilhado.&#10;&#10;### Solução&#10;- Adicionados os arquivos de configuração padrão do IntelliJ IDEA, incluindo definições de inspeção de código, mapeamento de bibliotecas JavaScript, configurações do Laravel e caminhos de recursos web.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: `.idea/inspectionProfiles/Project_Default.xml` com configurações de inspeções.&#10;- Adicionado: `.idea/jsLibraryMappings.xml` com mapeamento de bibliotecas Node.js.&#10;- Adicionado: `.idea/laravel-idea.xml` para suporte específico ao Laravel.&#10;- Adicionado: `.idea/webResources.xml` configurando os caminhos de recursos.&#10;- Adicionado: `.idea/workspace.xml` com customizações e atalhos do ambiente.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. Entretanto, o uso desses arquivos pode sobrescrever perfis personalizados de outros desenvolvedores." />
     <MESSAGE value="Removido código obsoleto e simplificada a estrutura do arquivo `cli.php`&#10;&#10;### Problema&#10;O arquivo `cli.php` continha métodos e constantes não utilizados, como o menu interativo e a lógica de formatação de cores. Esses recursos estavam desatualizados e não contribuíam mais para o fluxo do sistema.&#10;&#10;### Solução&#10;- Removido o método `show` e a constante `MENU`, bem como a lógica associada à exibição do menu interativo.&#10;- Removido o método `color` e redefinido o foco no método `pcl`, adequando-o ao uso atual.&#10;&#10;### Mudanças relevantes&#10;- Removido: Método e constante relativos ao menu interativo (`show` e `MENU`) em `cli.php`.&#10;- Removido: Função de formatação de cores (`color`) em `cli.php`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="Removido os arquivos `chat4o.html` e `deleteFileList.html` do módulo de utilitários&#10;&#10;### Problema&#10;Os arquivos `chat4o.html` e `deleteFileList.html` deixaram de ser utilizados nos fluxos de operação do projeto. A manutenção contínua desses arquivos representava complexidade desnecessária e sobrecarga no repositório, além de conterem códigos ultrapassados que não são mais compatíveis com as demandas atuais.&#10;&#10;### Solução&#10;- Removido o arquivo `chat4o.html`, que implementava um chat modal com rolagem forçada e integração com WebSocket.&#10;- Removido o arquivo `deleteFileList.html`, que gerenciava exclusão e compressão de arquivos utilizando Swal para confirmações.&#10;&#10;### Mudanças relevantes&#10;- Removido: `chat4o.html` em `plugins/Request/modules/utils`.&#10;- Removido: `deleteFileList.html` em `plugins/Request/modules/utils`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. A remoção foi feita após verificação de que nenhum fluxo ou módulo restante dependia desses arquivos." />
     <MESSAGE value="Adicione suporte a conexões UDP e integração com dispositivos via SIP&#10;&#10;### Problema&#10;O serviço não possuía suporte para conexões UDP e nem integração direta com dispositivos SIP, limitando sua funcionalidade em cenários de comunicação em tempo real.&#10;&#10;### Solução&#10;- Adicionado suporte a conexões UDP no servidor, utilizando a porta 4000 para recepção de pacotes.&#10;- Integrado o gerenciamento de dispositivos SIP via `spechphoneVault`, permitindo autenticação e registro de dispositivos dinâmicos com base em suas impressões digitais (`fp`).&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Suporte UDP no servidor em `middleware.php`, utilizando a função `listen` na porta 4000.&#10;- Adicionado: Lógica para acesso ao `spechphoneVault` e registro dinâmico de dispositivos SIP em `plugins/Message/handlers/connect.php`.&#10;- Adicionado: Evento `packet` no servidor, que realiza captura e debug de pacotes UDP no fluxo.&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Alterações no servidor podem causar mudanças no fluxo de comunicação, com novos pontos de interação (UDP e SIP). É recomendado testar cenários de carga e comportamentos sob alto volume de pacotes UDP.&#10;Nenhum efeito colateral conhecido até o momento." />
@@ -721,7 +720,8 @@
     <MESSAGE value="### TÍTULO  &#10;Adicionar timestamp ao envio de DTMF e novo logotipo&#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** O envio de DTMF não incluía informações de timestamp, dificultando a rastreabilidade dos eventos no fluxo de chamadas.  &#10;- **Problema 2:** O logotipo do projeto era inexistente, o que impactava na identidade visual da aplicação.  &#10;&#10;- **Solução:**  &#10;  - Adicionado um campo `timestamp` com o horário atual (`Date.now()`) ao enviar DTMFs no método `sendRecByToken` no arquivo `plugins/Request/pages/default.html`.  &#10;  - Inserido novo logotipo no formato SVG para utilização no sistema.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Campo `timestamp` no envio de DTMF em `sendRecByToken` (`plugins/Request/pages/default.html`).  &#10;- **Adicionado:** Arquivo `logo.svg` como novo logotipo do projeto.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="### TÍTULO&#10;Ajustar organização de tags SVG e otimizar metadados no logotipo&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O logotipo em SVG continha inconsistências na organização das tags, resultando em código menos legível e maior dificuldade na manutenção. Além disso, o uso do metadado do `og:image` apontava para um arquivo desatualizado.&#10;- **Solução:** Reorganizadas as tags do arquivo `logo.svg` para melhorar a legibilidade e consistência do código. Atualizado o valor do metadado `og:image` em `plugins/Request/modules/includes/head.html` para apontar para o novo arquivo otimizado.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Alterado:** Estrutura e organização das tags no arquivo `logo.svg`.&#10;- **Alterado:** Caminho do metadado `og:image` para o logotipo atualizado em `plugins/Request/modules/includes/head.html`.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;Nenhum efeito colateral conhecido até o momento." />
     <MESSAGE value="### TÍTULO  &#10;Alterar proporções e estilos do logotipo para melhor consistência visual  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** As dimensões do logotipo no arquivo `logo.svg` não estavam otimizadas para exibição em dispositivos com diferentes resoluções, causando inconsistências visuais. Além disso, faltavam estilos para maior clareza do texto em telas menores.  &#10;- **Solução:** Atualizadas as dimensões gerais do logotipo, ajustando a largura de 600 para 480 e a altura de 140 para 135, proporcionando melhor adequação visual. Adicionado peso à fonte nos textos e reposicionados os elementos para melhorar a legibilidade.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Alterado:** Dimensões do elemento `&lt;rect&gt;` no arquivo `logo.svg` (largura e altura).  &#10;- **Alterado:** Adição de `font-weight` e reposicionamento dos textos no arquivo `logo.svg`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento." />
-    <option name="LAST_COMMIT_MESSAGE" value="### TÍTULO  &#10;Alterar proporções e estilos do logotipo para melhor consistência visual  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** As dimensões do logotipo no arquivo `logo.svg` não estavam otimizadas para exibição em dispositivos com diferentes resoluções, causando inconsistências visuais. Além disso, faltavam estilos para maior clareza do texto em telas menores.  &#10;- **Solução:** Atualizadas as dimensões gerais do logotipo, ajustando a largura de 600 para 480 e a altura de 140 para 135, proporcionando melhor adequação visual. Adicionado peso à fonte nos textos e reposicionados os elementos para melhorar a legibilidade.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Alterado:** Dimensões do elemento `&lt;rect&gt;` no arquivo `logo.svg` (largura e altura).  &#10;- **Alterado:** Adição de `font-weight` e reposicionamento dos textos no arquivo `logo.svg`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento." />
+    <MESSAGE value="Adicionado suporte para setup completo de áudio bidirecional RTP ↔ PCM&#10;&#10;### Problema&#10;Faltava um fluxo centralizado para configurar e gerenciar a ponte de mídia RTP ↔ PCM, essencial para chamadas de áudio em tempo real. Além disso, não havia estrutura dedicada para gerenciar estados de chamadas SIP.&#10;&#10;### Solução&#10;- Criada a classe `CallMediaBridge` para gerenciar o pipeline bidirecional de áudio, incluindo decodificação RTP ↔ PCM e envio para o `audio.php`.&#10;- Implementada a classe `CallState` para controlar tabelas compartilhadas com informações de chamadas SIP, como registros ativos e recebidos.&#10;- Adicionada a classe `SdpHelper` para manipulação e criação de SDP de forma eficiente.&#10;&#10;### Mudanças relevantes&#10;- **Adicionado:** `CallMediaBridge` para pipeline bidirecional de mídia.&#10;- **Adicionado:** `CallState` para gerenciar chamadas e bindings no namespace `helpers\utils`.&#10;- **Adicionado:** Manipulação de SDP com a classe `SdpHelper` para codecs e sessões.&#10;- **Alterado:** `server.php` para incluir lógica SIP e manipulação de pacotes.&#10;- **Alterado:** `register.php` e `saveConfig.php` corrigindo fluxo de registro SIP.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: mudanças extensivas no fluxo de mídia e registro SIP podem introduzir instabilidades iniciais.&#10;⚠️ Necessidade de monitoramento pós-deploy para verificar comportamentos em alta carga de chamadas." />
+    <option name="LAST_COMMIT_MESSAGE" value="Adicionado suporte para setup completo de áudio bidirecional RTP ↔ PCM&#10;&#10;### Problema&#10;Faltava um fluxo centralizado para configurar e gerenciar a ponte de mídia RTP ↔ PCM, essencial para chamadas de áudio em tempo real. Além disso, não havia estrutura dedicada para gerenciar estados de chamadas SIP.&#10;&#10;### Solução&#10;- Criada a classe `CallMediaBridge` para gerenciar o pipeline bidirecional de áudio, incluindo decodificação RTP ↔ PCM e envio para o `audio.php`.&#10;- Implementada a classe `CallState` para controlar tabelas compartilhadas com informações de chamadas SIP, como registros ativos e recebidos.&#10;- Adicionada a classe `SdpHelper` para manipulação e criação de SDP de forma eficiente.&#10;&#10;### Mudanças relevantes&#10;- **Adicionado:** `CallMediaBridge` para pipeline bidirecional de mídia.&#10;- **Adicionado:** `CallState` para gerenciar chamadas e bindings no namespace `helpers\utils`.&#10;- **Adicionado:** Manipulação de SDP com a classe `SdpHelper` para codecs e sessões.&#10;- **Alterado:** `server.php` para incluir lógica SIP e manipulação de pacotes.&#10;- **Alterado:** `register.php` e `saveConfig.php` corrigindo fluxo de registro SIP.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: mudanças extensivas no fluxo de mídia e registro SIP podem introduzir instabilidades iniciais.&#10;⚠️ Necessidade de monitoramento pós-deploy para verificar comportamentos em alta carga de chamadas." />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
@@ -731,22 +731,22 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/js/router.js</url>
-          <line>139</line>
+          <line>140</line>
           <option name="timeStamp" value="26" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>578</line>
+          <line>731</line>
           <option name="timeStamp" value="29" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/js/router.js</url>
-          <line>137</line>
+          <line>138</line>
           <option name="timeStamp" value="30" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>1269</line>
+          <line>1422</line>
           <option name="timeStamp" value="33" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">

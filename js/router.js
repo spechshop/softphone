@@ -108,6 +108,7 @@ window.sendRecByToken = async (params, type) => {
     if (waitTokens[id]) {
         let backup = waitTokens[id];
         delete waitTokens[id];
+
         return backup.data;
     } else {
         return null;
@@ -201,6 +202,8 @@ const onMessageSocket = (event, socket) => {
         if (window.currentCallId === data.data) return;
         window.currentCallId = data.data;
         playAudio(window.currentCallId)
+    } else if (data.type === 'messageNew') {
+        window.dispatchEvent(new CustomEvent('spechMessageNew', {detail: data.data.message}));
     }
 
 
