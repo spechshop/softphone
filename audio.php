@@ -275,7 +275,7 @@ $server->on("message", function (Server $server, Frame $frame) use (&$clientInfo
             go(function () use ($packet, $pcmData, $callId, $ssrc, &$udpPeers) {
                 $udp = new Swoole\Coroutine\Socket(AF_INET, SOCK_DGRAM, 0);
                 foreach ($udpPeers[$callId] as $peerSsrc => $peerInfo) {
-                    \libspech\Cli\cli::pcl("Enviando audio para peer: {$peerSsrc} - SSRC: {$ssrc}", 'bold_green');
+                    //\libspech\Cli\cli::pcl("Enviando audio para peer: {$peerSsrc} - SSRC: {$ssrc}", 'bold_green');
 
                     if ($peerSsrc === $ssrc) {
                         continue;
