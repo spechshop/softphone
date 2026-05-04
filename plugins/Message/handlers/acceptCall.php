@@ -8,7 +8,7 @@ use libspech\Cli\cli;
 use libspech\Network\network;
 use libspech\Rtp\MediaChannel;
 use libspech\Sip\sip;
-use Swoole\Coroutine\Socket;
+use Swoole\Coroutine;
 use Swoole\WebSocket\Server;
 
 class callAccept
@@ -142,106 +142,143 @@ class callAccept
         }
 
 
-        $rtpSocket = new \SocketMutable(AF_INET, SOCK_DGRAM, SOL_UDP);
-        $bindOk = $rtpSocket->bind('0.0.0.0', $localRtpPort);
-        cli::pcl("[ACCEPT-CO] bind({$localIp}:{$localRtpPort}) => " . ($bindOk ? 'OK' : 'FALHOU'), $bindOk ? 'cyan' : 'red');
+        Coroutine::create(function () use (
+            $socket, $fd,
+            $callId, $fp, $localRtpPort, $localIp, $sdpParsed,
+            $pt, $codecName, $frequency, $channels, $ssrc,
+            $userFrequency, $callState
+        ) {
+            cli::pcl("[ACCEPT-CO] Coroutine iniciada — ligando socket UDP {$localIp}:{$localRtpPort}", 'cyan');
 
+            $rtpSocket = new \SocketMutable(AF_INET, SOCK_DGRAM, SOL_UDP);
+            $bindOk = $rtpSocket->bind('0.0.0.0', $localRtpPort);
+            cli::pcl("[ACCEPT-CO] bind({$localIp}:{$localRtpPort}) => " . ($bindOk ? 'OK' : 'FALHOU'), $bindOk ? 'cyan' : 'red');
 
-        cli::pcl("[ACCEPT-CO] Coroutine iniciada — ligando socket UDP {$localIp}:{$localRtpPort}", 'cyan');
+            $mediaChannel = new MediaChannel($rtpSocket, $callId);
+            $mediaChannel->portList = $localRtpPort;
+            $mediaChannel->codecMapper = [
+                $pt => strtoupper("{$codecName}/{$frequency}/{$channels}"),
+            ];
+            $mediaChannel->registerPtCodecs($mediaChannel->codecMapper);
 
-        $mediaChannel = new MediaChannel($rtpSocket, $callId);
-        $mediaChannel->portList = $localRtpPort;
-        $mediaChannel->codecMapper = [
-            $pt => strtoupper("{$codecName}/{$frequency}/{$channels}"),
-        ];
+            // Bind eventSock para relay PCM ↔ browser (porta 9600)
+            $eventPort = network::getFreePort('udp');
+            $mediaChannel->eventSock->bind('0.0.0.0', $eventPort);
+            $portHandler = $mediaChannel->eventSock->getsockname()['port'];
+            cli::pcl("[ACCEPT-CO] eventSock bound na porta {$portHandler}", 'cyan');
 
-        $mediaChannel->registerPtCodecs($mediaChannel->codecMapper);
+            cli::pcl("[ACCEPT-CO] addMember REMOTO {$sdpParsed['ip']}:{$sdpParsed['port']} codec:{$codecName} pt:{$pt} freq:{$frequency} ssrc:{$ssrc}", 'cyan');
+            $mediaChannel->addMember([
+                'address' => $sdpParsed['ip'],
+                'port' => $sdpParsed['port'],
+                'codec' => $codecName,
+                'pt' => $pt,
+                'timestamp' => time(),
+                'config' => [],
+                'ssrc' => $ssrc,
+                'frequency' => $frequency,
+                'channels' => $channels,
+            ]);
 
-        // Membro 1: endpoint RTP remoto (caller SIP)
-        cli::pcl("[ACCEPT-CO] addMember REMOTO {$sdpParsed['ip']}:{$sdpParsed['port']} codec:{$codecName} pt:{$pt} freq:{$frequency} ssrc:{$ssrc}", 'cyan');
-        $mediaChannel->addMember([
-            'address' => $sdpParsed['ip'],
-            'port' => $sdpParsed['port'],
-            'codec' => $codecName,
-            'pt' => $pt,
-            'timestamp' => time(),
-            'config' => [],
-            'ssrc' => $ssrc,
-            'frequency' => $frequency,
-            'channels' => $channels,
-        ]);
+            // Caller → Browser: decodifica RTP do caller → PCM → relay porta 9600
+            $mediaChannel->onReceive(function (
+                \libspech\Rtp\rtpc         $rtp,
+                array                      $peer,
+                \libspech\Rtp\MediaChannel $mc,
+                \libspech\Rtp\rtpChannel   $rtpChan
+            ) use ($callId, $portHandler, $userFrequency, $frequency, $codecName) {
+                if (strlen($rtp->payloadRaw) < 1) return;
 
+                $pcmData = match (strtoupper($codecName)) {
+                    'PCMU' => decodePcmuToPcm($rtp->payloadRaw),
+                    'PCMA' => decodePcmaToPcm($rtp->payloadRaw),
+                    'G729' => $rtpChan->bcg729Channel->decode($rtp->payloadRaw),
+                    'L16' => decodeL16ToPcm($rtp->payloadRaw),
+                    default => false,
+                };
 
-        $freePort = network::getFreePort();
-        $eventSock = new Socket(AF_INET, SOCK_DGRAM, 0);
+                if (!$pcmData) return;
 
-        $eventSock->bind('0.0.0.0', $freePort);
-        $portHandler = $eventSock->getsockname()['port'];
+                if ($frequency !== $userFrequency) {
+                    $pcmData = resampler($pcmData, $frequency, $userFrequency);
+                }
 
+                $id = implode(':', array_values($peer));
+                $mc->eventSock->sendto(
+                    '127.0.0.1', 9600,
+                    "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}"
+                );
+            });
 
-        $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtpc, array $peer, \libspech\Rtp\MediaChannel $mediaChannel) use ($userFrequency, $eventSock, $callId, &$portHandler) {
+            // Cleanup quando o caller para de enviar RTP
+            $mediaChannel->packetOnTimeout(function (string $cid) use ($callState, $fp, $socket) {
+                $callState->callActive = false;
+                \libspech\Cache\cache::unset('coroutinesProcess', $fp);
+                \helpers\utils\CallState::$incomingCalls->del($cid);
+                foreach (\libspech\Cache\cache::get('connections')[$fp] ?? [] as $clientFd) {
+                    $socket->push($clientFd, json_encode(['type' => 'event', 'data' => 'bye']));
+                    $socket->push($clientFd, json_encode(['type' => 'notify', 'data' => ['type' => 'bg-warning text-white', 'message' => 'Chamada encerrada por inatividade RTP']]));
+                }
+                cli::pcl("[ACCEPT-CO] RTP timeout — chamada encerrada Call-ID:{$cid}", 'red');
+            });
 
-            if (strlen($rtpc->payloadRaw) < 12) return;
+            // Browser → Caller: lê PCM do relay porta 9600 → codifica → envia RTP
+            Coroutine::create(function () use (
+                $mediaChannel, $sdpParsed, $codecName, $frequency, $callState, $userFrequency
+            ) {
+                cli::pcl("[ACCEPT-CO] Browser→Caller coroutine iniciada", 'cyan');
 
-            $targetId = $peer['address'] . ':' . $peer['port'];
+                $mediaChannel->eventSock->sendto('127.0.0.1', 9600, str_repeat('0', 12));
 
+                $pcmBuffer = '';
+                $SRC_RATE = $userFrequency;
+                $PCM_FRAME_BYTES = (int)($SRC_RATE * 0.02) * 2;
 
-            $ssrc = $rtpc->ssrc;
+                while (true) {
+                    $peer = null;
+                    $raw = $mediaChannel->eventSock->recvfrom($peer, 0.2);
 
+                    if (!$callState->callActive || $callState->receiveBye) break;
+                    if (!$mediaChannel->active) break;
+                    if (!$raw || strlen($raw) < 12) continue;
 
-            $frequencyPacket = $mediaChannel->getFrequencyFromPtCodec($rtpc->payloadType);
+                    $pcmBuffer .= explode('__::__', $raw, 2)[0];
 
+                    while (strlen($pcmBuffer) >= $PCM_FRAME_BYTES) {
+                        $pcmChunk = substr($pcmBuffer, 0, $PCM_FRAME_BYTES);
+                        $pcmBuffer = substr($pcmBuffer, $PCM_FRAME_BYTES);
 
-            $packetCodecName = $mediaChannel->resolveCodecNameFromPt($rtpc->payloadType);
+                        if ($SRC_RATE !== $frequency) {
+                            $pcmChunk = resampler($pcmChunk, $SRC_RATE, $frequency);
+                        }
 
+                        $encode = match (strtoupper($codecName)) {
+                            'PCMU' => encodePcmToPcmu($pcmChunk),
+                            'PCMA' => encodePcmToPcma($pcmChunk),
+                            'G729' => $mediaChannel->channelEncode->encode($pcmChunk),
+                            'L16' => encodePcmToL16($pcmChunk),
+                            default => false,
+                        };
 
-            switch (strtoupper($packetCodecName)) {
-                case 'PCMU':
-                    $pcmData = decodePcmuToPcm($rtpc->payloadRaw);
-                    break;
-                case 'PCMA':
-                    $pcmData = decodePcmaToPcm($rtpc->payloadRaw);
-                    break;
-                case 'G729':
-                    $pcmData = $mediaChannel->members[$targetId]['rtpChannel']->bcg729Channel->decode($rtpc->payloadRaw);
-                    break;
-                case 'OPUS':
-                    $pcmData = $mediaChannel->opusChannel->decode($rtpc->payloadRaw);
-                    // cli::pcl("Recebendo " . strlen($pcmData) . " bytes de {$peer['address']}:{$peer['port']} | Sequence: $rtpc->sequence | TimeStamp: {$rtpc->timestamp} | SSRC: {$rtpChannel->ssrc}", 'bold_yellow');
+                        if (!$encode) continue;
 
-                    $pcmData = resampler($pcmData, 48000, 8000);
+                        $member = $mediaChannel->members["{$sdpParsed['ip']}:{$sdpParsed['port']}"] ?? null;
+                        if (!$member) continue;
 
+                        $mediaChannel->socket->sendto(
+                            $sdpParsed['ip'], $sdpParsed['port'],
+                            $member['rtpChannel']->buildAudioPacket($encode)
+                        );
+                    }
+                }
 
-                    break;
-                case 'L16':
-                    $pcmData = decodeL16ToPcm($rtpc->payloadRaw);
-                    break;
-                default:
-                    cli::pcl("Codec não suportado");
-                    return;
-                    break;
-            };
-            $id = implode(':', array_values($peer));
+                cli::pcl("[ACCEPT-CO] Browser→Caller coroutine encerrada", 'red');
+            });
 
-
-            // aqui vem rtp de quem ta me ligando
-            //cli::pcl("received ".strlen($pcmData)." bytes from {$peer['address']}:{$peer['port']}", 'bold_yellow');
-            $eventSock->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequencyPacket}");
+            $mediaChannel->connectTimeout = 30;
+            $mediaChannel->start();
+            cli::pcl("[ACCEPT-CO] mediaChannel->start() chamado — aguardando RTP do caller", 'cyan');
         });
-
-
-        for (; ;) {
-            $first = $rtpSocket->recvfrom($peer, 10);
-            if ($first) {
-                cli::pcl("received " . strlen($first) . " bytes from {$peer['address']}:{$peer['port']}", 'bold_yellow');
-                break;
-            }
-        }
-        $mediaChannel->start();
-        cli::pcl("[ACCEPT-CO] mediaChannel->start() retornou — callActive:{$callState->callActive} receiveBye:{$callState->receiveBye}", 'red');
-        cli::pcl("[ACCEPT-CO] unblock() chamado, coroutine encerrando", 'red');
-
-
 
         return true;
     }

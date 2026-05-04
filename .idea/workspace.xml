@@ -23,7 +23,6 @@
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="Adicionado arquivo trunkController.php para gerenciamento de sessões SIP&#10;&#10;O problema era a ausência de uma implementação genérica para controle de chamadas e sessões SIP no sistema. Isso impactava a integração de operações como INVITE, BYE, OPTIONS e tratamento de eventos DTMF.&#10;&#10;Foi introduzida a classe `trunkController` no arquivo `libspech/plugins/Utils/libspech/trunkController.php`. Essa classe gerencia sockets, estados de chamada, codecs suportados, manipulação de SDP, registro SIP, controle de áudio e callbacks para eventos como falhas, respostas e encerramentos.&#10;&#10;Mudanças Relevantes:&#10;- Adicionado suporte a envio e gestão de pacotes RTP e DTMF.&#10;- Implementadas funções para renderização de mensagens SIP (ex.: OPTIONS e ACK).&#10;- Introduzida lógica para controle de timeout e reconexões automáticas.&#10;&#10;Impactos e Riscos:&#10;⚠️ Possível impacto: comportamento sob alta carga ainda não validado devido à complexidade do processamento SIP e RTP.&#10;⚠️ Necessidade de monitoramento pós-deploy para validar estabilidade e registro.&#10;Nenhum outro efeito colateral conhecido até o momento.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/audio.php" beforeDir="false" afterPath="$PROJECT_DIR$/audio.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -266,15 +265,7 @@
       <workItem from="1777901667807" duration="264000" />
       <workItem from="1777902049302" duration="404000" />
       <workItem from="1777903287741" duration="1123000" />
-      <workItem from="1777904755076" duration="672000" />
-    </task>
-    <task id="LOCAL-00056" summary="Atualize lógica de inicialização e adicione script de testes integrados&#10;&#10;### Problema&#10;1. Arquivo `middleware.php`: Configurações de SSL estavam sujeitas a erros caso o certificado ou as chaves não existissem, afetando a inicialização do servidor.&#10;2. Ausência de validações automatizadas do projeto, dificultando identificar erros de sintaxe e problemas de configuração antes da execução.&#10;&#10;### Solução&#10;- Adicionada lógica de geração automática de certificados SSL caso os arquivos configurados não sejam encontrados.&#10;- Criado `run-tests.php` para validações automáticas abrangendo:&#10;  - Verificação de sintaxe PHP.&#10;  - Validação de arquivos JSON de configuração.&#10;  - Checagem de estrutura em diretórios de plugins.&#10;  - Geração de arquivo `fixs.json` com possíveis soluções para erros detectados.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Geração dinâmica de certificados SSL em `middleware.php`, com tratamento de erros e validação da existência dos arquivos.&#10;- Adicionado: Script `run-tests.php` para execução de testes integrados.&#10;- Alterado: `README.md` atualizado com instruções detalhadas sobre instalação, geração de certificados e execução de testes.&#10;&#10;### Impactos, riscos ou limitações&#10;- ⚠️ Possível impacto: Geração dinâmica de certificação SSL pode falhar caso o OpenSSL não esteja instalado no sistema.&#10;- ⚠️ Possível impacto: O script `run-tests.php` depende da estrutura atual do projeto e pode não funcionar corretamente em ambientes modificados.&#10;- Nenhum outro efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767185112427</created>
-      <option name="number" value="00056" />
-      <option name="presentableId" value="LOCAL-00056" />
-      <option name="project" value="LOCAL" />
-      <updated>1767185112427</updated>
+      <workItem from="1777904755076" duration="2073000" />
     </task>
     <task id="LOCAL-00057" summary="Atualize lógica de inicialização e adicione script de testes integrados&#10;&#10;### Problema&#10;1. Arquivo `middleware.php`: Configurações de SSL estavam sujeitas a erros caso o certificado ou as chaves não existissem, afetando a inicialização do servidor.&#10;2. Ausência de validações automatizadas do projeto, dificultando identificar erros de sintaxe e problemas de configuração antes da execução.&#10;&#10;### Solução&#10;- Adicionada lógica de geração automática de certificados SSL caso os arquivos configurados não sejam encontrados.&#10;- Criado `run-tests.php` para validações automáticas abrangendo:&#10;  - Verificação de sintaxe PHP.&#10;  - Validação de arquivos JSON de configuração.&#10;  - Checagem de estrutura em diretórios de plugins.&#10;  - Geração de arquivo `fixs.json` com possíveis soluções para erros detectados.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Geração dinâmica de certificados SSL em `middleware.php`, com tratamento de erros e validação da existência dos arquivos.&#10;- Adicionado: Script `run-tests.php` para execução de testes integrados.&#10;- Alterado: `README.md` atualizado com instruções detalhadas sobre instalação, geração de certificados e execução de testes.&#10;&#10;### Impactos, riscos ou limitações&#10;- ⚠️ Possível impacto: Geração dinâmica de certificação SSL pode falhar caso o OpenSSL não esteja instalado no sistema.&#10;- ⚠️ Possível impacto: O script `run-tests.php` depende da estrutura atual do projeto e pode não funcionar corretamente em ambientes modificados.&#10;- Nenhum outro efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -660,7 +651,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777899426485</updated>
     </task>
-    <option name="localTasksCounter" value="105" />
+    <task id="LOCAL-00105" summary="Adicionado arquivo trunkController.php para gerenciamento de sessões SIP&#10;&#10;O problema era a ausência de uma implementação genérica para controle de chamadas e sessões SIP no sistema. Isso impactava a integração de operações como INVITE, BYE, OPTIONS e tratamento de eventos DTMF.&#10;&#10;Foi introduzida a classe `trunkController` no arquivo `libspech/plugins/Utils/libspech/trunkController.php`. Essa classe gerencia sockets, estados de chamada, codecs suportados, manipulação de SDP, registro SIP, controle de áudio e callbacks para eventos como falhas, respostas e encerramentos.&#10;&#10;Mudanças Relevantes:&#10;- Adicionado suporte a envio e gestão de pacotes RTP e DTMF.&#10;- Implementadas funções para renderização de mensagens SIP (ex.: OPTIONS e ACK).&#10;- Introduzida lógica para controle de timeout e reconexões automáticas.&#10;&#10;Impactos e Riscos:&#10;⚠️ Possível impacto: comportamento sob alta carga ainda não validado devido à complexidade do processamento SIP e RTP.&#10;⚠️ Necessidade de monitoramento pós-deploy para validar estabilidade e registro.&#10;Nenhum outro efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1777905441652</created>
+      <option name="number" value="00105" />
+      <option name="presentableId" value="LOCAL-00105" />
+      <option name="project" value="LOCAL" />
+      <updated>1777905441654</updated>
+    </task>
+    <option name="localTasksCounter" value="106" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
