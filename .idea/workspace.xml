@@ -23,7 +23,8 @@
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Corrigir envio de mensagens SIP BYE e aprimorar logs no encerramento de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** Na desconexão de chamadas SIP, o fluxo de envio de mensagens BYE apresentava inconsistências na formação de headers SIP e na inclusão de tags obrigatórias, ocasionando erros na comunicação.  &#10;- **Solução:** Atualizado o handler `hangUpCall.php` para garantir a construção correta de headers SIP, incluindo a tag `To`, rota reversa de headers `Record-Route`, e campo `Contact`. Mensagens de log detalhadas foram adicionadas para auditoria e rastreamento de encerramento de chamadas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Headers SIP no envio de BYE em `plugins/Message/handlers/hangUpCall.php`, com suporte à tag `To` e rotas `Record-Route`.  &#10;- **Adicionado:** Mensagens de log detalhadas via `cli::pcl` para monitorar o fluxo de encerramento.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: alterações no fluxo SIP podem impactar integrações que dependam de headers legados no BYE. Recomenda-se testes em ambientes controlados.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.pt-br.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.pt-br.md" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -147,7 +148,7 @@
     &quot;javascript.nodejs.core.library.typings.version&quot;: &quot;25.6.0&quot;,
     &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
     &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/lotus/projetos/spechphone&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/lotus/projetos/saldospechlib&quot;,
     &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
     &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
@@ -266,15 +267,8 @@
       <workItem from="1777902049302" duration="404000" />
       <workItem from="1777903287741" duration="1123000" />
       <workItem from="1777904755076" duration="3135000" />
-      <workItem from="1777915614483" duration="379000" />
-    </task>
-    <task id="LOCAL-00059" summary="Atualize documentação técnica com detalhes sobre modelo de segurança e suporte a NAT&#10;&#10;### Problema&#10;A documentação do projeto nos arquivos `README.pt-br.md` e `README.md` estava incompleta, omitindo informações importantes sobre o modelo de segurança, transporte de mídia e suporte a NAT. Isso prejudicava a clareza para desenvolvedores que precisam compreender os requisitos e limitações do projeto.&#10;&#10;### Solução&#10;- Adicionado: Novo tópico sobre **Modelo de Segurança**, explicando a ausência de WebRTC, transporte de mídia via backend e requisitos mínimos para produção (HTTPS, WSS, firewall).&#10;- Adicionado: Detalhes sobre suporte a NAT com uso opcional de STUN e ausência de suporte a TURN.&#10;- Alterado: Correção de informações em ambos os arquivos para enfatizar a ausência de credenciais hardcoded.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Tópico **Modelo de Segurança** em `README.pt-br.md` e `README.md`.&#10;- Adicionado: Suporte opcional a STUN e ressalva sobre TURN não implementado.&#10;- Alterado: Secção de variáveis de ambiente em ambos os arquivos para destacar a ausência de credenciais hardcoded.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767186698709</created>
-      <option name="number" value="00059" />
-      <option name="presentableId" value="LOCAL-00059" />
-      <option name="project" value="LOCAL" />
-      <updated>1767186698709</updated>
+      <workItem from="1777915614483" duration="496000" />
+      <workItem from="1777934727632" duration="1549000" />
     </task>
     <task id="LOCAL-00060" summary="Atualize documentação técnica com detalhes sobre modelo de segurança e suporte a NAT&#10;&#10;### Problema&#10;A documentação do projeto nos arquivos `README.pt-br.md` e `README.md` estava incompleta, omitindo informações importantes sobre o modelo de segurança, transporte de mídia e suporte a NAT. Isso prejudicava a clareza para desenvolvedores que precisam compreender os requisitos e limitações do projeto.&#10;&#10;### Solução&#10;- Adicionado: Novo tópico sobre **Modelo de Segurança**, explicando a ausência de WebRTC, transporte de mídia via backend e requisitos mínimos para produção (HTTPS, WSS, firewall).&#10;- Adicionado: Detalhes sobre suporte a NAT com uso opcional de STUN e ausência de suporte a TURN.&#10;- Alterado: Correção de informações em ambos os arquivos para enfatizar a ausência de credenciais hardcoded.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Tópico **Modelo de Segurança** em `README.pt-br.md` e `README.md`.&#10;- Adicionado: Suporte opcional a STUN e ressalva sobre TURN não implementado.&#10;- Alterado: Secção de variáveis de ambiente em ambos os arquivos para destacar a ausência de credenciais hardcoded.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -660,7 +654,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777907675091</updated>
     </task>
-    <option name="localTasksCounter" value="108" />
+    <task id="LOCAL-00108" summary="### TÍTULO  &#10;Corrigir envio de mensagens SIP BYE e aprimorar logs no encerramento de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** Na desconexão de chamadas SIP, o fluxo de envio de mensagens BYE apresentava inconsistências na formação de headers SIP e na inclusão de tags obrigatórias, ocasionando erros na comunicação.  &#10;- **Solução:** Atualizado o handler `hangUpCall.php` para garantir a construção correta de headers SIP, incluindo a tag `To`, rota reversa de headers `Record-Route`, e campo `Contact`. Mensagens de log detalhadas foram adicionadas para auditoria e rastreamento de encerramento de chamadas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Headers SIP no envio de BYE em `plugins/Message/handlers/hangUpCall.php`, com suporte à tag `To` e rotas `Record-Route`.  &#10;- **Adicionado:** Mensagens de log detalhadas via `cli::pcl` para monitorar o fluxo de encerramento.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: alterações no fluxo SIP podem impactar integrações que dependam de headers legados no BYE. Recomenda-se testes em ambientes controlados.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1777916002705</created>
+      <option name="number" value="00108" />
+      <option name="presentableId" value="LOCAL-00108" />
+      <option name="project" value="LOCAL" />
+      <updated>1777916002705</updated>
+    </task>
+    <option name="localTasksCounter" value="109" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

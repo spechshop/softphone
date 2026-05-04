@@ -1,210 +1,192 @@
+# SpechPhone
+
+Open-source web softphone built with PHP + Swoole, focused on SIP signaling, RTP media, real-time media bridge,
+`libspech` integration, and non-WebRTC architecture.
+
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](LICENSE.txt)
 [![PHP Runtime](https://img.shields.io/badge/Runtime-pcg729-orange.svg)](https://github.com/spechshop/pcg729)
 [![Swoole](https://img.shields.io/badge/Swoole-enabled-brightgreen.svg)](https://www.swoole.co.uk/)
-[![GitHub Repo Size](https://img.shields.io/github/repo-size/spechshop/spechphone)](https://github.com/spechshop/spechphone)
-[![GitHub Last Commit](https://img.shields.io/github/last-commit/spechshop/spechphone)](https://github.com/spechshop/spechphone)
-[![GitHub Issues](https://img.shields.io/github/issues/spechshop/spechphone)](https://github.com/spechshop/spechphone/issues)
-[![GitHub Pull Requests](https://img.shields.io/github/issues-pr/spechshop/spechphone)](https://github.com/spechshop/spechphone/pulls)
-[![GitHub stars](https://img.shields.io/github/stars/spechshop/spechphone)](https://github.com/spechshop/spechphone/stargazers)
-[![GitHub forks](https://img.shields.io/github/forks/spechshop/spechphone)](https://github.com/spechshop/spechphone/network/members)
 
 [Português (Brasil)](README.pt-br.md)
 
-# SpechPhone
+## Why SpechPhone?
 
-> **⚠️ IMPORTANT:** The project is still in **beta** and under development. Some features, such as **receiving calls**,
-> are yet to be implemented.
+Most web-based softphone solutions rely on WebRTC — a feature-rich stack that introduces unnecessary complexity in
+environments where SIP infrastructure is already in place: a PBX, a SIP trunk, or a VoIP provider.
 
-## Architecture and Operation
+**The problem SpechPhone solves:**
 
-SpechPhone was designed for high performance and ease of use in both development and production environments.
+- Existing SIP environments that don't need WebRTC overhead
+- Need for full control over the media and signaling stack
+- Avoiding dependency on external STUN/TURN servers
+- Integrating a web softphone into PHP stacks without rewriting existing infrastructure
 
-### Audio Processing and Coroutines
+**Why choose SpechPhone:**
 
-Through **Swoole**, the application opens a dedicated coroutine instance for each `trunkController` (SIP trunk manager).
-This allows hundreds of calls to occur simultaneously without blocking the main process.
+- Fully PHP + Swoole stack — no Node.js, no transpilers
+- Direct communication with SIP trunks via native UDP
+- RTP ↔ PCM media bridge without WebRTC intermediaries
+- Open-source, with no external service dependencies
 
-- **Dynamic Decoding:** When audio packets (RTP) arrive, they are processed by `libspech`, which identifies the codec (
-  G.729, Opus, PCMA/U, L16) and performs dynamic real-time decoding via native C functions from the `pcg729` runtime.
-- **PCM Delivery:** The decoded audio is delivered to the WebSocket controller in PCM **chunks**, ready to be consumed
-  by the browser or other clients. SpechPhone **discards the use of WebRTC**, opting for a more direct approach where
-  the audio is read in JavaScript via `webkitAudioContext`, ensuring extremely low latency and eliminating the
-  complexity of the WebRTC stack.
+## Current Status
 
-### Security and SSL
+The project now features advanced support for **inbound calls**, featuring a dedicated RTP ↔ PCM media bridge and
+real-time state management. While the `inbound` branch is highly functional, it is still considered active/experimental
+for production hardening.
 
-To speed up local development, SpechPhone features an **automatic SSL key generation** system.
+- Full SIP inbound flow (INVITE/ACK/CANCEL/BYE).
+- RTP ↔ PCM bridge using Swoole coroutines for high-performance media.
+- Real-time messaging with backend storage and integrated chat UI.
+- Advanced SIP session control via `trunkController`.
 
-- If certificate files are not found at startup, the system uses OpenSSL to automatically generate **self-signed**
-  certificates.
-- This allows immediate use of HTTPS and WSS (Secure WebSockets), which are essential requirements for media operation
-  in the browser (microphone) in secure contexts.
+## Architecture Overview
 
-#### Security Model
+SpechPhone follows a decentralized signaling and media architecture designed to operate without the complexity of
+WebRTC.
 
-- **No WebRTC:** SpechPhone does not use WebRTC (no SRTP / ICE / DTLS).
-- **Backend Media:** Audio is transported via raw RTP (UDP) in the backend.
-- **Thin Client:** The browser acts as a thin client via WebSocket (PCM delivery).
-- **Production Requirements:** HTTPS and WSS are mandatory for production environments.
-- **Firewall:** RTP ports should not be exposed to the public internet without a proper firewall.
+### SIP Signaling & Control Plane
 
-## Requirements
+- **server.php**: The central entrypoint. It manages HTTPS, WSS, and SIP signaling (listening on UDP :4000). It handles
+  packet parsing, transaction deduplication, and routing.
+- **trunkController**: Located in `libspech`, this is the main orchestrator for SIP sessions. It manages sockets,
+  registration, codec selection, SDP, RTP transport, and DTMF.
+- **CallState**: A robust state manager using Swoole Tables to maintain real-time tracking of incoming calls, active
+  sessions, and SIP user bindings.
 
-- **Optimized PHP Runtime (pcg729)** – A static PHP CLI that includes native support for G.729, Opus, L16, C resampling
-  functions, and other audio extensions. It is required for high-performance processing. It can
-  be [downloaded here](https://github.com/spechshop/pcg729/releases/download/current/php) or built locally from
-  the [official repository](https://github.com/spechshop/pcg729).
-- **OpenSSL** for TLS/SSL features.
-- Linux or macOS system is recommended for best compatibility.
+### Media Engine
 
-> No external media tools are required; codecs and DSP are provided by the application itself.
+- **CallMediaBridge**: Orchestrates the RTP ↔ PCM flow. It bridges the SIP stack's RTP packets with the browser's PCM
+  stream via a UDP relay.
+- **audio.php**: A dedicated server that manages the browser's audio WebSocket (:8888) and the internal UDP relay (:
+  9600). It handles jitter buffering, mixing, and resamping.
+- **SdpHelper**: Helper for parsing remote SDP, selecting compatible codecs, and generating local SDP answers for
+  session negotiation.
+- **Swoole Coroutines**: The core of the media path, allowing asynchronous processing of RTP/PCM packets without
+  blocking the signaling plane.
 
-## Installation and Execution
+### Messaging System
 
-Installation is simple and straightforward. Follow the commands below to set up the environment:
-
-```bash
-# Install system dependencies
-sudo apt update && sudo apt install -y openssl
-
-# Clone the main repository and the codec library
-git clone https://github.com/spechshop/spechphone && cd spechphone
-git clone https://github.com/spechshop/libspech
-
-# Obtain the pcg729 runtime (PHP optimized for audio)
-# Using curl:
-# curl -L https://github.com/spechshop/pcg729/releases/download/current/php -o php
-# Or using wget: wget https://github.com/spechshop/pcg729/releases/download/current/php
-
-# Configure and install the runtime
-chmod +x ./php
-sudo cp php /usr/local/bin/php
-
-# Start the services (running in separate terminals is recommended)
-php middleware.php
-php audio.php
-```
-
-These commands set up the environment and start the necessary services. After execution, simply open the generated link
-in your browser.
-
-## What is SpechPhone?
-
-SpechPhone is a modern **SIP/VoIP softphone** written in **PHP** and optimized with **Swoole**.  
-It allows establishing real-time voice calls, controlling codecs, and integrating with backend tools without depending
-on external media libraries.  
-The implementation is entirely in PHP and follows high-performance principles with coroutines for asynchronous I/O.
+- **messageStore**: Manages message persistence (`messages.json`), conversation listing, and history retrieval.
+- **Real-time Notify**: New messages are pushed to connected clients instantly via WebSocket events (`messageNew`).
 
 ## Features
 
-- **Self-sufficient** – does not require FFmpeg, SoX, or other tools; all audio processing is done by the application
-  itself.
-- **Integrated Codecs** – support for PCMA, PCMU, G.729, Opus, and L16 via [
-  `libspech`](https://github.com/spechshop/libspech). You can make calls with multiple audio formats without
-  complications.
-- **Embedded Audio Processing** – includes resampling, mixing, noise suppression, echo cancellation, and automatic gain
-  control. These features are accessible via the PHP API.
-- **Asynchronous I/O** – the use of Swoole coroutines eliminates blocking and allows hundreds of simultaneous sessions
-  in a single process.
-- **Full PHP Stack** – implements SIP, RTP, and media control within the code itself, avoiding additional compiled
-  dependencies.
-- **Easy Frontend Integration** – provides a responsive HTML/JS interface ready for browsers with **WebSocket** support.
+### Calls and SIP
 
-## What can I build?
+- **Inbound Calls**: Reliable receiving of calls with proper Ringing state and `To` tag management.
+- **SIP Dialog**: Proper handling of BYE/CANCEL with reverse routing (Record-Route) and correct headers (Contact).
+- **Outbound Calls**: Full support for dialing via `trunkController`.
+- **Registration**: SIP register and authentication flow with real-time status updates to the UI.
 
-- **Enterprise Softphone** with dialer, shortcut keys, and browser-based workspace integration.
-- **Proxy/SBC Client** for connecting to SIP servers via UDP.
-- **Audio Streaming via WebSocket** or RTP for real-time dashboards.
-- **Monitoring and Recording Services** using native audio utilities.
+### Media and Codecs
 
-## Functionalities
+- **RTP Media Bridge**: Bi-directional RTP ↔ PCM bridging using Swoole coroutines.
+- **Codec Support**: Negotiation for PCMA, PCMU, G729, L16, and Opus (depending on environment and extensions).
+- **DTMF**: Support for RFC2833 signaling.
+- **Audio Relay**: Optimized transport between the SIP coroutines and the browser.
 
-### Calls and Media
+### Messaging
 
-- Dialer with keypad support and volume control.
-- Negotiation of PCMA, PCMU, G.729, Opus, and L16 codecs.
-- Mute, hold, speakerphone, and multi-channel mixing controls.
-- Built-in DSP for noise suppression, echo cancellation, and clarity enhancement.
+- **SIP MESSAGE**: Fully integrated send and receive path for SIP text messages.
+- **Chat Interface**: Web-based chat UI with conversation history and list.
+- **Message Management**: Mark messages as read and real-time delivery events.
 
-### Network and SIP
+### Frontend/UI
 
-- SIP transport support via UDP.
-- Raw RTP streaming over UDP and audio transport via WebSocket.
-- HTTPS and WSS using OpenSSL.
-- **NAT Traversal:** Optional support for **STUN** when configured.
-- **TURN:** Not used or implemented.
+- **Modular Design**: Tabs for Dialer, Messaging, Audio Settings, and Configuration.
+- **Real-time Updates**: Live call timers, signal meters, and notification system.
+- **Dynamic Content**: Socket-driven page loading for a smooth SPA experience.
 
-### User Interface
+### Security and Runtime
 
-- Responsive web interface with light/dark mode.
-- Modular pages: Calls, Audio, Settings.
-- Support for keyboard shortcuts and script control.
+- **Encryption**: Built-in support for WSS/HTTPS with automated SSL certificate generation.
+- **Privacy**: No external WebRTC dependencies or STUN/TURN requirements for the media path.
 
-## Screenshots
+## Requirements
 
-![Call screen with dialer](screenshot_call.png)
+- **Linux Environment** (Ubuntu/Debian recommended).
+- **PHP 8.1+** with Swoole extension enabled.
+- **OpenSSL** (required for WSS/HTTPS).
+- **libspech** (must be fetched as a submodule).
+- **Write Permissions**: `/data/spechphone` must exist and be writable by the PHP process.
 
-![Audio controls and meters](screenshot_audio.png)
+## Installation
 
-![Configuration panel](screenshot_config.png)
+```bash
+git clone https://github.com/spechshop/spechphone
+cd spechphone
+git clone https://github.com/spechshop/libspech
+wget https://github.com/spechshop/pcg729/releases/download/PCG729/php
+sudo mv php /usr/local/bin/php
+sudo chmod +x /usr/local/bin/php
+git submodule update --init --recursive
+
+cp .env.example .env
+# Open .env and set your SPECH_VAULT_KEY_HEX
+```
+
+> **Note on `pcg729`:** The binary above is a static PHP build with pre-compiled G.729 support. If you prefer not to use
+> the static binary, you can clone the [pcg729](https://github.com/spechshop/pcg729) repository and compile normally — it
+> is an adaptation of [Static PHP CLI (SPC)](https://github.com/crazywhalecc/static-php-cli), so it follows the same build
+> process with the desired PHP extensions.
+
+## Running
+
+Launch both servers in separate terminals or as background processes:
+
+```bash
+# Main signaling and web server
+php server.php
+
+# Dedicated audio bridge server
+php audio.php
+```
+
+*Note: `testInbound.php` is provided for development testing and should not be used as a primary entrypoint.*
 
 ## Configuration
 
-### File `plugins/configInterface.json`
+### `plugins/configInterface.json`
 
-Define ports, SSL options, number of Swoole workers, and other parameters for the main server.  
-Example fields:
-
-- `port`: HTTP/WS port (default 443).
-- `ssl`: enable SSL (boolean).
-- `serverSettings`: array of Swoole configurations (workers, certificates, etc.).
+Main runtime settings including host, port, SSL files, and plugin autoloading paths.
 
 ### Environment Variables
 
-- **No Hardcoded Credentials:** There are no hardcoded credentials, tokens, or secrets in this repository.
-- `SPECH_VAULT_KEY_HEX`: hexadecimal key used to encrypt sensitive configurations. It must be provided by the operator
-  via the environment.
+- `SPECH_VAULT_KEY_HEX`: Secret key used to encrypt/decrypt sensitive device configurations in `devices.vault`.
 
-### Directory Structure
+## Inbound Call Flow
 
-```
-spechphone/
-├── middleware.php           # HTTP/WS Server (UI and SIP)
-├── audio.php                # Audio Server (mixing and streaming)
-├── plugins/                 # Modular system (messages, connections, utilities)
-│   ├── Extension/           # Utility plugins
-│   ├── Message/             # WebSocket handlers
-│   ├── OpenConnection/      # Connection management
-│   ├── Request/             # HTTP routes and templates
-│   ├── Start/               # Initialization (CLI, console)
-│   └── Utils/               # Cache, buffers, and auxiliaries
-├── libspech/                # SIP/RTP library and codecs (submodule)
-├── js/                      # Frontend scripts
-├── css/                     # Styles and themes
-└── plugins/configInterface.json # Server configurations
-```
+1. **Configuration**: Device registers its SIP account and is mapped via `CallState`.
+2. **INVITE**: `server.php` receives the SIP INVITE on UDP 4000.
+3. **SDP Negotiation**: `SdpHelper` selects the best codec and `server.php` sends `180 Ringing`.
+4. **Notification**: Browser receives an `incomingCall` event via WebSocket.
+5. **Acceptance**: When the user accepts, a `200 OK` with local SDP is sent.
+6. **Media Bridge**: `CallMediaBridge` starts a coroutine to bridge RTP ↔ PCM via the UDP relay.
+7. **Audio Path**: Audio travels from `audio.php` (WSS 8888) to the browser.
+8. **Hangup**: `BYE` is sent/received, terminating the dialog and cleaning up states.
 
-## Additional Resources
+## Security Notes
 
-- **SIP/RTP Library Logic:** signaling and codec functionalities are provided via [
-  `libspech`](https://github.com/spechshop/libspech). Refer to that project's documentation to learn how call
-  controllers, adaptive buffers, DTMF, etc., work.
-- **Examples and Tools:** the `libspech/extra` directory contains auxiliary scripts to validate the environment, test
-  codecs, and generate audio quality reports.
-- **Interactive CLI:** access `plugins/Start/console/cli.php` to use management and status check menus.
+- Always use valid SSL certificates for production.
+- Ensure your firewall allows UDP traffic for SIP (4000) and the dynamic RTP port range.
+- Direct RTP communication requires visibility between the server and the SIP trunk/peer.
 
-## Contribution
+## Limitations
 
-Contributions are welcome! Before submitting a pull request:
+- **Experimental**: The `inbound` branch is in active development; expect updates and potential bugs.
+- **NAT Traversal**: Depends on correct network configuration as WebRTC/ICE is not used.
+- **DSP Features**: Advanced features like Echo Cancellation or Noise Suppression are currently planned or handled by
+  the browser's hardware/OS layer.
 
-- Keep copyright headers and licenses intact.
-- Clearly describe your changes and the tests performed.
-- Open an issue if you have questions or want to discuss a feature.
+## Screenshots
 
-## License and Acknowledgments
+![Call screen](screenshot_call.png)
+![Audio controls](screenshot_audio.png)
+![Configuration](screenshot_config.png)
 
-This project is distributed under the **Apache License 2.0**.  
+## License
+
+Distributed under the **Apache License 2.0**.
 Copyright © 2025 Lotus / berzersks.
 
-We thank the community for their support and look forward to your contributions to make SpechPhone even better.  
-Visit <https://spechshop.com> for news and downloads.
+Visit [spechshop.com](https://spechshop.com) for more info.
