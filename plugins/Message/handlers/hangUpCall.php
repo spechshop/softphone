@@ -4,6 +4,7 @@ namespace handlers;
 
 use helpers\utils\CallState;
 use libspech\Cache\cache;
+use libspech\Cli\cli;
 use libspech\Network\network;
 use libspech\Packet\renderMessages;
 use libspech\Sip\sip;
@@ -48,22 +49,30 @@ class hangUpCall
             $remotePort = $incomingCall['remote_port'];
 
             if ($incomingCall['status'] === 'ringing') {
+                $inviteHeaders['To'][0] = ($inviteHeaders['To'][0] ?? '') . ';tag=' . $incomingCall['to_tag'];
                 $socket->sendto($remoteIp, $remotePort, renderMessages::respond486Busy($inviteHeaders));
             } else {
+                $byeHeaders = [
+                    'Via' => ['SIP/2.0/UDP ' . network::getLocalIp() . ':4000;branch=z9hG4bK-' . bin2hex(random_bytes(4))],
+                    'From' => [($inviteHeaders['To'][0] ?? '') . ';tag=' . $incomingCall['to_tag']],
+                    'To' => $inviteHeaders['From'],
+                    'Call-ID' => $inviteHeaders['Call-ID'],
+                    'CSeq' => [(((int)$inviteHeaders['CSeq'][0]) + 1) . ' BYE'],
+                    'Max-Forwards' => ['70'],
+                    'Contact' => ['<sip:s@' . network::getLocalIp() . ':4000>'],
+                    'Content-Length' => ['0'],
+                ];
+                if (!empty($inviteHeaders['Record-Route'])) {
+                    $byeHeaders['Route'] = array_reverse($inviteHeaders['Record-Route']);
+                }
+                $callerUser = sip::extractURI($inviteHeaders['From'][0] ?? '')['user'] ?? 'unknown';
                 $byePacket = sip::renderSolution([
                     'method' => 'BYE',
-                    'methodForParser' => 'BYE sip:' . sip::extractURI($inviteHeaders['From'][0] ?? '')['user'] . '@' . $remoteIp . ' SIP/2.0',
-                    'headers' => [
-                        'Via' => ['SIP/2.0/UDP ' . network::getLocalIp() . ':4000;branch=z9hG4bK-' . bin2hex(random_bytes(4))],
-                        'From' => $inviteHeaders['To'],
-                        'To' => $inviteHeaders['From'],
-                        'Call-ID' => $inviteHeaders['Call-ID'],
-                        'CSeq' => [(((int)$inviteHeaders['CSeq'][0]) + 1) . ' BYE'],
-                        'Max-Forwards' => ['70'],
-                        'Content-Length' => ['0'],
-                    ],
+                    'methodForParser' => "BYE sip:{$callerUser}@{$remoteIp}:{$remotePort} SIP/2.0",
+                    'headers' => $byeHeaders,
                 ]);
                 $socket->sendto($remoteIp, $remotePort, $byePacket);
+                cli::pcl("[HANGUP] BYE enviado → {$remoteIp}:{$remotePort} Call-ID:{$callId}", 'yellow');
             }
 
             CallState::$incomingCalls->del($callId);
