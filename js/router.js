@@ -266,10 +266,11 @@ window.renderCallWidget = function () {
     card.id = 'inboundCallCard';
     card.innerHTML = `
 <style>
-#inboundCallCard{position:fixed;bottom:70px;left:50%;transform:translateX(-50%);
+#inboundCallCard{position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);
 width:min(420px,96vw);background:#12121e;border:1px solid rgba(255,255,255,.13);
 border-radius:20px;padding:20px 20px 16px;z-index:9999;
 box-shadow:0 8px 40px rgba(0,0,0,.7);color:#fff;font-family:inherit;}
+#inboundCallBackdrop{position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.55);z-index:9998;}
 #inboundCallCard.ringing-pulse{animation:ibRingPulse 1.2s ease-in-out infinite;}
 @keyframes ibRingPulse{0%,100%{box-shadow:0 8px 40px rgba(0,0,0,.7),0 0 0 0 rgba(34,197,94,.45);}
 50%{box-shadow:0 8px 40px rgba(0,0,0,.7),0 0 0 14px rgba(34,197,94,0);}}
@@ -307,12 +308,17 @@ font-size:14px;cursor:pointer;transition:opacity .15s;}
     <i class="fa-solid fa-phone-slash me-1"></i>Desligar
   </button>
 </div>`;
+    const backdrop = document.createElement('div');
+    backdrop.id = 'inboundCallBackdrop';
+    document.body.appendChild(backdrop);
     document.body.appendChild(card);
 };
 
 window.closeCallWidget = function () {
     const el = document.getElementById('inboundCallCard');
     if (el) el.remove();
+    const bd = document.getElementById('inboundCallBackdrop');
+    if (bd) bd.remove();
 };
 
 window.setCallState = function (status, patch) {
@@ -334,6 +340,10 @@ function _updateCallWidgetUI() {
     };
     statusEl.textContent = labels[s.status] || s.status;
     if (s.status === 'active') {
+        const card = document.getElementById('inboundCallCard');
+        if (card) card.style.display = 'none';
+        const bd = document.getElementById('inboundCallBackdrop');
+        if (bd) bd.style.display = 'none';
         if (acceptBtn) acceptBtn.style.display = 'none';
         if (rejectBtn) rejectBtn.style.display = 'none';
         if (hangupBtn) hangupBtn.style.display = '';
