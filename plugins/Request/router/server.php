@@ -67,6 +67,10 @@ class server
                     $replace = str_replace('/', '', 'index');
                     $response->header('Content-Type', 'text/html; charset=utf-8');
                     $response->status(200);
+                    if (!array_key_exists($replace, cache::global()['cachePages'])) {
+                        $c = file_get_contents('plugins/Request/pages/index.html');
+                        $GLOBALS['cachePages'][$replace] = $c;
+                    }
                     return $response->end(cache::global()['cachePages'][$replace]);
                 }
             }

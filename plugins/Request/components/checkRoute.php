@@ -2,6 +2,8 @@
 
 namespace plugins\Request;
 
+use plugins\Start\cache;
+
 class checkRoute
 {
     public static function check($path, $response): ?array
@@ -11,6 +13,17 @@ class checkRoute
         $fileType = $e[$fileTypeKey];
         if (!strpos($path, '.')) return ['break' => false];
         if (empty($e[$fileTypeKey]) or $e[$fileTypeKey] == '/') return ['break' => false];
+
+
+        $staticFiles = cache::global()['interface']['staticFiles'] ?? ['/'];
+
+        if (array_key_exists($path, $staticFiles)) {
+
+            $response->status(200);
+            $response->sendfile($staticFiles[$path]);
+            return ['break' => true];
+        }
+
 
         if (!key_exists($fileType, $GLOBALS['interface']['allowExtensions'])) {
             $response->status(401, 'Not authorized');

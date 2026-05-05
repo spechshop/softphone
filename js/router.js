@@ -73,6 +73,9 @@ const onOpenSocket = (socket) => {
         return;
     }
 
+    requestBrowserNotificationPermission();
+    requestWakeLock();
+
     template.displayLoading().then(r => {
         socket.send(JSON.stringify({
             type: 'connect',
@@ -154,6 +157,52 @@ window.stopCallTimer = function () {
         timerEl.textContent = '00:00';
     }
 }
+
+// ===== Browser Notifications & Background Keep-Alive =====
+
+window._wakeLock = null;
+
+window.requestBrowserNotificationPermission = async function () {
+    if (!('Notification' in window)) return;
+    if (Notification.permission !== 'default') {
+        window._notifPermission = Notification.permission;
+        return;
+    }
+    const perm = await Notification.requestPermission();
+    window._notifPermission = perm;
+};
+
+window.sendBrowserNotification = function (title, body, options) {
+    if (!('Notification' in window) || Notification.permission !== 'granted') return;
+    if (document.visibilityState === 'visible') return;
+    const n = new Notification(title, Object.assign({
+        body,
+        icon: '/img/pyramid.png',
+        badge: '/img/pyramid.png',
+        tag: 'spechphone',
+    }, options || {}));
+    n.onclick = () => {
+        window.focus();
+        n.close();
+    };
+};
+
+window.requestWakeLock = async function () {
+    if (!('wakeLock' in navigator) || window._wakeLock) return;
+    try {
+        window._wakeLock = await navigator.wakeLock.request('screen');
+        window._wakeLock.addEventListener('release', () => {
+            window._wakeLock = null;
+        });
+        console.log('[WakeLock] ativo');
+    } catch (e) {
+        console.warn('[WakeLock] não disponível', e);
+    }
+};
+
+document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState === 'visible') window.requestWakeLock();
+});
 
 // ===== Inbound Call Engine =====
 
@@ -396,6 +445,11 @@ window.handleIncomingCall = function (data) {
     };
     renderCallWidget();
     startRingtone();
+    sendBrowserNotification(
+        'Chamada recebida',
+        formatSipUri(data.from) || 'Número desconhecido',
+        {requireInteraction: true, tag: 'incoming-call-' + callId}
+    );
 };
 
 window.handleCallActive = function () {
@@ -496,6 +550,11 @@ window.handleMessageNew = function (message) {
         window.chatStore.unread[partner] = (window.chatStore.unread[partner] || 0) + 1;
         window._updateConvPreview(partner, message);
         window._updateMsgTabBadge();
+        sendBrowserNotification(
+            'Nova mensagem de ' + (formatSipUri(partner) || partner),
+            message.body || '',
+            {tag: 'msg-' + partnerNorm}
+        );
     }
 };
 

@@ -1,0 +1,16 @@
+{
+  "name": "Spechphone Softphone",
+  "short_name": "Spechphone",
+  "description": "Web softphone focused on high-performance",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#12121e",
+  "theme_color": "#182038",
+  "icons": [
+    {
+      "src": "/img/pyramid.png",
+      "sizes": "any",
+      "type": "image/png"
+    }
+  ]
+}

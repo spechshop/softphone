@@ -1,5 +1,5 @@
 {
-  "port": "9501",
+  "port": "443",
   "host": "0.0.0.0",
   "ssl": true,
   "autoload": [
@@ -18,6 +18,9 @@
     "Utils/messages",
     "Utils/helpers"
   ],
+  "staticFiles": {
+    "/manifest.json": "manifest.json"
+  },
   "allowExtensions": {
     "css": "text/css",
     "js": "text/javascript",
