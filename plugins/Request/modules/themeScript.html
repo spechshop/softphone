@@ -1,6 +1,6 @@
 
-<script>
 
+<script>
 
     function hexToRgb(hex) {
         hex = hex.replace('#', '');
@@ -45,100 +45,79 @@
     // Sistema de Troca de Temas
     (function () {
         const themes = {
-            golden: {
-                name: 'Golden Noir',
-                icon: 'fa-crown',
+            abyss: {
+                name: 'Abismo Azul',
+                icon: 'fa-anchor',
                 colors: {
-                    '--primary-bg': '#111111',
-                    '--secondary-bg': '#181818',
-                    '--accent': '#ffcf5b',  // dourado suave (sem virar amarelo berrante)
-                    '--menu-bg': '#181818',
-                    '--text': 'rgb(255 248 230 / 90%)',
-                    '--navbar-bg': '#181818',
-                    '--card-bg': '#151515',
-
-
+                    '--primary-bg': '#060d1a',
+                    '--secondary-bg': '#0d1b2a',
+                    '--accent': '#1e90ff',
+                    '--menu-bg': '#0d1b2a',
+                    '--text': 'rgb(210 230 255 / 90%)',
+                    '--navbar-bg': '#0d1b2a',
+                    '--card-bg': '#0a1520'
                 }
             },
-            ocean: {
-                name: 'Ocean Blue',
-                icon: 'fa-water',
+            nebula: {
+                name: 'Nebulosa',
+                icon: 'fa-star',
                 colors: {
-                    '--primary-bg': '#161d31',
-                    '--secondary-bg': '#283046',
-                    '--accent': '#00b1ff',
-                    '--menu-bg': '#283046',
-                    '--text': 'rgb(225 222 245 / 90%)',
-                    '--navbar-bg': '#283046',
-                    '--card-bg': '#27283c'
+                    '--primary-bg': '#080c1a',
+                    '--secondary-bg': '#0f1530',
+                    '--accent': '#4d9fff',
+                    '--menu-bg': '#0f1530',
+                    '--text': 'rgb(215 225 255 / 90%)',
+                    '--navbar-bg': '#0f1530',
+                    '--card-bg': '#0b1025'
                 }
             },
-            royal: {
-                name: 'Royal Purple',
-                icon: 'fa-gem',
+            cerulean: {
+                name: 'Noite Cerúlea',
+                icon: 'fa-cloud-moon',
                 colors: {
-                    '--primary-bg': '#1a1326',
-                    '--secondary-bg': '#241933',
-                    '--accent': '#b56dff',
-                    '--menu-bg': '#241933',
-                    '--text': 'rgb(235 225 255 / 90%)',
-                    '--navbar-bg': '#241933',
-                    '--card-bg': '#1f172d'
-                },
-            },
-            amethyst: {
-                name: 'Midnight Amethyst',
-                icon: 'fa-moon',
-                colors: {
-                    '--primary-bg': '#0f0c18',
-                    '--secondary-bg': '#1a1423',
-                    '--accent': '#c17fff',
-                    '--menu-bg': '#1a1423',
-                    '--text': 'rgb(240 230 255 / 90%)',
-                    '--navbar-bg': '#1a1423',
-                    '--card-bg': '#15101e'
+                    '--primary-bg': '#0c1420',
+                    '--secondary-bg': '#152234',
+                    '--accent': '#38bdf8',
+                    '--menu-bg': '#152234',
+                    '--text': 'rgb(220 240 255 / 90%)',
+                    '--navbar-bg': '#152234',
+                    '--card-bg': '#101b2b'
                 }
             },
-            arctic: {
-                name: 'Arctic Frost',
-                icon: 'fa-snowflake',
+            cobalt: {
+                name: 'Tempestade Cobalto',
+                icon: 'fa-bolt',
                 colors: {
-                    '--primary-bg': '#0e141a',
-                    '--secondary-bg': '#18222b',
-                    '--accent': '#7fcaff',   // azul gelo premium
-                    '--menu-bg': '#18222b',
-                    '--text': 'rgb(225 240 255 / 90%)',
-                    '--navbar-bg': '#18222b',
-                    '--card-bg': '#141c24'
+                    '--primary-bg': '#090f1e',
+                    '--secondary-bg': '#111b30',
+                    '--accent': '#3b82f6',
+                    '--menu-bg': '#111b30',
+                    '--text': 'rgb(210 228 255 / 90%)',
+                    '--navbar-bg': '#111b30',
+                    '--card-bg': '#0c1526'
                 }
             },
-
-
+            polaris: {
+                name: 'Polaris',
+                icon: 'fa-location-crosshairs',
+                colors: {
+                    '--primary-bg': '#07101c',
+                    '--secondary-bg': '#0e1c2e',
+                    '--accent': '#93c5fd',
+                    '--menu-bg': '#0e1c2e',
+                    '--text': 'rgb(225 238 255 / 90%)',
+                    '--navbar-bg': '#0e1c2e',
+                    '--card-bg': '#0b1725'
+                }
+            },
         };
 
-        let currentTheme = localStorage.getItem('selectedTheme') || 'golden';
+        let currentTheme = localStorage.getItem('selectedTheme') || 'abyss';
         let isMenuOpen = false;
         let themeStyleElement = null;
 
-        function applyTheme(themeName) {
-            const theme = themes[themeName];
-            theme.colors['--glow-1'] = deriveGlow(theme.colors['--accent']);
-            theme.colors['--glow-2'] = deriveGlow(theme.colors['--accent'], 0.2, 0.5);
-
-
-
-            if (!theme) return;
-
-            // Remove estilo anterior se existir
-            if (themeStyleElement) {
-                themeStyleElement.remove();
-            }
-
-
-            // Cria novo elemento de estilo com regras CSS importantes
-            themeStyleElement = document.createElement('style');
-            themeStyleElement.id = 'dynamic-theme-style';
-            themeStyleElement.innerHTML = `
+        function generateThemeCSS(theme) {
+            return `
                            body {
     background-color: ${theme.colors['--primary-bg']} !important;
     background-image:
@@ -188,7 +167,8 @@
             }
 
             /* Cards */
-            .card-distak, .distak {
+           .card, .card-distak, .distak {
+
                 background-color: ${theme.colors['--card-bg']} !important;
                 color: ${theme.colors['--accent']} !important;
             }
@@ -212,12 +192,6 @@
                 border-color: ${theme.colors['--accent']} !important;
                 color: ${theme.colors['--accent']} !important;
             }
-
-            .border-theme:active {
-
-                color: ${theme.colors['--primary-bg']} !important;
-            }
-
 
 
 
@@ -324,7 +298,24 @@
                 background: transparent !important;
             }
         `;
+        }
 
+        function applyTheme(themeName) {
+            const theme = themes[themeName];
+            if (!theme) return;
+
+            theme.colors['--glow-1'] = deriveGlow(theme.colors['--accent']);
+            theme.colors['--glow-2'] = deriveGlow(theme.colors['--accent'], 0.2, 0.5);
+
+            // Remove estilo anterior se existir
+            if (themeStyleElement) {
+                themeStyleElement.remove();
+            }
+
+            // Cria novo elemento de estilo com regras CSS importantes
+            themeStyleElement = document.createElement('style');
+            themeStyleElement.id = 'dynamic-theme-style';
+            themeStyleElement.innerHTML = generateThemeCSS(theme);
             document.head.appendChild(themeStyleElement);
 
             // Atualiza gráficos ApexCharts existentes
@@ -370,13 +361,9 @@
             buttonContainer.id = 'theme-switcher-container';
             Object.assign(buttonContainer.style, {
                 position: 'fixed',
-                bottom: '70px',
+                bottom: '90px',
                 right: '10px',
-                zIndex: '9998',
-                display: 'flex',
-                flexDirection: 'column-reverse',
-                gap: '10px',
-                alignItems: 'center'
+                zIndex: '9998'
             });
 
             // Botão principal
@@ -390,313 +377,165 @@
                 color: '#fff',
                 border: 'none',
                 borderRadius: '50%',
-                cursor: 'grab',
+                cursor: 'pointer',
                 fontSize: '18px',
                 width: '46px',
                 height: '46px',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                boxShadow: '0 4px 16px rgba(102,126,234,0.45), 0 2px 6px rgba(0,0,0,0.35)',
-                transition: 'transform 0.3s ease, box-shadow 0.3s ease',
-                touchAction: 'none',
-                userSelect: 'none'
-            });
-
-            // Drag state
-            let isDragging = false, hasMoved = false;
-            let dragStartX = 0, dragStartY = 0;
-            let containerStartLeft = 0, containerStartTop = 0;
-            let containerW = 0, containerH = 0;
-
-            mainButton.addEventListener('pointerdown', (e) => {
-                if (e.pointerType === 'mouse' && e.button !== 0) return;
-                isDragging = true;
-                hasMoved = false;
-                mainButton.setPointerCapture(e.pointerId);
-                const rect = buttonContainer.getBoundingClientRect();
-                containerStartLeft = rect.left;
-                containerStartTop = rect.top;
-                containerW = rect.width;
-                containerH = rect.height;
-                dragStartX = e.clientX;
-                dragStartY = e.clientY;
-                buttonContainer.style.bottom = 'auto';
-                buttonContainer.style.right = 'auto';
-                buttonContainer.style.left = containerStartLeft + 'px';
-                buttonContainer.style.top = containerStartTop + 'px';
-                mainButton.style.cursor = 'grabbing';
-                mainButton.style.transition = 'box-shadow 0.2s ease';
-            });
-
-            mainButton.addEventListener('pointermove', (e) => {
-                if (!isDragging) return;
-                const dx = e.clientX - dragStartX;
-                const dy = e.clientY - dragStartY;
-                if (Math.abs(dx) > 4 || Math.abs(dy) > 4) hasMoved = true;
-                let newLeft = Math.max(0, Math.min(window.innerWidth - containerW, containerStartLeft + dx));
-                let newTop = Math.max(0, Math.min(window.innerHeight - containerH, containerStartTop + dy));
-                buttonContainer.style.left = newLeft + 'px';
-                buttonContainer.style.top = newTop + 'px';
-            });
-
-            mainButton.addEventListener('pointerup', () => {
-                if (!isDragging) return;
-                isDragging = false;
-                mainButton.style.cursor = 'grab';
-                mainButton.style.transition = 'transform 0.3s ease, box-shadow 0.3s ease';
-                if (hasMoved) {
-                    const rect = buttonContainer.getBoundingClientRect();
-                    localStorage.setItem('themeBtnPos', JSON.stringify({left: rect.left, top: rect.top}));
-                }
-            });
-
-            mainButton.addEventListener('mouseenter', () => {
-                if (!isDragging) mainButton.style.boxShadow = '0 6px 22px rgba(102,126,234,0.65), 0 3px 8px rgba(0,0,0,0.4)';
-            });
-            mainButton.addEventListener('mouseleave', () => {
-                if (!isDragging) mainButton.style.boxShadow = '0 4px 16px rgba(102,126,234,0.45), 0 2px 6px rgba(0,0,0,0.35)';
+                boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
+                transition: 'transform 0.3s ease'
             });
 
             mainButton.onclick = () => {
-                if (hasMoved) {
-                    hasMoved = false;
-                    return;
-                }
-                isMenuOpen = !isMenuOpen;
-                themeMenu.style.display = isMenuOpen ? 'flex' : 'none';
-                mainButton.style.transform = isMenuOpen ? 'rotate(180deg)' : '';
+                openThemeModal();
             };
-
-            // Menu de temas
-            const themeMenu = document.createElement('div');
-            themeMenu.id = 'theme-menu';
-            Object.assign(themeMenu.style, {
-                display: 'none',
-                flexDirection: 'column',
-                gap: '8px',
-                marginBottom: '5px'
-            });
-
-            // Botão de criar novo tema
-            const createBtn = document.createElement('button');
-            createBtn.title = 'Criar Novo Tema';
-            createBtn.innerHTML = '<i class="fa-solid fa-plus"></i>';
-            Object.assign(createBtn.style, {
-                padding: '8px',
-                background: '#10b981',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '50%',
-                cursor: 'pointer',
-                fontSize: '14px',
-                width: '38px',
-                height: '38px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                transition: 'all 0.3s ease'
-            });
-
-            createBtn.onclick = (e) => {
-                e.stopPropagation();
-                openThemeCreator();
-                isMenuOpen = false;
-                themeMenu.style.display = 'none';
-                mainButton.style.transform = '';
-            };
-
-            themeMenu.appendChild(createBtn);
-
-            Object.entries(themes).forEach(([key, theme]) => {
-                const themeContainer = document.createElement('div');
-                Object.assign(themeContainer.style, {
-                    position: 'relative',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center'
-                });
-
-                const themeBtn = document.createElement('button');
-                themeBtn.title = theme.name;
-                themeBtn.innerHTML = `<i class="fa-solid ${theme.icon}"></i>`;
-                Object.assign(themeBtn.style, {
-                    padding: '8px',
-                    background: currentTheme === key ? theme.colors['--accent'] : '#333',
-                    color: '#fff',
-                    border: currentTheme === key ? '2px solid #fff' : 'none',
-                    borderRadius: '50%',
-                    cursor: 'pointer',
-                    fontSize: '14px',
-                    width: '38px',
-                    height: '38px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: '0 2px 5px rgba(0,0,0,0.3)',
-                    transition: 'all 0.3s ease',
-                    opacity: '0.9'
-                });
-
-                themeBtn.onmouseover = () => {
-                    if (currentTheme !== key) {
-                        themeBtn.style.opacity = '1';
-                        themeBtn.style.transform = 'scale(1.1)';
-                    }
-                };
-
-                themeBtn.onmouseout = () => {
-                    if (currentTheme !== key) {
-                        themeBtn.style.opacity = '0.9';
-                        themeBtn.style.transform = 'scale(1)';
-                    }
-                };
-
-                themeBtn.onclick = () => {
-                    applyTheme(key);
-                    isMenuOpen = false;
-                    themeMenu.style.display = 'none';
-                    mainButton.style.transform = '';
-
-                    // Atualiza visual dos botões
-                    document.querySelectorAll('#theme-menu button').forEach(btn => {
-                        if (!btn.classList.contains('delete-btn')) {
-                            btn.style.border = 'none';
-                            btn.style.background = '#333';
-                        }
-                    });
-                    themeBtn.style.background = theme.colors['--accent'];
-                    themeBtn.style.border = '2px solid #fff';
-                };
-
-                themeContainer.appendChild(themeBtn);
-
-                // Botão de editar (para todos os temas)
-                const editBtn = document.createElement('button');
-                editBtn.classList.add('edit-btn');
-                editBtn.innerHTML = '<i class="fa-solid fa-pen"></i>';
-                editBtn.title = 'Editar tema';
-                Object.assign(editBtn.style, {
-                    position: 'absolute',
-                    top: '-5px',
-                    left: '-5px',
-                    width: '18px',
-                    height: '18px',
-                    borderRadius: '50%',
-                    background: '#3b82f6',
-                    color: '#fff',
-                    border: '2px solid #fff',
-                    cursor: 'pointer',
-                    fontSize: '9px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    padding: '0',
-                    boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                    transition: 'all 0.2s ease',
-                    zIndex: '10'
-                });
-
-                editBtn.onmouseover = () => {
-                    editBtn.style.background = '#2563eb';
-                    editBtn.style.transform = 'scale(1.1)';
-                };
-
-                editBtn.onmouseout = () => {
-                    editBtn.style.background = '#3b82f6';
-                    editBtn.style.transform = 'scale(1)';
-                };
-
-                editBtn.onclick = (e) => {
-                    e.stopPropagation();
-                    openThemeEditor(key, theme);
-                    isMenuOpen = false;
-                    themeMenu.style.display = 'none';
-                    mainButton.style.transform = '';
-                };
-
-                themeContainer.appendChild(editBtn);
-
-                // Botão de deletar (apenas temas customizados)
-                if (theme.custom) {
-                    const deleteBtn = document.createElement('button');
-                    deleteBtn.classList.add('delete-btn');
-                    deleteBtn.innerHTML = '<i class="fa-solid fa-xmark"></i>';
-                    deleteBtn.title = 'Deletar tema';
-                    Object.assign(deleteBtn.style, {
-                        position: 'absolute',
-                        top: '-5px',
-                        right: '-5px',
-                        width: '18px',
-                        height: '18px',
-                        borderRadius: '50%',
-                        background: '#ef4444',
-                        color: '#fff',
-                        border: '2px solid #fff',
-                        cursor: 'pointer',
-                        fontSize: '10px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        padding: '0',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.3)',
-                        transition: 'all 0.2s ease',
-                        zIndex: '10'
-                    });
-
-                    deleteBtn.onmouseover = () => {
-                        deleteBtn.style.background = '#dc2626';
-                        deleteBtn.style.transform = 'scale(1.1)';
-                    };
-
-                    deleteBtn.onmouseout = () => {
-                        deleteBtn.style.background = '#ef4444';
-                        deleteBtn.style.transform = 'scale(1)';
-                    };
-
-                    deleteBtn.onclick = (e) => {
-                        e.stopPropagation();
-                        if (confirm(`Deletar tema "${theme.name}"?`)) {
-                            deleteCustomTheme(key);
-                            if (currentTheme === key) {
-                                applyTheme('ocean');
-                            }
-                            document.getElementById('theme-switcher-container').remove();
-                            createThemeButton();
-                        }
-                    };
-
-                    themeContainer.appendChild(deleteBtn);
-                }
-
-                themeMenu.appendChild(themeContainer);
-            });
 
             buttonContainer.appendChild(mainButton);
-            buttonContainer.appendChild(themeMenu);
             document.body.appendChild(buttonContainer);
+        }
 
-            // Restaura posição salva do drag
-            const _savedPos = localStorage.getItem('themeBtnPos');
-            if (_savedPos) {
-                try {
-                    const p = JSON.parse(_savedPos);
-                    buttonContainer.style.bottom = 'auto';
-                    buttonContainer.style.right = 'auto';
-                    buttonContainer.style.left = p.left + 'px';
-                    buttonContainer.style.top = p.top + 'px';
-                } catch (e) {
-                }
-            }
+        function openThemeModal() {
+            // Remove modal antigo se existir
+            const oldModal = document.getElementById('themeListModal');
+            if (oldModal) oldModal.remove();
 
-            // Fecha o menu ao clicar fora
-            document.addEventListener('click', (e) => {
-                if (!buttonContainer.contains(e.target) && isMenuOpen) {
-                    isMenuOpen = false;
-                    themeMenu.style.display = 'none';
-                    mainButton.style.transform = '';
-                }
+            let themesHTML = '';
+            Object.entries(themes).forEach(([key, theme]) => {
+                const isActive = currentTheme === key;
+                themesHTML += `
+                    <div class="col-6 col-md-4 col-lg-3 mb-3">
+                        <div class="card h-100 theme-card" style="cursor: pointer; border: ${isActive ? '3px solid ' + theme.colors['--accent'] : '1px solid #444'};" data-theme-key="${key}">
+                            <div class="card-body text-center position-relative">
+                                <i class="fa-solid ${theme.icon} fa-3x mb-2" style="color: ${theme.colors['--accent']};"></i>
+                                <h6 class="card-title text-white">${theme.name}</h6>
+                                ${theme.custom ? `<button class="btn btn-sm btn-danger delete-theme-btn position-absolute top-0 end-0 m-1" data-theme-key="${key}" style="padding: 2px 6px;"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                                <button class="btn btn-sm btn-primary edit-theme-btn mt-2" data-theme-key="${key}"><i class="fa-solid fa-pen"></i> Editar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            const modalHTML = `
+                <div class="modal fade" id="themeListModal" tabindex="-1" data-bs-backdrop="static">
+                    <div class="modal-dialog modal-dialog-centered modal-lg modal-dialog-scrollable">
+                        <div class="modal-content">
+                            <div class="modal-header">
+                                <h5 class="modal-title text-white"><i class="fa-solid fa-palette"></i> Escolher Tema</h5>
+                                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                            </div>
+                            <div class="modal-body">
+                                <button class="btn btn-success mb-3 w-100" id="create-new-theme-btn">
+                                    <i class="fa-solid fa-plus"></i> Criar Novo Tema
+                                </button>
+                                <div class="row" id="themes-grid">
+                                    ${themesHTML}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.insertAdjacentHTML('beforeend', modalHTML);
+            const modal = new bootstrap.Modal(document.getElementById('themeListModal'));
+            modal.show();
+
+            // Event listeners
+            document.querySelectorAll('.theme-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('.delete-theme-btn') && !e.target.closest('.edit-theme-btn')) {
+                        const key = card.dataset.themeKey;
+                        applyTheme(key);
+                        refreshThemeGrid();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.delete-theme-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const key = btn.dataset.themeKey;
+                    if (confirm(`Deletar tema "${themes[key].name}"?`)) {
+                        deleteCustomTheme(key);
+                        if (currentTheme === key) {
+                            applyTheme('abyss');
+                        }
+                        refreshThemeGrid();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.edit-theme-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const key = btn.dataset.themeKey;
+                    openThemeEditor(key, themes[key]);
+                });
+            });
+
+            document.getElementById('create-new-theme-btn').addEventListener('click', () => {
+                openThemeCreator();
+            });
+
+            document.getElementById('themeListModal').addEventListener('hidden.bs.modal', () => {
+                document.getElementById('themeListModal').remove();
+            });
+        }
+
+        function refreshThemeGrid() {
+            let themesHTML = '';
+            Object.entries(themes).forEach(([key, theme]) => {
+                const isActive = currentTheme === key;
+                themesHTML += `
+                    <div class="col-6 col-md-4 col-lg-3 mb-3">
+                        <div class="card h-100 theme-card" style="cursor: pointer; border: ${isActive ? '3px solid ' + theme.colors['--accent'] : '1px solid #444'};" data-theme-key="${key}">
+                            <div class="card-body text-center position-relative">
+                                <i class="fa-solid ${theme.icon} fa-3x mb-2" style="color: ${theme.colors['--accent']};"></i>
+                                <h6 class="card-title text-white">${theme.name}</h6>
+                                ${theme.custom ? `<button class="btn btn-sm btn-danger delete-theme-btn position-absolute top-0 end-0 m-1" data-theme-key="${key}" style="padding: 2px 6px;"><i class="fa-solid fa-xmark"></i></button>` : ''}
+                                <button class="btn btn-sm btn-primary edit-theme-btn mt-2" data-theme-key="${key}"><i class="fa-solid fa-pen"></i> Editar</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+
+            document.getElementById('themes-grid').innerHTML = themesHTML;
+
+            // Re-attach event listeners
+            document.querySelectorAll('.theme-card').forEach(card => {
+                card.addEventListener('click', (e) => {
+                    if (!e.target.closest('.delete-theme-btn') && !e.target.closest('.edit-theme-btn')) {
+                        const key = card.dataset.themeKey;
+                        applyTheme(key);
+                        refreshThemeGrid();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.delete-theme-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const key = btn.dataset.themeKey;
+                    if (confirm(`Deletar tema "${themes[key].name}"?`)) {
+                        deleteCustomTheme(key);
+                        if (currentTheme === key) {
+                            applyTheme('abyss');
+                        }
+                        refreshThemeGrid();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.edit-theme-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    const key = btn.dataset.themeKey;
+                    openThemeEditor(key, themes[key]);
+                });
             });
         }
 
@@ -728,12 +567,12 @@
 
         function openThemeCreator() {
             const modalHTML = `
-                    <div class="modal fade" id="themeCreatorModal" tabindex="-1">
+                    <div class="modal fade" id="themeCreatorModal" tabindex="-1" data-bs-backdrop="static">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title text-white">Criar Novo Tema</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    <button type="button" class="btn-close btn-close-white" onclick="closeCreatorModal()"></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="mb-3">
@@ -749,56 +588,56 @@
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Fundo Principal</label>
                                             <div class="input-group">
-                                                <input type="color" class="form-control form-control-color" id="theme-primary-bg" value="#161d31">
-                                                <input type="text" class="form-control" id="theme-primary-bg-text" value="#161d31" maxlength="7">
+                                                <input type="color" class="form-control form-control-color theme-preview-input" id="theme-primary-bg" value="#161d31">
+                                                <input type="text" class="form-control theme-preview-input" id="theme-primary-bg-text" value="#161d31" maxlength="7">
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Fundo Secundário</label>
                                             <div class="input-group">
-                                                <input type="color" class="form-control form-control-color" id="theme-secondary-bg" value="#283046">
-                                                <input type="text" class="form-control" id="theme-secondary-bg-text" value="#283046" maxlength="7">
+                                                <input type="color" class="form-control form-control-color theme-preview-input" id="theme-secondary-bg" value="#283046">
+                                                <input type="text" class="form-control theme-preview-input" id="theme-secondary-bg-text" value="#283046" maxlength="7">
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Cor de Destaque</label>
                                             <div class="input-group">
-                                                <input type="color" class="form-control form-control-color" id="theme-accent" value="#00b1ff">
-                                                <input type="text" class="form-control" id="theme-accent-text" value="#00b1ff" maxlength="7">
+                                                <input type="color" class="form-control form-control-color theme-preview-input" id="theme-accent" value="#00b1ff">
+                                                <input type="text" class="form-control theme-preview-input" id="theme-accent-text" value="#00b1ff" maxlength="7">
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Fundo dos Cards</label>
                                             <div class="input-group">
-                                                <input type="color" class="form-control form-control-color" id="theme-card-bg" value="#27283c">
-                                                <input type="text" class="form-control" id="theme-card-bg-text" value="#27283c" maxlength="7">
+                                                <input type="color" class="form-control form-control-color theme-preview-input" id="theme-card-bg" value="#27283c">
+                                                <input type="text" class="form-control theme-preview-input" id="theme-card-bg-text" value="#27283c" maxlength="7">
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Fundo do Menu</label>
                                             <div class="input-group">
-                                                <input type="color" class="form-control form-control-color" id="theme-menu-bg" value="#283046">
-                                                <input type="text" class="form-control" id="theme-menu-bg-text" value="#283046" maxlength="7">
+                                                <input type="color" class="form-control form-control-color theme-preview-input" id="theme-menu-bg" value="#283046">
+                                                <input type="text" class="form-control theme-preview-input" id="theme-menu-bg-text" value="#283046" maxlength="7">
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Fundo da Navbar</label>
                                             <div class="input-group">
-                                                <input type="color" class="form-control form-control-color" id="theme-navbar-bg" value="#283046">
-                                                <input type="text" class="form-control" id="theme-navbar-bg-text" value="#283046" maxlength="7">
+                                                <input type="color" class="form-control form-control-color theme-preview-input" id="theme-navbar-bg" value="#283046">
+                                                <input type="text" class="form-control theme-preview-input" id="theme-navbar-bg-text" value="#283046" maxlength="7">
                                             </div>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label class="form-label text-white">Cor do Texto</label>
                                             <div class="input-group">
-                                                <input type="text" class="form-control" id="theme-text" value="rgb(225 222 245 / 90%)" placeholder="Ex: #ffffff ou rgb(255,255,255)">
+                                                <input type="text" class="form-control theme-preview-input" id="theme-text" value="rgb(225 222 245 / 90%)" placeholder="Ex: #ffffff ou rgb(255,255,255)">
                                             </div>
                                             <small class="text-muted">Aceita hex, rgb ou rgba</small>
                                         </div>
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="button" class="btn btn-secondary" onclick="closeCreatorModal()">Cancelar</button>
                                     <button type="button" class="btn btn-primary" id="save-theme-btn">Salvar Tema</button>
                                 </div>
                             </div>
@@ -810,19 +649,47 @@
             const modal = new bootstrap.Modal(document.getElementById('themeCreatorModal'));
             modal.show();
 
-            // Sincroniza os inputs de cor com os de texto
+            // Função para aplicar preview em tempo real
+            const applyLivePreview = () => {
+                const previewTheme = {
+                    colors: {
+                        '--primary-bg': document.getElementById('theme-primary-bg-text').value,
+                        '--secondary-bg': document.getElementById('theme-secondary-bg-text').value,
+                        '--accent': document.getElementById('theme-accent-text').value,
+                        '--card-bg': document.getElementById('theme-card-bg-text').value,
+                        '--menu-bg': document.getElementById('theme-menu-bg-text').value,
+                        '--navbar-bg': document.getElementById('theme-navbar-bg-text').value,
+                        '--text': document.getElementById('theme-text').value
+                    }
+                };
+                previewTheme.colors['--glow-1'] = deriveGlow(previewTheme.colors['--accent']);
+                previewTheme.colors['--glow-2'] = deriveGlow(previewTheme.colors['--accent'], 0.2, 0.5);
+
+                if (themeStyleElement) {
+                    themeStyleElement.remove();
+                }
+
+                themeStyleElement = document.createElement('style');
+                themeStyleElement.id = 'dynamic-theme-style';
+                themeStyleElement.innerHTML = generateThemeCSS(previewTheme);
+                document.head.appendChild(themeStyleElement);
+            };
+
+            // Sincroniza os inputs de cor com os de texto e aplica preview
             const syncColorInputs = (colorId, textId) => {
                 const colorInput = document.getElementById(colorId);
                 const textInput = document.getElementById(textId);
 
                 colorInput.addEventListener('input', () => {
                     textInput.value = colorInput.value;
+                    applyLivePreview();
                 });
 
                 textInput.addEventListener('input', () => {
                     if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
                         colorInput.value = textInput.value;
                     }
+                    applyLivePreview();
                 });
             };
 
@@ -832,6 +699,8 @@
             syncColorInputs('theme-card-bg', 'theme-card-bg-text');
             syncColorInputs('theme-menu-bg', 'theme-menu-bg-text');
             syncColorInputs('theme-navbar-bg', 'theme-navbar-bg-text');
+
+            document.getElementById('theme-text').addEventListener('input', applyLivePreview);
 
             document.getElementById('save-theme-btn').onclick = () => {
                 const name = document.getElementById('theme-name').value.trim();
@@ -866,30 +735,35 @@
                 };
 
                 saveCustomTheme(key, newTheme);
-                modal.hide();
-                document.getElementById('themeCreatorModal').remove();
-
-                // Recria o menu com o novo tema
-                document.getElementById('theme-switcher-container').remove();
-                createThemeButton();
-
-                // Aplica o novo tema
                 applyTheme(key);
-            };
 
-            document.getElementById('themeCreatorModal').addEventListener('hidden.bs.modal', () => {
+                // Fecha o modal de criação
+                const creatorModal = bootstrap.Modal.getInstance(document.getElementById('themeCreatorModal'));
+                creatorModal.hide();
                 document.getElementById('themeCreatorModal').remove();
-            });
+
+                // Atualiza a grid de temas se o modal estiver aberto
+                if (document.getElementById('themeListModal')) {
+                    refreshThemeGrid();
+                }
+            };
         }
+
+        window.closeCreatorModal = function () {
+            const creatorModal = bootstrap.Modal.getInstance(document.getElementById('themeCreatorModal'));
+            creatorModal.hide();
+            document.getElementById('themeCreatorModal').remove();
+            applyTheme(currentTheme); // Restaura o tema atual
+        };
 
         function openThemeEditor(themeKey, theme) {
             const modalHTML = `
-                    <div class="modal fade" id="themeEditorModal" tabindex="-1">
+                    <div class="modal fade" id="themeEditorModal" tabindex="-1" data-bs-backdrop="static">
                         <div class="modal-dialog modal-dialog-centered">
                             <div class="modal-content">
                                 <div class="modal-header">
                                     <h5 class="modal-title text-white">Editar Tema</h5>
-                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                                    <button type="button" class="btn-close btn-close-white" onclick="closeEditorModal()"></button>
                                 </div>
                                 <div class="modal-body">
                                     <div class="mb-3">
@@ -954,7 +828,7 @@
                                     </div>
                                 </div>
                                 <div class="modal-footer">
-                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                                    <button type="button" class="btn btn-secondary" onclick="closeEditorModal()">Cancelar</button>
                                     <button type="button" class="btn btn-primary" id="update-theme-btn">Atualizar Tema</button>
                                 </div>
                             </div>
@@ -966,19 +840,47 @@
             const modal = new bootstrap.Modal(document.getElementById('themeEditorModal'));
             modal.show();
 
-            // Sincroniza os inputs de cor com os de texto no editor
+            // Função para aplicar preview em tempo real
+            const applyLivePreview = () => {
+                const previewTheme = {
+                    colors: {
+                        '--primary-bg': document.getElementById('edit-theme-primary-bg-text').value,
+                        '--secondary-bg': document.getElementById('edit-theme-secondary-bg-text').value,
+                        '--accent': document.getElementById('edit-theme-accent-text').value,
+                        '--card-bg': document.getElementById('edit-theme-card-bg-text').value,
+                        '--menu-bg': document.getElementById('edit-theme-menu-bg-text').value,
+                        '--navbar-bg': document.getElementById('edit-theme-navbar-bg-text').value,
+                        '--text': document.getElementById('edit-theme-text').value
+                    }
+                };
+                previewTheme.colors['--glow-1'] = deriveGlow(previewTheme.colors['--accent']);
+                previewTheme.colors['--glow-2'] = deriveGlow(previewTheme.colors['--accent'], 0.2, 0.5);
+
+                if (themeStyleElement) {
+                    themeStyleElement.remove();
+                }
+
+                themeStyleElement = document.createElement('style');
+                themeStyleElement.id = 'dynamic-theme-style';
+                themeStyleElement.innerHTML = generateThemeCSS(previewTheme);
+                document.head.appendChild(themeStyleElement);
+            };
+
+            // Sincroniza os inputs de cor com os de texto no editor e aplica preview
             const syncEditColorInputs = (colorId, textId) => {
                 const colorInput = document.getElementById(colorId);
                 const textInput = document.getElementById(textId);
 
                 colorInput.addEventListener('input', () => {
                     textInput.value = colorInput.value;
+                    applyLivePreview();
                 });
 
                 textInput.addEventListener('input', () => {
                     if (/^#[0-9A-Fa-f]{6}$/.test(textInput.value)) {
                         colorInput.value = textInput.value;
                     }
+                    applyLivePreview();
                 });
             };
 
@@ -988,6 +890,8 @@
             syncEditColorInputs('edit-theme-card-bg', 'edit-theme-card-bg-text');
             syncEditColorInputs('edit-theme-menu-bg', 'edit-theme-menu-bg-text');
             syncEditColorInputs('edit-theme-navbar-bg', 'edit-theme-navbar-bg-text');
+
+            document.getElementById('edit-theme-text').addEventListener('input', applyLivePreview);
 
             document.getElementById('update-theme-btn').onclick = () => {
                 const name = document.getElementById('edit-theme-name').value.trim();
@@ -1027,21 +931,26 @@
                 }
 
                 saveCustomTheme(newThemeKey, updatedTheme);
-                modal.hide();
-                document.getElementById('themeEditorModal').remove();
-
-                // Recria o menu com o tema atualizado
-                document.getElementById('theme-switcher-container').remove();
-                createThemeButton();
-
-                // Aplica o novo tema
                 applyTheme(newThemeKey);
-            };
 
-            document.getElementById('themeEditorModal').addEventListener('hidden.bs.modal', () => {
+                // Fecha o modal de edição
+                const editorModal = bootstrap.Modal.getInstance(document.getElementById('themeEditorModal'));
+                editorModal.hide();
                 document.getElementById('themeEditorModal').remove();
-            });
+
+                // Atualiza a grid de temas se o modal estiver aberto
+                if (document.getElementById('themeListModal')) {
+                    refreshThemeGrid();
+                }
+            };
         }
+
+        window.closeEditorModal = function () {
+            const editorModal = bootstrap.Modal.getInstance(document.getElementById('themeEditorModal'));
+            editorModal.hide();
+            document.getElementById('themeEditorModal').remove();
+            applyTheme(currentTheme); // Restaura o tema atual
+        };
 
         // Inicializa
         document.addEventListener('DOMContentLoaded', () => {
