@@ -203,7 +203,7 @@ class callAccept
                 $id = implode(':', array_values($peer));
                 $mc->eventSock->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
             });
-            $mediaChannel->setVadTimeout();
+            $mediaChannel->setVadTimeout(3);
             // Cleanup quando o caller para de enviar RTP
             $mediaChannel->packetOnTimeout(function (string $cid) use ($callState, $fp, $socket) {
                 $callState->callActive = false;
