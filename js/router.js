@@ -270,12 +270,19 @@ async function _savePushSubscription(sub) {
 }
 
 window.enablePushMessages = async function () {
+    console.log('[PUSH] enablePushMessages chamado');
+
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
         console.warn('[PUSH] Push API não suportada neste navegador');
+        toast('Push não suportado neste navegador.', 'Push', 4000, 'error');
         return;
     }
 
+    const regs = await navigator.serviceWorker.getRegistrations();
+    console.log('[PUSH] Service Workers registrados:', regs.map(r => r.scope));
+
     const perm = await Notification.requestPermission();
+    console.log('[PUSH] Permissão de notificação:', perm);
     _updatePushBtnState();
 
     if (perm !== 'granted') {
@@ -287,21 +294,29 @@ window.enablePushMessages = async function () {
     }
 
     const reg = await navigator.serviceWorker.ready;
-    console.log('[PUSH] Service Worker registrado');
+    console.log('[PUSH] SW ativo — escopo:', reg.scope, '| estado:', reg.active?.state);
 
     const keyResp = await sendRecByToken({}, 'getPushPublicKey');
+    console.log('[PUSH] Resposta getPushPublicKey:', keyResp);
     const vapidKey = keyResp?.publicKey;
     if (!vapidKey) {
-        console.warn('[PUSH] Backend sem VAPID key configurada — configure SPECH_PUSH_PUBLIC_KEY no .env');
+        console.warn('[PUSH] Backend sem VAPID key — configure SPECH_PUSH_PUBLIC_KEY no .env');
         toast('Servidor sem chave VAPID configurada.', 'Push', 4000, 'error');
         return;
     }
+    console.log('[PUSH] VAPID public key recebida:', vapidKey.substring(0, 20) + '...');
 
     const sub = await _getPushSubscription(reg, vapidKey);
-    if (!sub) return;
+    if (!sub) {
+        console.error('[PUSH] Falha ao criar subscription — verifique VAPID key e HTTPS');
+        toast('Falha ao criar subscription push.', 'Push', 4000, 'error');
+        return;
+    }
+    console.log('[PUSH] Subscription:', JSON.stringify(sub.toJSON()).substring(0, 80) + '...');
 
     await _savePushSubscription(sub);
     _updatePushBtnState();
+    toast('Notificações de mensagens ativadas!', 'Push', 3000, 'success');
 };
 
 // ===== Inbound Call Engine =====

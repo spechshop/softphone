@@ -14,6 +14,13 @@ class WebPushHelper
 
     public static function saveSubscription(string $sipUser, array $sub, string $fp = ''): void
     {
+        cli::pcl("[PUSH:SAVE] sipUser={$sipUser} fp={$fp} endpoint=" . substr($sub['endpoint'] ?? '', 0, 60) . '...', 'cyan');
+
+        if (empty($sipUser)) {
+            cli::pcl('[PUSH:SAVE] ERRO: sipUser vazio, subscription não salva', 'red');
+            return;
+        }
+
         $data = self::loadSubs();
         $hash = hash('sha256', $sub['endpoint']);
 
@@ -34,6 +41,7 @@ class WebPushHelper
         ];
 
         self::saveSubs($data);
+        cli::pcl("[PUSH:SAVE] OK — {$sipUser} agora tem " . count($data[$sipUser]) . " subscription(s)", 'green');
     }
 
     private static function loadSubs(): array
@@ -64,11 +72,19 @@ class WebPushHelper
 
     public static function notifyUser(string $sipUser, array $message): void
     {
+        cli::pcl("[PUSH:NOTIFY] Disparando push para sipUser={$sipUser}", 'cyan');
+
         $data = self::loadSubs();
+        $allKeys = array_keys($data);
+        cli::pcl('[PUSH:NOTIFY] sipUsers com subscription: ' . implode(', ', $allKeys ?: ['(nenhum)']), 'cyan');
+
         $subscriptions = $data[$sipUser] ?? [];
         if (empty($subscriptions)) {
+            cli::pcl("[PUSH:NOTIFY] Nenhuma subscription encontrada para {$sipUser} — push não enviado", 'yellow');
             return;
         }
+
+        cli::pcl("[PUSH:NOTIFY] {$sipUser} tem " . count($subscriptions) . " subscription(s)", 'cyan');
 
         $from = $message['from'] ?? 'Contato';
         $body = mb_substr($message['body'] ?? '', 0, 120);
@@ -87,10 +103,7 @@ class WebPushHelper
         foreach ($subscriptions as $hash => $sub) {
             $ok = self::send($sub, $payload);
             if (!$ok) {
-                cli::pcl("[PUSH] Subscription inválida ou expirada para {$sipUser} hash:{$hash}", 'yellow');
                 $expired[] = $hash;
-            } else {
-                cli::pcl("[PUSH] Notificação enviada para {$sipUser}", 'green');
             }
         }
 
@@ -99,6 +112,7 @@ class WebPushHelper
                 unset($data[$sipUser][$hash]);
             }
             self::saveSubs($data);
+            cli::pcl('[PUSH:NOTIFY] ' . count($expired) . " subscription(s) expirada(s) removida(s)", 'yellow');
         }
     }
 
@@ -106,9 +120,12 @@ class WebPushHelper
     {
         $auth = self::buildAuth();
         if (!$auth) {
-            cli::pcl('[PUSH] VAPID keys não configuradas — defina SPECH_PUSH_PUBLIC_KEY e SPECH_PUSH_PRIVATE_KEY no .env', 'red');
+            cli::pcl('[PUSH:SEND] VAPID keys não configuradas — defina SPECH_PUSH_PUBLIC_KEY e SPECH_PUSH_PRIVATE_KEY no .env', 'red');
             return false;
         }
+
+        $endpointShort = substr($subscription['endpoint'] ?? '', 0, 60) . '...';
+        cli::pcl("[PUSH:SEND] Enviando para endpoint: {$endpointShort}", 'cyan');
 
         try {
             $webPush = new WebPush($auth);
@@ -118,22 +135,34 @@ class WebPushHelper
                 'authToken' => $subscription['keys']['auth'] ?? '',
             ]);
             $report = $webPush->sendOneNotification($sub, json_encode($payload, JSON_UNESCAPED_UNICODE));
-            return $report->isSuccess();
+
+            if ($report->isSuccess()) {
+                cli::pcl('[PUSH:SEND] ✓ Push entregue com sucesso', 'green');
+                return true;
+            }
+
+            $reason = $report->getReason();
+            $statusCode = $report->getResponse()?->getStatusCode() ?? '?';
+            cli::pcl("[PUSH:SEND] ✗ Falha — HTTP {$statusCode}: {$reason}", 'red');
+            return false;
         } catch (\Throwable $e) {
-            cli::pcl('[PUSH] Erro ao enviar: ' . $e->getMessage(), 'red');
+            cli::pcl('[PUSH:SEND] ✗ Exceção: ' . $e->getMessage(), 'red');
             return false;
         }
     }
 
-    // ── Notify helpers ──────────────────────────────────────────────────────
+    // ── Auth ────────────────────────────────────────────────────────────────
 
     private static function buildAuth(): ?array
     {
         $publicKey = getenv('SPECH_PUSH_PUBLIC_KEY');
         $privateKey = getenv('SPECH_PUSH_PRIVATE_KEY');
+
         if (!$publicKey || !$privateKey) {
             return null;
         }
+
+        cli::pcl('[PUSH:AUTH] VAPID public key: ' . substr($publicKey, 0, 20) . '...', 'cyan');
         return [
             'VAPID' => [
                 'subject' => getenv('SPECH_PUSH_SUBJECT') ?: 'mailto:suporte@spechshop.com',
