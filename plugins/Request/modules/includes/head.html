@@ -108,11 +108,12 @@
             Object.assign(toast.style, {
                 position: "fixed", top: `${10 + toastHeight}px`, right: "10px", padding: "10px",
                 backgroundColor: theme.backgroundColor, color: theme.color, borderRadius: "5px",
-                boxShadow: "0 0 10px rgba(0, 0, 0, 0.2)", zIndex: toastZIndex++, // Incrementa o z-index
+                boxShadow: "0 0 10px rgba(0, 0, 0, 0.2)", zIndex: toastZIndex++,
                 width: "300px", marginBottom: "10px", fontSize: "13px"
             });
-            toast.setAttribute('role', 'alert');  // Acessibilidade
+            toast.setAttribute('role', 'alert');
             toast.setAttribute('aria-live', 'assertive');
+            toast.dataset.spechToast = '1';
 
             const header = createToastHeader(titleMessage, theme, toast);
             const message = document.createElement("div");
@@ -188,13 +189,14 @@
         }
 
         function removeToast(toast) {
+            const h = toast.offsetHeight; // lê ANTES de remover
             toast.remove();
-            toastHeight -= toast.offsetHeight + 10; // Ajusta a altura acumulada
+            toastHeight = Math.max(0, toastHeight - h - 10);
             updateToastPositions();
         }
 
         function updateToastPositions() {
-            const toasts = document.querySelectorAll("div[style*='position: fixed']");
+            const toasts = document.querySelectorAll("div[data-spech-toast]");
             let height = 10;
             toasts.forEach(toast => {
                 toast.style.top = `${height}px`;
