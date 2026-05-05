@@ -637,6 +637,7 @@ window.hangupCurrentCall = function () {
 
 let _activeBarTimerId = null;
 let _activeBarStartAt = null;
+let _activeBarDragListeners = null;
 
 window._hangupActiveCall = function () {
     const s = window.inboundCallState;
@@ -647,6 +648,13 @@ window._hangupActiveCall = function () {
     }
 };
 
+function _acbAvatarColor(name) {
+    const palette = ['#8e44ad', '#2980b9', '#16a085', '#d35400', '#c0392b', '#2c3e50', '#1a6b4a', '#6c3483'];
+    let h = 0;
+    for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) >>> 0;
+    return palette[h % palette.length];
+}
+
 window.renderActiveCallBar = function (partner) {
     window.closeActiveCallBar();
     _activeBarStartAt = Date.now();
@@ -656,120 +664,235 @@ window.renderActiveCallBar = function (partner) {
         const s = document.createElement('style');
         s.id = '_activeBarCss';
         s.textContent = `
+            /* ── Desktop ────────────────────────────── */
             @media (min-width: 769px) {
                 #activeCallBar {
                     position: fixed;
-                    bottom: 24px;
-                    left: 20px;
-                    width: 214px;
-                    background: #111827;
-                    border: 1px solid rgba(39,174,96,0.35);
-                    border-radius: 14px;
-                    padding: 13px 14px 11px;
+                    top: auto;
+                    bottom: 28px;
+                    left: 22px;
+                    width: 248px;
+                    background: linear-gradient(160deg, #0d1b32 0%, #162444 100%);
+                    border: 1px solid rgba(46,204,113,0.25);
+                    border-radius: 20px;
+                    padding: 0;
                     z-index: 9000;
-                    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+                    box-shadow: 0 12px 40px rgba(0,0,0,0.75), inset 0 1px 0 rgba(255,255,255,0.06);
                     color: #fff;
                     font-family: inherit;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
+                    overflow: hidden;
+                    cursor: grab;
+                    user-select: none;
+                    transform: none;
+                    left: 22px;
                 }
-                #activeCallBar .bar-mob-hangup { display: none; }
+                #activeCallBar:active { cursor: grabbing; }
+                #activeCallBar .acb-header {
+                    display: flex;
+                    align-items: center;
+                    justify-content: space-between;
+                    padding: 8px 14px 6px;
+                    background: rgba(46,204,113,0.08);
+                    border-bottom: 1px solid rgba(255,255,255,0.05);
+                }
+                #activeCallBar .acb-grip {
+                    display: flex; gap: 3px; align-items: center;
+                }
+                #activeCallBar .acb-grip span {
+                    display: block; width: 3px; height: 3px;
+                    border-radius: 50%; background: rgba(255,255,255,0.3);
+                }
+                #activeCallBar .acb-body {
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    padding: 14px 14px 10px;
+                }
+                #activeCallBar .acb-footer {
+                    padding: 0 10px 10px;
+                }
+                #activeCallBar .acb-hangup-full {
+                    width: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    gap: 8px;
+                    background: rgba(231,76,60,0.15);
+                    border: 1px solid rgba(231,76,60,0.35);
+                    border-radius: 12px;
+                    padding: 9px;
+                    color: #e74c3c;
+                    font-size: 13px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    transition: background 0.15s, border-color 0.15s;
+                    font-family: inherit;
+                }
+                #activeCallBar .acb-hangup-full:hover {
+                    background: rgba(231,76,60,0.3);
+                    border-color: rgba(231,76,60,0.6);
+                }
+                #activeCallBar .acb-hangup-round { display: none; }
             }
+            /* ── Mobile ─────────────────────────────── */
             @media (max-width: 768px) {
                 #activeCallBar {
                     position: fixed;
                     top: 0;
                     left: 50%;
+                    bottom: auto;
                     transform: translateX(-50%);
-                    background: #155e38;
-                    border-radius: 0 0 20px 20px;
-                    padding: 3px 18px 7px;
+                    width: min(380px, 96vw);
+                    background: linear-gradient(135deg, #0b3d22 0%, #155e38 60%, #1a7a4a 100%);
+                    border-radius: 0 0 22px 22px;
+                    padding: 6px 14px 12px;
                     z-index: 9000;
                     color: #fff;
                     font-family: inherit;
-                    font-size: 12px;
-                    cursor: pointer;
-                    min-width: 160px;
-                    box-shadow: 0 2px 16px rgba(0,0,0,0.5);
-                    transition: padding 0.18s ease;
-                    display: flex;
-                    flex-direction: column;
-                    align-items: center;
+                    box-shadow: 0 6px 24px rgba(0,0,0,0.6);
+                    overflow: hidden;
                 }
-                #activeCallBar .bar-desk-hangup { display: none; }
-                #activeCallBar .bar-mob-hangup { display: none; margin-top: 7px; }
-                #activeCallBar.expanded { padding: 6px 18px 13px; }
-                #activeCallBar.expanded .bar-mob-hangup { display: flex; }
+                #activeCallBar .acb-header { display: none; }
+                #activeCallBar .acb-footer { display: none; }
+                #activeCallBar .acb-body {
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    padding: 0;
+                }
+                #activeCallBar .acb-hangup-full { display: none; }
+                #activeCallBar .acb-hangup-round {
+                    display: flex;
+                    margin-left: auto;
+                }
             }
-            #activeCallBar .bar-row {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-            }
-            #activeCallBar-dot {
-                width: 8px; height: 8px;
-                background: #2ecc71;
+            /* ── Shared ──────────────────────────────── */
+            #activeCallBar .acb-avatar {
+                width: 46px; height: 46px;
                 border-radius: 50%;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 19px; font-weight: 700;
+                color: rgba(255,255,255,0.95);
                 flex-shrink: 0;
-                animation: _barPulse 1.4s ease-in-out infinite;
+                box-shadow: 0 2px 8px rgba(0,0,0,0.4);
+                letter-spacing: -0.5px;
             }
-            @keyframes _barPulse {
-                0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(46,204,113,0.5); }
-                50% { opacity:0.65; box-shadow: 0 0 0 5px rgba(46,204,113,0); }
+            #activeCallBar .acb-info {
+                flex: 1; min-width: 0;
             }
             #activeCallBar-name {
-                font-size: 13px; font-weight: 600;
+                font-size: 14px; font-weight: 700;
                 white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-                max-width: 126px;
+                line-height: 1.2;
+            }
+            #activeCallBar .acb-sub {
+                display: flex; align-items: center; gap: 5px;
+                margin-top: 2px;
+            }
+            #activeCallBar-dot {
+                width: 7px; height: 7px;
+                background: #2ecc71; border-radius: 50%;
+                flex-shrink: 0;
+                animation: _acbPulse 1.4s ease-in-out infinite;
+            }
+            @keyframes _acbPulse {
+                0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(46,204,113,0.6); }
+                50%      { opacity:0.6; box-shadow: 0 0 0 5px rgba(46,204,113,0); }
             }
             #activeCallBar-time {
-                font-size: 11px; opacity: 0.72;
-                font-variant-numeric: tabular-nums;
-                margin-left: auto;
+                font-size: 12px; opacity: 0.75;
+                font-variant-numeric: tabular-nums; font-weight: 500;
             }
-            .bar-desk-hangup, .bar-mob-hangup-btn {
-                background: #e74c3c; border: none; cursor: pointer;
-                color: #fff; transition: background 0.15s;
+            #activeCallBar .acb-status-badge {
+                font-size: 10px; font-weight: 600; letter-spacing: 0.6px;
+                text-transform: uppercase; opacity: 0.65;
             }
-            .bar-desk-hangup {
+            .acb-hangup-round {
+                background: rgba(231,76,60,0.18);
+                border: 1px solid rgba(231,76,60,0.45);
                 border-radius: 50%;
-                width: 30px; height: 30px;
-                display: flex; align-items: center; justify-content: center;
-                font-size: 13px; flex-shrink: 0;
+                width: 36px; height: 36px;
+                align-items: center; justify-content: center;
+                color: #e74c3c; font-size: 14px;
+                cursor: pointer; flex-shrink: 0;
+                transition: background 0.15s, border-color 0.15s;
             }
-            .bar-desk-hangup:hover { background: #c0392b; }
-            .bar-mob-hangup-btn {
-                border-radius: 10px;
-                padding: 7px 22px;
-                font-size: 13px; font-weight: 600;
-                display: flex; align-items: center; gap: 7px;
+            .acb-hangup-round:hover {
+                background: rgba(231,76,60,0.35);
+                border-color: rgba(231,76,60,0.7);
             }
         `;
         document.head.appendChild(s);
     }
 
+    const initials = partner.trim().split(/\s+/).map(w => w[0]).slice(0, 2).join('').toUpperCase() || '?';
+    const avatarBg = _acbAvatarColor(partner);
+
     const bar = document.createElement('div');
     bar.id = 'activeCallBar';
     bar.innerHTML = `
-        <div class="bar-row">
-            <span id="activeCallBar-dot"></span>
-            <span id="activeCallBar-name">${partner}</span>
-            <span id="activeCallBar-time">00:00</span>
-            <button class="bar-desk-hangup" onclick="event.stopPropagation();window._hangupActiveCall()" title="Desligar">
+        <div class="acb-header">
+            <div class="acb-grip">
+                <span></span><span></span><span></span>
+                <span></span><span></span><span></span>
+            </div>
+            <span class="acb-status-badge">Em chamada</span>
+            <span></span>
+        </div>
+        <div class="acb-body">
+            <div class="acb-avatar" style="background:${avatarBg}">${initials}</div>
+            <div class="acb-info">
+                <div id="activeCallBar-name">${partner}</div>
+                <div class="acb-sub">
+                    <span id="activeCallBar-dot"></span>
+                    <span id="activeCallBar-time">00:00</span>
+                </div>
+            </div>
+            <button class="acb-hangup-round" onclick="event.stopPropagation();window._hangupActiveCall()" title="Desligar">
                 <i class="fa-solid fa-phone-slash"></i>
             </button>
         </div>
-        <div class="bar-mob-hangup">
-            <button class="bar-mob-hangup-btn" onclick="event.stopPropagation();window._hangupActiveCall()">
+        <div class="acb-footer">
+            <button class="acb-hangup-full" onclick="window._hangupActiveCall()">
                 <i class="fa-solid fa-phone-slash"></i> Desligar
             </button>
         </div>
     `;
 
-    bar.addEventListener('click', () => bar.classList.toggle('expanded'));
     document.body.appendChild(bar);
 
+    // ── Drag (desktop only) ──
+    let _drag = {on: false, sx: 0, sy: 0, ox: 0, oy: 0};
+    const onMove = (e) => {
+        if (!_drag.on) return;
+        const cx = e.touches ? e.touches[0].clientX : e.clientX;
+        const cy = e.touches ? e.touches[0].clientY : e.clientY;
+        const nx = Math.max(0, Math.min(window.innerWidth - bar.offsetWidth, _drag.ox + cx - _drag.sx));
+        const ny = Math.max(0, Math.min(window.innerHeight - bar.offsetHeight, _drag.oy + cy - _drag.sy));
+        bar.style.left = nx + 'px';
+        bar.style.top = ny + 'px';
+        bar.style.bottom = 'auto';
+    };
+    const onUp = () => {
+        _drag.on = false;
+        bar.style.cursor = 'grab';
+    };
+    bar.addEventListener('mousedown', (e) => {
+        if (e.target.closest('button')) return;
+        if (window.innerWidth <= 768) return;
+        const rect = bar.getBoundingClientRect();
+        _drag = {on: true, sx: e.clientX, sy: e.clientY, ox: rect.left, oy: rect.top};
+        bar.style.cursor = 'grabbing';
+        e.preventDefault();
+    });
+    document.addEventListener('mousemove', onMove);
+    document.addEventListener('mouseup', onUp);
+    _activeBarDragListeners = () => {
+        document.removeEventListener('mousemove', onMove);
+        document.removeEventListener('mouseup', onUp);
+    };
+
+    // ── Timer ──
     const timerEl = bar.querySelector('#activeCallBar-time');
     _activeBarTimerId = setInterval(() => {
         const e = Math.floor((Date.now() - _activeBarStartAt) / 1000);
@@ -783,6 +906,10 @@ window.closeActiveCallBar = function () {
     if (_activeBarTimerId) {
         clearInterval(_activeBarTimerId);
         _activeBarTimerId = null;
+    }
+    if (_activeBarDragListeners) {
+        _activeBarDragListeners();
+        _activeBarDragListeners = null;
     }
     _activeBarStartAt = null;
 };
