@@ -45,6 +45,123 @@
     // Sistema de Troca de Temas
     (function () {
         const themes = {
+            golden: {
+                name: 'Golden Noir',
+                icon: 'fa-crown',
+                colors: {
+                    '--primary-bg': '#111111',
+                    '--secondary-bg': '#181818',
+                    '--accent': '#ffcf5b',
+                    '--menu-bg': '#181818',
+                    '--text': 'rgb(255 248 230 / 90%)',
+                    '--navbar-bg': '#181818',
+                    '--card-bg': '#151515'
+                }
+            },
+            ocean: {
+                name: 'Ocean Blue',
+                icon: 'fa-water',
+                colors: {
+                    '--primary-bg': '#161d31',
+                    '--secondary-bg': '#283046',
+                    '--accent': '#00b1ff',
+                    '--menu-bg': '#283046',
+                    '--text': 'rgb(225 222 245 / 90%)',
+                    '--navbar-bg': '#283046',
+                    '--card-bg': '#27283c'
+                }
+            },
+            royal: {
+                name: 'Royal Purple',
+                icon: 'fa-gem',
+                colors: {
+                    '--primary-bg': '#1a1326',
+                    '--secondary-bg': '#241933',
+                    '--accent': '#b56dff',
+                    '--menu-bg': '#241933',
+                    '--text': 'rgb(235 225 255 / 90%)',
+                    '--navbar-bg': '#241933',
+                    '--card-bg': '#1f172d'
+                }
+            },
+            amethyst: {
+                name: 'Midnight Amethyst',
+                icon: 'fa-moon',
+                colors: {
+                    '--primary-bg': '#0f0c18',
+                    '--secondary-bg': '#1a1423',
+                    '--accent': '#c17fff',
+                    '--menu-bg': '#1a1423',
+                    '--text': 'rgb(240 230 255 / 90%)',
+                    '--navbar-bg': '#1a1423',
+                    '--card-bg': '#15101e'
+                }
+            },
+            arctic: {
+                name: 'Arctic Frost',
+                icon: 'fa-snowflake',
+                colors: {
+                    '--primary-bg': '#0e141a',
+                    '--secondary-bg': '#18222b',
+                    '--accent': '#7fcaff',
+                    '--menu-bg': '#18222b',
+                    '--text': 'rgb(225 240 255 / 90%)',
+                    '--navbar-bg': '#18222b',
+                    '--card-bg': '#141c24'
+                }
+            },
+            forest: {
+                name: 'Forest Emerald',
+                icon: 'fa-tree',
+                colors: {
+                    '--primary-bg': '#0a1612',
+                    '--secondary-bg': '#162420',
+                    '--accent': '#50c878',
+                    '--menu-bg': '#162420',
+                    '--text': 'rgb(225 245 235 / 90%)',
+                    '--navbar-bg': '#162420',
+                    '--card-bg': '#111e1a'
+                }
+            },
+            bronze: {
+                name: 'Bronze Luxe',
+                icon: 'fa-shield',
+                colors: {
+                    '--primary-bg': '#18120d',
+                    '--secondary-bg': '#251e16',
+                    '--accent': '#cd7f32',
+                    '--menu-bg': '#251e16',
+                    '--text': 'rgb(245 235 225 / 90%)',
+                    '--navbar-bg': '#251e16',
+                    '--card-bg': '#1d1610'
+                }
+            },
+            sapphire: {
+                name: 'Sapphire Blue',
+                icon: 'fa-diamond',
+                colors: {
+                    '--primary-bg': '#0a0f1a',
+                    '--secondary-bg': '#12182b',
+                    '--accent': '#0f52ba',
+                    '--menu-bg': '#12182b',
+                    '--text': 'rgb(225 235 255 / 90%)',
+                    '--navbar-bg': '#12182b',
+                    '--card-bg': '#0d1320'
+                }
+            },
+            aqua: {
+                name: 'Aqua Marine',
+                icon: 'fa-droplet',
+                colors: {
+                    '--primary-bg': '#0a1418',
+                    '--secondary-bg': '#102228',
+                    '--accent': '#00ced1',
+                    '--menu-bg': '#102228',
+                    '--text': 'rgb(225 245 250 / 90%)',
+                    '--navbar-bg': '#102228',
+                    '--card-bg': '#0d1a1f'
+                }
+            },
             abyss: {
                 name: 'Abismo Azul',
                 icon: 'fa-anchor',
@@ -112,7 +229,7 @@
             },
         };
 
-        let currentTheme = localStorage.getItem('selectedTheme') || 'abyss';
+        let currentTheme = localStorage.getItem('selectedTheme') || 'golden';
         let isMenuOpen = false;
         let themeStyleElement = null;
 
@@ -461,7 +578,7 @@
                     if (confirm(`Deletar tema "${themes[key].name}"?`)) {
                         deleteCustomTheme(key);
                         if (currentTheme === key) {
-                            applyTheme('abyss');
+                            applyTheme('golden');
                         }
                         refreshThemeGrid();
                     }
@@ -523,7 +640,7 @@
                     if (confirm(`Deletar tema "${themes[key].name}"?`)) {
                         deleteCustomTheme(key);
                         if (currentTheme === key) {
-                            applyTheme('abyss');
+                            applyTheme('golden');
                         }
                         refreshThemeGrid();
                     }
