@@ -181,12 +181,17 @@ class callAccept
                 'frequency' => $frequency,
                 'channels' => $channels,
             ]);
+
+
             // Caller → Browser: decodifica RTP do caller → PCM → relay porta 9600
             $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtp, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan) use ($callId, $portHandler, $userFrequency, $frequency, $codecName) {
                 if (strlen($rtp->payloadRaw) < 1) {
                     return;
                 }
-                cli::pcl("received " . strlen($rtp->payloadRaw) . " bytes from {$peer['address']}:{$peer['port']}", 'cyan');
+                $targetId = "$peer[address]:$peer[port]";
+                if (strtoupper($codecName) === 'OPUS') {
+                    return;
+                }
                 $pcmData = match (strtoupper($codecName)) {
                     'PCMU' => decodePcmuToPcm($rtp->payloadRaw),
                     'PCMA' => decodePcmaToPcm($rtp->payloadRaw),

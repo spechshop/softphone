@@ -22,7 +22,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="Adicionar suporte a re-registro automático e melhorias no fluxo de chamadas&#10;&#10;### Problema&#10;O sistema não realizava re-registros automáticos para prolongar a validade do registro SIP, o que causava encerramento prematuro de conexões. Além disso, o fluxo de chamadas apresentava falta de notificações apropriadas para chamadas ativas no momento do reconectar.&#10;&#10;### Solução&#10;- Implementado timer para re-registro automático a cada 25 minutos no `connect.php` para evitar expiração do registro.&#10;- Adicionada notificação de chamadas ativas pendentes ao cliente WebSocket no momento da reconexão.&#10;- Padronização nas respostas de erro e notificações em `acceptCall.php`.&#10;- Melhoria na leitura e envio de pacotes RTP para maior clareza e eficiência no manejo de mídia.&#10;&#10;### Mudanças relevantes&#10;- Adicionado temporizador para re-registro automático (connect.php).&#10;- Alterado o envio de mensagens de erro e notificações (acceptCall.php).&#10;- Melhoria na manipulação de eventos de mídia e sockets RTP.&#10;- Adicionado suporte a novas URLs no ambiente de desenvolvimento (.idea/gbrowsers.xml).&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Mudanças no timing de registro podem interferir com sistemas externos dependentes do intervalo default de 30 minutos.&#10;⚠️ Recomenda-se testes sob carga para verificar estabilidade no envio de RTP com alta concorrência.&#10;Nenhum outro efeito colateral conhecido até o momento.">
-      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -269,15 +268,7 @@
       <workItem from="1777915614483" duration="496000" />
       <workItem from="1777934727632" duration="13338000" />
       <workItem from="1777949193746" duration="12924000" />
-      <workItem from="1777968728047" duration="837000" />
-    </task>
-    <task id="LOCAL-00066" summary="Atualize `.gitignore` para remover exclusão desnecessária de `/libspech`&#10;&#10;### Problema&#10;O arquivo `.gitignore` continha a entrada `/libspech/.git`, que se tornou desnecessária após o diretório `/libspech` ser adicionado ao controle de versão. Manter essa exclusão poderia causar inconsistências na gestão de arquivos versionados.&#10;&#10;### Solução&#10;- Removida a entrada `/libspech/.git` do arquivo `.gitignore` para alinhar com a inclusão do diretório no repositório.&#10;&#10;### Mudanças relevantes&#10;- Corrigido: Exclusão redundante no arquivo `.gitignore` referente ao diretório `/libspech`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767239815139</created>
-      <option name="number" value="00066" />
-      <option name="presentableId" value="LOCAL-00066" />
-      <option name="project" value="LOCAL" />
-      <updated>1767239815139</updated>
+      <workItem from="1777968728047" duration="1611000" />
     </task>
     <task id="LOCAL-00067" summary="Removido offCanvas.html e atualizado configuração do módulo spechphone.iml&#10;&#10;O offCanvas.html, responsável por buscas internas com exibição de animações Lottie, foi removido devido à descontinuidade de uso. A configuração do módulo spechphone.iml também foi simplificada com a remoção de referências a pastas de plugins obsoletas.&#10;&#10;Mudanças relevantes:&#10;- Removido offCanvas.html (plugins/Request/modules/includes).&#10;- Alterado spechphone.iml para simplificar referências de conteúdo.&#10;&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -663,7 +654,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777969182506</updated>
     </task>
-    <option name="localTasksCounter" value="115" />
+    <task id="LOCAL-00115" summary="Adicionar suporte a re-registro automático e melhorias no fluxo de chamadas&#10;&#10;### Problema&#10;O sistema não realizava re-registros automáticos para prolongar a validade do registro SIP, o que causava encerramento prematuro de conexões. Além disso, o fluxo de chamadas apresentava falta de notificações apropriadas para chamadas ativas no momento do reconectar.&#10;&#10;### Solução&#10;- Implementado timer para re-registro automático a cada 25 minutos no `connect.php` para evitar expiração do registro.&#10;- Adicionada notificação de chamadas ativas pendentes ao cliente WebSocket no momento da reconexão.&#10;- Padronização nas respostas de erro e notificações em `acceptCall.php`.&#10;- Melhoria na leitura e envio de pacotes RTP para maior clareza e eficiência no manejo de mídia.&#10;&#10;### Mudanças relevantes&#10;- Adicionado temporizador para re-registro automático (connect.php).&#10;- Alterado o envio de mensagens de erro e notificações (acceptCall.php).&#10;- Melhoria na manipulação de eventos de mídia e sockets RTP.&#10;- Adicionado suporte a novas URLs no ambiente de desenvolvimento (.idea/gbrowsers.xml).&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Mudanças no timing de registro podem interferir com sistemas externos dependentes do intervalo default de 30 minutos.&#10;⚠️ Recomenda-se testes sob carga para verificar estabilidade no envio de RTP com alta concorrência.&#10;Nenhum outro efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1777969571160</created>
+      <option name="number" value="00115" />
+      <option name="presentableId" value="LOCAL-00115" />
+      <option name="project" value="LOCAL" />
+      <updated>1777969571160</updated>
+    </task>
+    <option name="localTasksCounter" value="116" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
