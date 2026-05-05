@@ -838,15 +838,15 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            padding: 40px 24px 80px;
+            padding: 40px 24px 60px;
             color: #fff;
             font-family: inherit;
+            transition: padding 0.25s ease, border-radius 0.25s ease;
         }
 
         #activeCallBar .acb-header {
             display: none;
         }
-
         #activeCallBar .acb-body {
             display: flex;
             flex-direction: column;
@@ -854,19 +854,18 @@
             gap: 0;
             width: 100%;
         }
-
         #activeCallBar .acb-avatar {
-            width: 100px;
-            height: 100px;
+            width: 96px;
+            height: 96px;
             border-radius: 50%;
-            font-size: 40px;
+            font-size: 38px;
             font-weight: 700;
             display: flex;
             align-items: center;
             justify-content: center;
             color: #fff;
             box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.07), 0 8px 32px rgba(0, 0, 0, 0.5);
-            margin-bottom: 20px;
+            margin-bottom: 18px;
         }
 
         #activeCallBar .acb-info {
@@ -874,11 +873,10 @@
         }
 
         #activeCallBar-name {
-            font-size: 24px;
+            font-size: 22px;
             font-weight: 700;
-            margin-bottom: 10px;
+            margin-bottom: 8px;
         }
-
         #activeCallBar .acb-sub {
             display: flex;
             align-items: center;
@@ -887,32 +885,68 @@
         }
 
         #activeCallBar-time {
-            font-size: 22px;
+            font-size: 20px;
             font-weight: 600;
             color: #2ecc71;
             font-variant-numeric: tabular-nums;
         }
 
-        #activeCallBar .acb-hangup-round {
-            display: none;
+        /* Botões de controle */
+        #activeCallBar .acb-mob-actions {
+            display: flex;
+            gap: 14px;
+            margin-top: 36px;
         }
 
-        #activeCallBar .acb-footer {
-            margin-top: 60px;
+        #activeCallBar .acb-btn-action {
             display: flex;
             flex-direction: column;
             align-items: center;
-            gap: 10px;
+            gap: 6px;
+            background: rgba(255, 255, 255, 0.09);
+            border: 1px solid rgba(255, 255, 255, 0.14);
+            border-radius: 18px;
+            padding: 14px 16px;
+            color: rgba(255, 255, 255, 0.85);
+            font-size: 11px;
+            font-weight: 500;
+            cursor: pointer;
+            font-family: inherit;
+            min-width: 72px;
+            transition: background 0.15s, border-color 0.15s, color 0.15s;
         }
 
+        #activeCallBar .acb-btn-action i {
+            font-size: 20px;
+        }
+
+        #activeCallBar .acb-btn-action.acb-btn-active {
+            background: rgba(231, 76, 60, 0.18);
+            border-color: rgba(231, 76, 60, 0.4);
+            color: #ff7675;
+        }
+
+        #activeCallBar .acb-btn-keypad-active {
+            background: rgba(255, 255, 255, 0.18) !important;
+            border-color: rgba(255, 255, 255, 0.35) !important;
+            color: #fff !important;
+        }
+
+        /* Botão desligar */
+        #activeCallBar .acb-footer {
+            margin-top: 44px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
         #activeCallBar .acb-hangup-full {
-            width: 72px;
-            height: 72px;
+            width: 68px;
+            height: 68px;
             border-radius: 50%;
             background: #e74c3c;
             border: none;
             color: #fff;
-            font-size: 28px;
+            font-size: 26px;
             cursor: pointer;
             display: flex;
             align-items: center;
@@ -921,7 +955,6 @@
             font-family: inherit;
             transition: transform 0.1s, background 0.15s;
         }
-
         #activeCallBar .acb-hangup-full:active {
             transform: scale(0.91);
             background: #c0392b;
@@ -929,6 +962,81 @@
 
         #activeCallBar .acb-hangup-label {
             display: none;
+        }
+
+        #activeCallBar .acb-hangup-round {
+            display: none;
+        }
+
+        /* ── Estado minimizado: slim bar no topo ── */
+        #activeCallBar.acb-minimized {
+            inset: auto;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 6px 16px 10px;
+            flex-direction: row;
+            align-items: center;
+            justify-content: space-between;
+            gap: 10px;
+            border-radius: 0 0 20px 20px;
+            cursor: pointer;
+        }
+
+        #activeCallBar.acb-minimized .acb-body {
+            flex-direction: row;
+            width: auto;
+            flex: 1;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #activeCallBar.acb-minimized .acb-avatar {
+            width: 34px;
+            height: 34px;
+            font-size: 14px;
+            margin: 0;
+            box-shadow: none;
+        }
+
+        #activeCallBar.acb-minimized .acb-info {
+            text-align: left;
+        }
+
+        #activeCallBar.acb-minimized #activeCallBar-name {
+            font-size: 14px;
+            margin: 0;
+        }
+
+        #activeCallBar.acb-minimized .acb-sub {
+            justify-content: flex-start;
+        }
+
+        #activeCallBar.acb-minimized #activeCallBar-time {
+            font-size: 13px;
+        }
+
+        #activeCallBar.acb-minimized .acb-mob-actions {
+            display: none;
+        }
+
+        #activeCallBar.acb-minimized .acb-footer {
+            display: none;
+            margin: 0;
+        }
+
+        #activeCallBar.acb-minimized .acb-hangup-round {
+            display: flex;
+        }
+    }
+
+    @media (min-width: 769px) {
+        #activeCallBar .acb-mob-actions {
+            display: none;
+        }
+
+        #activeCallBar .acb-hangup-round {
+            display: flex;
         }
     }
 

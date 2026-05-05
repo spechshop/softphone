@@ -648,6 +648,40 @@ window._hangupActiveCall = function () {
     }
 };
 
+window._acbMuted = false;
+
+window._acbToggleMute = function () {
+    window._acbMuted = !window._acbMuted;
+    if (window._acbMuted) {
+        if (typeof window.stopAudioCapture === 'function') window.stopAudioCapture();
+    } else {
+        if (typeof window.startAudioCapture === 'function') window.startAudioCapture();
+    }
+    const icon = document.getElementById('acb-mute-icon');
+    if (icon) icon.className = window._acbMuted ? 'fa-solid fa-microphone-slash' : 'fa-solid fa-microphone';
+    const btn = document.getElementById('acb-btn-mute');
+    if (btn) btn.classList.toggle('acb-btn-active', window._acbMuted);
+};
+
+window._acbToggleSpeaker = function () {
+    window.isSpeakerMuted = !window.isSpeakerMuted;
+    if (window.speakerGainNode) {
+        window.speakerGainNode.gain.value = window.isSpeakerMuted ? 0 : 1;
+    }
+    const icon = document.getElementById('acb-speaker-icon');
+    if (icon) icon.className = window.isSpeakerMuted ? 'fa-solid fa-volume-slash' : 'fa-solid fa-volume-high';
+    const btn = document.getElementById('acb-btn-speaker');
+    if (btn) btn.classList.toggle('acb-btn-active', window.isSpeakerMuted);
+};
+
+window._acbToggleMinimize = function () {
+    const bar = document.getElementById('activeCallBar');
+    if (!bar || window.innerWidth > 768) return;
+    const isMin = bar.classList.toggle('acb-minimized');
+    const btn = document.getElementById('acb-btn-keypad');
+    if (btn) btn.classList.toggle('acb-btn-keypad-active', isMin);
+};
+
 function _acbAvatarColor(name) {
     const palette = ['#8e44ad', '#2980b9', '#16a085', '#d35400', '#c0392b', '#2c3e50', '#1a6b4a', '#6c3483'];
     let h = 0;
@@ -688,6 +722,20 @@ window.renderActiveCallBar = function (partner) {
                 <i class="fa-solid fa-phone-slash"></i>
             </button>
         </div>
+        <div class="acb-mob-actions">
+            <button id="acb-btn-mute" class="acb-btn-action" onclick="window._acbToggleMute()" title="Mutar microfone">
+                <i id="acb-mute-icon" class="fa-solid fa-microphone"></i>
+                <span>Mudo</span>
+            </button>
+            <button id="acb-btn-speaker" class="acb-btn-action" onclick="window._acbToggleSpeaker()" title="Alto-falante">
+                <i id="acb-speaker-icon" class="fa-solid fa-volume-high"></i>
+                <span>Volume</span>
+            </button>
+            <button id="acb-btn-keypad" class="acb-btn-action" onclick="window._acbToggleMinimize()" title="Mostrar teclado DTMF">
+                <i class="fa-solid fa-grip"></i>
+                <span>Teclado</span>
+            </button>
+        </div>
         <div class="acb-footer">
             <button class="acb-hangup-full" onclick="window._hangupActiveCall()">
                 <i class="fa-solid fa-phone-slash"></i>
@@ -697,6 +745,16 @@ window.renderActiveCallBar = function (partner) {
     `;
 
     document.body.appendChild(bar);
+
+    // Toque na barra minimizada re-expande (mobile)
+    bar.addEventListener('click', (e) => {
+        if (e.target.closest('button')) return;
+        if (bar.classList.contains('acb-minimized')) {
+            bar.classList.remove('acb-minimized');
+            const btn = document.getElementById('acb-btn-keypad');
+            if (btn) btn.classList.remove('acb-btn-keypad-active');
+        }
+    });
 
     // ── Drag (desktop only) ──
     let _drag = {on: false, sx: 0, sy: 0, ox: 0, oy: 0};
@@ -749,6 +807,7 @@ window.closeActiveCallBar = function () {
         _activeBarDragListeners = null;
     }
     _activeBarStartAt = null;
+    window._acbMuted = false;
 };
 
 // ===== Real-time Chat Store =====
