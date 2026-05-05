@@ -330,11 +330,6 @@ class startCall
                     $peer = null;
                     $data = $phone->globalInfo['eventSock']->recvfrom($peer, 0.2);
 
-                    var_dump(strlen($data));
-
-
-
-
 
                     // condições de saída
                     if ($phone->receiveBye) {
