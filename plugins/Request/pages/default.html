@@ -692,6 +692,289 @@
 
 </div>
 
+<style>
+    /* ===== Active Call Bar ===== */
+
+    /* ── Desktop: floating card topo-esquerdo ── */
+    @media (min-width: 769px) {
+        #activeCallBar {
+            position: fixed;
+            top: 64px;
+            left: 16px;
+            width: 244px;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(155deg, #0d1b32 0%, #162444 100%);
+            border: 1px solid rgba(46, 204, 113, 0.22);
+            border-radius: 20px;
+            z-index: 9000;
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.75), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            color: #fff;
+            font-family: inherit;
+            overflow: hidden;
+            cursor: grab;
+            user-select: none;
+        }
+
+        #activeCallBar:active {
+            cursor: grabbing;
+        }
+
+        #activeCallBar .acb-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 14px 6px;
+            background: rgba(46, 204, 113, 0.07);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        #activeCallBar .acb-grip {
+            display: grid;
+            grid-template-columns: repeat(3, 4px);
+            gap: 3px;
+        }
+
+        #activeCallBar .acb-grip span {
+            width: 4px;
+            height: 4px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.25);
+        }
+
+        #activeCallBar .acb-status-badge {
+            font-size: 10px;
+            font-weight: 600;
+            letter-spacing: 0.8px;
+            text-transform: uppercase;
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        #activeCallBar .acb-body {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 14px 10px;
+        }
+
+        #activeCallBar .acb-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            font-size: 20px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.4);
+            flex-shrink: 0;
+        }
+
+        #activeCallBar .acb-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        #activeCallBar-name {
+            font-size: 14px;
+            font-weight: 700;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        #activeCallBar .acb-sub {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-top: 3px;
+        }
+
+        #activeCallBar-time {
+            font-size: 12px;
+            opacity: 0.7;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #activeCallBar .acb-hangup-round {
+            display: flex;
+        }
+
+        #activeCallBar .acb-footer {
+            padding: 0 10px 10px;
+        }
+
+        #activeCallBar .acb-hangup-full {
+            width: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            background: rgba(231, 76, 60, 0.12);
+            border: 1px solid rgba(231, 76, 60, 0.3);
+            border-radius: 12px;
+            padding: 9px;
+            color: #e74c3c;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: background 0.15s, border-color 0.15s;
+        }
+
+        #activeCallBar .acb-hangup-full:hover {
+            background: rgba(231, 76, 60, 0.25);
+            border-color: rgba(231, 76, 60, 0.55);
+        }
+    }
+
+    /* ── Mobile: tela cheia estilo chamada nativa ── */
+    @media (max-width: 768px) {
+        #activeCallBar {
+            position: fixed;
+            inset: 0;
+            z-index: 9000;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(170deg, #0b1e33 0%, #0c2b1a 55%, #0f3520 100%);
+            padding: 40px 24px 80px;
+            color: #fff;
+            font-family: inherit;
+        }
+
+        #activeCallBar .acb-header {
+            display: none;
+        }
+
+        #activeCallBar .acb-body {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 0;
+            width: 100%;
+        }
+
+        #activeCallBar .acb-avatar {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            font-size: 40px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            box-shadow: 0 0 0 8px rgba(255, 255, 255, 0.07), 0 8px 32px rgba(0, 0, 0, 0.5);
+            margin-bottom: 20px;
+        }
+
+        #activeCallBar .acb-info {
+            text-align: center;
+        }
+
+        #activeCallBar-name {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        #activeCallBar .acb-sub {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        #activeCallBar-time {
+            font-size: 22px;
+            font-weight: 600;
+            color: #2ecc71;
+            font-variant-numeric: tabular-nums;
+        }
+
+        #activeCallBar .acb-hangup-round {
+            display: none;
+        }
+
+        #activeCallBar .acb-footer {
+            margin-top: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+        }
+
+        #activeCallBar .acb-hangup-full {
+            width: 72px;
+            height: 72px;
+            border-radius: 50%;
+            background: #e74c3c;
+            border: none;
+            color: #fff;
+            font-size: 28px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 6px 28px rgba(231, 76, 60, 0.55);
+            font-family: inherit;
+            transition: transform 0.1s, background 0.15s;
+        }
+
+        #activeCallBar .acb-hangup-full:active {
+            transform: scale(0.91);
+            background: #c0392b;
+        }
+
+        #activeCallBar .acb-hangup-label {
+            display: none;
+        }
+    }
+
+    /* ── Compartilhado ── */
+    #activeCallBar .acb-hangup-round {
+        background: rgba(231, 76, 60, 0.15);
+        border: 1px solid rgba(231, 76, 60, 0.4);
+        border-radius: 50%;
+        width: 34px;
+        height: 34px;
+        align-items: center;
+        justify-content: center;
+        color: #e74c3c;
+        font-size: 13px;
+        cursor: pointer;
+        flex-shrink: 0;
+        transition: background 0.15s, border-color 0.15s;
+    }
+
+    #activeCallBar .acb-hangup-round:hover {
+        background: rgba(231, 76, 60, 0.3);
+        border-color: rgba(231, 76, 60, 0.65);
+    }
+
+    #activeCallBar-dot {
+        width: 7px;
+        height: 7px;
+        background: #2ecc71;
+        border-radius: 50%;
+        flex-shrink: 0;
+        animation: acbDotPulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes acbDotPulse {
+        0%, 100% {
+            opacity: 1;
+            box-shadow: 0 0 0 0 rgba(46, 204, 113, 0.6);
+        }
+        50% {
+            opacity: 0.5;
+            box-shadow: 0 0 0 5px rgba(46, 204, 113, 0);
+        }
+    }
+</style>
 
 <script>
     // ===== MESSAGES SYSTEM =====
