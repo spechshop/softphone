@@ -583,6 +583,7 @@ window.handleCallActive = function () {
     if (typeof window.startAudioCapture === 'function') {
         window.startAudioCapture();
     }
+    renderActiveCallBar(formatSipUri(window.inboundCallState.from) || window.inboundCallState.from);
 };
 
 window.handleCallEnded = function () {
@@ -592,6 +593,7 @@ window.handleCallEnded = function () {
     _stopInboundTimer();
     if (typeof window.stopAudio === 'function') window.stopAudio();
     setCallState('ended');
+    closeActiveCallBar();
     setTimeout(() => {
         closeCallWidget();
         window.inboundCallState.status = 'idle';
@@ -629,6 +631,160 @@ window.hangupCurrentCall = function () {
     console.log('[CALL] enviando callHangup');
     setCallState('ending');
     sendRecByToken({hangup: true, callId: s.currentCallId}, 'HangUpCall');
+};
+
+// ===== Active Call Floating Bar =====
+
+let _activeBarTimerId = null;
+let _activeBarStartAt = null;
+
+window._hangupActiveCall = function () {
+    const s = window.inboundCallState;
+    if (s && ['accepting', 'active'].includes(s.status)) {
+        window.hangupCurrentCall();
+    } else if (typeof window.hangUpCall === 'function') {
+        window.hangUpCall();
+    }
+};
+
+window.renderActiveCallBar = function (partner) {
+    window.closeActiveCallBar();
+    _activeBarStartAt = Date.now();
+    partner = partner || 'Chamada ativa';
+
+    if (!document.getElementById('_activeBarCss')) {
+        const s = document.createElement('style');
+        s.id = '_activeBarCss';
+        s.textContent = `
+            @media (min-width: 769px) {
+                #activeCallBar {
+                    position: fixed;
+                    bottom: 24px;
+                    left: 20px;
+                    width: 214px;
+                    background: #111827;
+                    border: 1px solid rgba(39,174,96,0.35);
+                    border-radius: 14px;
+                    padding: 13px 14px 11px;
+                    z-index: 9000;
+                    box-shadow: 0 4px 24px rgba(0,0,0,0.6);
+                    color: #fff;
+                    font-family: inherit;
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                #activeCallBar .bar-mob-hangup { display: none; }
+            }
+            @media (max-width: 768px) {
+                #activeCallBar {
+                    position: fixed;
+                    top: 0;
+                    left: 50%;
+                    transform: translateX(-50%);
+                    background: #155e38;
+                    border-radius: 0 0 20px 20px;
+                    padding: 3px 18px 7px;
+                    z-index: 9000;
+                    color: #fff;
+                    font-family: inherit;
+                    font-size: 12px;
+                    cursor: pointer;
+                    min-width: 160px;
+                    box-shadow: 0 2px 16px rgba(0,0,0,0.5);
+                    transition: padding 0.18s ease;
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                }
+                #activeCallBar .bar-desk-hangup { display: none; }
+                #activeCallBar .bar-mob-hangup { display: none; margin-top: 7px; }
+                #activeCallBar.expanded { padding: 6px 18px 13px; }
+                #activeCallBar.expanded .bar-mob-hangup { display: flex; }
+            }
+            #activeCallBar .bar-row {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+            #activeCallBar-dot {
+                width: 8px; height: 8px;
+                background: #2ecc71;
+                border-radius: 50%;
+                flex-shrink: 0;
+                animation: _barPulse 1.4s ease-in-out infinite;
+            }
+            @keyframes _barPulse {
+                0%,100% { opacity:1; box-shadow: 0 0 0 0 rgba(46,204,113,0.5); }
+                50% { opacity:0.65; box-shadow: 0 0 0 5px rgba(46,204,113,0); }
+            }
+            #activeCallBar-name {
+                font-size: 13px; font-weight: 600;
+                white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                max-width: 126px;
+            }
+            #activeCallBar-time {
+                font-size: 11px; opacity: 0.72;
+                font-variant-numeric: tabular-nums;
+                margin-left: auto;
+            }
+            .bar-desk-hangup, .bar-mob-hangup-btn {
+                background: #e74c3c; border: none; cursor: pointer;
+                color: #fff; transition: background 0.15s;
+            }
+            .bar-desk-hangup {
+                border-radius: 50%;
+                width: 30px; height: 30px;
+                display: flex; align-items: center; justify-content: center;
+                font-size: 13px; flex-shrink: 0;
+            }
+            .bar-desk-hangup:hover { background: #c0392b; }
+            .bar-mob-hangup-btn {
+                border-radius: 10px;
+                padding: 7px 22px;
+                font-size: 13px; font-weight: 600;
+                display: flex; align-items: center; gap: 7px;
+            }
+        `;
+        document.head.appendChild(s);
+    }
+
+    const bar = document.createElement('div');
+    bar.id = 'activeCallBar';
+    bar.innerHTML = `
+        <div class="bar-row">
+            <span id="activeCallBar-dot"></span>
+            <span id="activeCallBar-name">${partner}</span>
+            <span id="activeCallBar-time">00:00</span>
+            <button class="bar-desk-hangup" onclick="event.stopPropagation();window._hangupActiveCall()" title="Desligar">
+                <i class="fa-solid fa-phone-slash"></i>
+            </button>
+        </div>
+        <div class="bar-mob-hangup">
+            <button class="bar-mob-hangup-btn" onclick="event.stopPropagation();window._hangupActiveCall()">
+                <i class="fa-solid fa-phone-slash"></i> Desligar
+            </button>
+        </div>
+    `;
+
+    bar.addEventListener('click', () => bar.classList.toggle('expanded'));
+    document.body.appendChild(bar);
+
+    const timerEl = bar.querySelector('#activeCallBar-time');
+    _activeBarTimerId = setInterval(() => {
+        const e = Math.floor((Date.now() - _activeBarStartAt) / 1000);
+        timerEl.textContent = `${String(Math.floor(e / 60)).padStart(2, '0')}:${String(e % 60).padStart(2, '0')}`;
+    }, 1000);
+};
+
+window.closeActiveCallBar = function () {
+    const bar = document.getElementById('activeCallBar');
+    if (bar) bar.remove();
+    if (_activeBarTimerId) {
+        clearInterval(_activeBarTimerId);
+        _activeBarTimerId = null;
+    }
+    _activeBarStartAt = null;
 };
 
 // ===== Real-time Chat Store =====
@@ -747,6 +903,7 @@ const onMessageSocket = (event, socket) => {
                 $('#btnHangup').css('display', 'none');
                 $('#btnCall').css('display', '');
                 if (typeof window.stopCallTimer === 'function') window.stopCallTimer();
+                closeActiveCallBar();
                 // Inbound call teardown
                 handleCallEnded();
             }
@@ -757,6 +914,8 @@ const onMessageSocket = (event, socket) => {
                     $('#btnCall').css('display', 'none');
                     if (typeof window.startCallTimer === 'function') window.startCallTimer();
                     playAudio(window.currentCallId);
+                    const _outPartner = (new UserManager()).getValue('lastDigits') || 'Chamada';
+                    renderActiveCallBar(_outPartner);
                 }
             }
             if (data.data === 'callActive') {
