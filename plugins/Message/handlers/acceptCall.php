@@ -151,7 +151,7 @@ class callAccept
         ) {
             cli::pcl("[ACCEPT-CO] Coroutine iniciada — ligando socket UDP {$localIp}:{$localRtpPort}", 'cyan');
 
-            $rtpSocket = new \SocketMutable(AF_INET, SOCK_DGRAM, SOL_UDP);
+            $rtpSocket = new \SocketMutable(AF_INET, SOCK_DGRAM, 0);
             $bindOk = $rtpSocket->bind('0.0.0.0', $localRtpPort);
             cli::pcl("[ACCEPT-CO] bind({$localIp}:{$localRtpPort}) => " . ($bindOk ? 'OK' : 'FALHOU'), $bindOk ? 'cyan' : 'red');
 
@@ -229,7 +229,7 @@ class callAccept
             ) {
                 cli::pcl("[ACCEPT-CO] Browser→Caller coroutine iniciada", 'cyan');
 
-                $mediaChannel->eventSock->sendto('127.0.0.1', 9600, str_repeat('0', 12));
+                //$mediaChannel->eventSock->sendto('127.0.0.1', 9600, str_repeat('0', 12));
 
                 $pcmBuffer = '';
                 $SRC_RATE = $userFrequency;
@@ -263,8 +263,10 @@ class callAccept
 
                         if (!$encode) continue;
 
+
                         $member = $mediaChannel->members["{$sdpParsed['ip']}:{$sdpParsed['port']}"] ?? null;
                         if (!$member) continue;
+
 
                         $mediaChannel->socket->sendto(
                             $sdpParsed['ip'], $sdpParsed['port'],

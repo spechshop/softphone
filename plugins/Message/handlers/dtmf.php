@@ -47,7 +47,10 @@ class dtmf
             $dtmf = substr($data['dtmf'], 0);
 
 
-            $phone->send2833($dtmf);
+            try {
+                $phone->send2833($dtmf);
+            } catch (\Throwable $e) {
+            }
 
 
             return $socket->push($fd, json_encode([

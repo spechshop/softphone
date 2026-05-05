@@ -1437,7 +1437,8 @@
         }
 
         const sampleRate = audioContext ? audioContext.sampleRate : 8000;
-        const wsUrl = `${proto}//${infoURI().host}:8888?fp=${fp}&ssrc=mic-user&sampleRate=${sampleRate}`;
+        const userFp = user.getValue('fp') || 'anon';
+        const wsUrl = `${proto}//${infoURI().host}:8888?fp=${fp}&ssrc=mic-${userFp}&sampleRate=${sampleRate}`;
 
         // Fecha conexão anterior se existir
         if (websocket && websocket.readyState === WebSocket.OPEN) {

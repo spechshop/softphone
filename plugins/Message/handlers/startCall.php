@@ -116,6 +116,7 @@ class startCall
                 ]));
                 return false;
             }
+            cli::pcl("START CALL TRUNK-CONTROLLER-ID: $phone->callId", 'bold_yellow');
             cache::subDefine('coroutinesProcess', $fingerprint, $phone);
             $socket->push($fd, json_encode([
                 'type' => 'notify',
@@ -283,14 +284,11 @@ class startCall
 
         $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone, $codec, $frequency)
         use ($fingerprint, $portHandler, $userCodec, $userFrequency, $trunkCodec) {
-            if (strlen($pcmData) < 12) return;
+
             $id = implode(':', array_values($peer));
+            if (strlen($pcmData) < 12) return;
 
             // resample
-
-
-
-
             $phone->globalInfo['eventSock']->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
         });
 
@@ -298,7 +296,7 @@ class startCall
 
         $phone->onAnswer(function (trunkController $phone) use ($socket, $vault, $fingerprint, $userFrequency) {
             $phone->receiveMedia();
-            cli::pcl("Recebendo audio", "green");
+
 
             Coroutine::create(function () use (&$cacheAudio, $phone, $userFrequency) {
 
@@ -322,17 +320,42 @@ class startCall
                 $PCM_FRAME_BYTES = $SAMPLES_PER_FRAME * 2; // PCM16 = 2 bytes por sample = 320 bytes
 
 
-
+                $phone->globalInfo['eventSock']->sendto(
+                    '127.0.0.1',
+                    9600,
+                    str_repeat('0', 12)
+                );
                 while (true) {
 
                     $peer = null;
                     $data = $phone->globalInfo['eventSock']->recvfrom($peer, 0.2);
-                    //cli::pcl("SRC_RATE: {$SRC_RATE}", "green");
+
+                    var_dump(strlen($data));
+
+
+
+
 
                     // condições de saída
-                    if ($phone->receiveBye) break;
-                    if ($phone->error) break;
-                    if (!$phone->callActive) break;
+                    if ($phone->receiveBye) {
+                        cli::pcl("Recebendo bye", "red");
+                        break;
+                    }
+                    if ($phone->error) {
+                        cli::pcl("Recebendo erro", "red");
+                        break;
+                    }
+                    if (!$phone->callActive) {
+                        cli::pcl("Recebendo inativo", "red");
+                        break;
+                    }
+                    if (!$data) continue;
+
+
+
+
+
+
 
 
                     // separa payload
@@ -393,7 +416,9 @@ class startCall
                                 continue 2;
                         }
 
+
                         if (!$encode) continue;
+
 
                         // RTP
                         $packet = $phone->rtpChannel->buildAudioPacket($encode);

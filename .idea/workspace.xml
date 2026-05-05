@@ -21,7 +21,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment=" TÍTULO  &#10;Adicionar camada de fundo e centralizar widget de chamada inbound  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A exibição do widget de chamada inbound não possuía uma camada de fundo nem posição central, causando problemas na usabilidade e integração visual.  &#10;- **Solução:** Adicionada a div `inboundCallBackdrop` para criar uma camada de fundo translúcida e ajustada a posição do widget para centralizá-lo na tela, melhorando a experiência do usuário.  &#10;- **Local:** Alterações realizadas em `js/router.js`, incluindo lógica de criação e remoção do fundo, além de ajustes no estilo CSS do widget.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- Adicionado: Componente `inboundCallBackdrop` para fundo opaco no fluxo de chamadas.  &#10;- Alterado: Posição de `inboundCallCard` para centralização na tela.  &#10;- Alterado: Lógicas de exibição e remoção de elementos relacionados à chamada ativa em `window.setCallState` e `window.closeCallWidget`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento." />
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment=" TÍTULO  &#10;Adicionar camada de fundo e centralizar widget de chamada inbound  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A exibição do widget de chamada inbound não possuía uma camada de fundo nem posição central, causando problemas na usabilidade e integração visual.  &#10;- **Solução:** Adicionada a div `inboundCallBackdrop` para criar uma camada de fundo translúcida e ajustada a posição do widget para centralizá-lo na tela, melhorando a experiência do usuário.  &#10;- **Local:** Alterações realizadas em `js/router.js`, incluindo lógica de criação e remoção do fundo, além de ajustes no estilo CSS do widget.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- Adicionado: Componente `inboundCallBackdrop` para fundo opaco no fluxo de chamadas.  &#10;- Alterado: Posição de `inboundCallCard` para centralização na tela.  &#10;- Alterado: Lógicas de exibição e remoção de elementos relacionados à chamada ativa em `window.setCallState` e `window.closeCallWidget`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/audio.php" beforeDir="false" afterPath="$PROJECT_DIR$/audio.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/dtmf.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/dtmf.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/startCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -149,7 +157,7 @@
     &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
     &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
     &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;ml.llm.LLMTrustedDomainsConfigurableProvider&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
     &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
     &quot;ts.external.directory.path&quot;: &quot;/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
     &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
@@ -263,15 +271,8 @@
       <workItem from="1777903287741" duration="1123000" />
       <workItem from="1777904755076" duration="3135000" />
       <workItem from="1777915614483" duration="496000" />
-      <workItem from="1777934727632" duration="2737000" />
-    </task>
-    <task id="LOCAL-00062" summary="Atualize `.gitignore` para corrigir exclusões redundantes&#10;&#10;### Problema&#10;O arquivo `.gitignore` continha entradas redundantes relacionadas ao diretório `/libspech` e seu repositório Git, o que poderia causar confusão na gestão de arquivos ignorados.&#10;&#10;### Solução&#10;- Corrigido: Ajuste na exclusão do diretório `/libspech` e seu repositório para evitar duplicações e manter consistência.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Removidas redundâncias no arquivo `.gitignore`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767238809781</created>
-      <option name="number" value="00062" />
-      <option name="presentableId" value="LOCAL-00062" />
-      <option name="project" value="LOCAL" />
-      <updated>1767238809781</updated>
+      <workItem from="1777934727632" duration="13338000" />
+      <workItem from="1777949193746" duration="655000" />
     </task>
     <task id="LOCAL-00063" summary="Adicione o diretório `/libspech` ao repositório&#10;&#10;### Problema&#10;O diretório `/libspech` não fazia parte do repositório, embora fosse uma dependência essencial para a execução do projeto. Isso poderia causar falhas em ambientes onde esse diretório não exista localmente.&#10;&#10;### Solução&#10;- Adicionado: Diretório `/libspech` ao repositório, garantindo que os arquivos necessários estão disponíveis durante o desenvolvimento e a execução do sistema.&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Diretório `/libspech` ao controle de versão.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -657,7 +658,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777937217427</updated>
     </task>
-    <option name="localTasksCounter" value="111" />
+    <task id="LOCAL-00111" summary=" TÍTULO  &#10;Adicionar camada de fundo e centralizar widget de chamada inbound  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A exibição do widget de chamada inbound não possuía uma camada de fundo nem posição central, causando problemas na usabilidade e integração visual.  &#10;- **Solução:** Adicionada a div `inboundCallBackdrop` para criar uma camada de fundo translúcida e ajustada a posição do widget para centralizá-lo na tela, melhorando a experiência do usuário.  &#10;- **Local:** Alterações realizadas em `js/router.js`, incluindo lógica de criação e remoção do fundo, além de ajustes no estilo CSS do widget.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- Adicionado: Componente `inboundCallBackdrop` para fundo opaco no fluxo de chamadas.  &#10;- Alterado: Posição de `inboundCallCard` para centralização na tela.  &#10;- Alterado: Lógicas de exibição e remoção de elementos relacionados à chamada ativa em `window.setCallState` e `window.closeCallWidget`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1777937557028</created>
+      <option name="number" value="00111" />
+      <option name="presentableId" value="LOCAL-00111" />
+      <option name="project" value="LOCAL" />
+      <updated>1777937557028</updated>
+    </task>
+    <option name="localTasksCounter" value="112" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -741,12 +750,12 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>1683</line>
+          <line>1684</line>
           <option name="timeStamp" value="33" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
           <url>file://$PROJECT_DIR$/audio.php</url>
-          <line>35</line>
+          <line>103</line>
           <option name="timeStamp" value="38" />
         </line-breakpoint>
       </breakpoints>
