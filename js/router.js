@@ -65,7 +65,7 @@ const onOpenSocket = (socket) => {
     socket.closed = false;
     try {
         if (socket.readyState === WebSocket.OPEN) {
-        document.getElementById('connection-icon').className = 'fa-solid fa-plug-circle-check text-success';
+            document.getElementById('connection-icon').className = 'fa-solid fa-plug-circle-check text-success';
             document.getElementById('connection-status').innerText = 'Connected';
         }
     } catch (error) {

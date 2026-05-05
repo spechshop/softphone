@@ -21,7 +21,15 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Adicionar identificação de usuários em conexões WebSocket e otimizar fluxo de mídia  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não diferenciava as conexões WebSocket para múltiplos usuários, dificultando o gerenciamento de fluxos de mídia e mixagem de áudio.  &#10;- **Solução:** Adicionado parâmetro `ssrc` na URL do WebSocket, identificando os usuários como `rx-*` ou `mic-*` com base no fingerprint. Essa mudança permite melhor organização e distinção dos fluxos de mídia no backend. Também foram realizadas melhorias em handlers de chamada para lidar de forma mais eficiente com corrotinas e eventos de mídia.  &#10;- **Local:** Alterações em `js/router.js`, `plugins/Request/pages/default.html`, e múltiplos handlers SIP (`acceptCall.php`, `startCall.php`, `dtmf.php`).  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Inclusão do parâmetro `ssrc` na conexão WebSocket.  &#10;- **Alterado:** Configuração de sockets RTP em `plugins/Message/handlers/acceptCall.php`.  &#10;- **Corrigido:** Exceção no envio de mensagens DTMF em `dtmf.php`.  &#10;- **Removido:** Código redundante relacionado ao envio manual de pacotes via socket UDP.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Como houve alterações profundas no fluxo de mídia, recomenda-se testes de comportamento em cenários com múltiplos usuários simultâneos.  &#10;Nenhum outro efeito colateral conhecido até o momento." />
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Adicionar identificação de usuários em conexões WebSocket e otimizar fluxo de mídia  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não diferenciava as conexões WebSocket para múltiplos usuários, dificultando o gerenciamento de fluxos de mídia e mixagem de áudio.  &#10;- **Solução:** Adicionado parâmetro `ssrc` na URL do WebSocket, identificando os usuários como `rx-*` ou `mic-*` com base no fingerprint. Essa mudança permite melhor organização e distinção dos fluxos de mídia no backend. Também foram realizadas melhorias em handlers de chamada para lidar de forma mais eficiente com corrotinas e eventos de mídia.  &#10;- **Local:** Alterações em `js/router.js`, `plugins/Request/pages/default.html`, e múltiplos handlers SIP (`acceptCall.php`, `startCall.php`, `dtmf.php`).  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Inclusão do parâmetro `ssrc` na conexão WebSocket.  &#10;- **Alterado:** Configuração de sockets RTP em `plugins/Message/handlers/acceptCall.php`.  &#10;- **Corrigido:** Exceção no envio de mensagens DTMF em `dtmf.php`.  &#10;- **Removido:** Código redundante relacionado ao envio manual de pacotes via socket UDP.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Como houve alterações profundas no fluxo de mídia, recomenda-se testes de comportamento em cenários com múltiplos usuários simultâneos.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
+      <change beforePath="$PROJECT_DIR$/.idea/gbrowsers.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gbrowsers.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/connect.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/connect.php" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -264,15 +272,8 @@
       <workItem from="1777904755076" duration="3135000" />
       <workItem from="1777915614483" duration="496000" />
       <workItem from="1777934727632" duration="13338000" />
-      <workItem from="1777949193746" duration="960000" />
-    </task>
-    <task id="LOCAL-00064" summary="Atualize `.gitignore` para remover exclusão desnecessária de `/libspech`&#10;&#10;### Problema&#10;O arquivo `.gitignore` continha a entrada `/libspech/.git`, que se tornou desnecessária após o diretório `/libspech` ser adicionado ao controle de versão. Manter essa exclusão poderia causar inconsistências na gestão de arquivos versionados.&#10;&#10;### Solução&#10;- Removida a entrada `/libspech/.git` do arquivo `.gitignore` para alinhar com a inclusão do diretório no repositório.&#10;&#10;### Mudanças relevantes&#10;- Corrigido: Exclusão redundante no arquivo `.gitignore` referente ao diretório `/libspech`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767239310301</created>
-      <option name="number" value="00064" />
-      <option name="presentableId" value="LOCAL-00064" />
-      <option name="project" value="LOCAL" />
-      <updated>1767239310301</updated>
+      <workItem from="1777949193746" duration="12924000" />
+      <workItem from="1777968728047" duration="195000" />
     </task>
     <task id="LOCAL-00065" summary="Atualize `.gitignore` para remover exclusão desnecessária de `/libspech`&#10;&#10;### Problema&#10;O arquivo `.gitignore` continha a entrada `/libspech/.git`, que se tornou desnecessária após o diretório `/libspech` ser adicionado ao controle de versão. Manter essa exclusão poderia causar inconsistências na gestão de arquivos versionados.&#10;&#10;### Solução&#10;- Removida a entrada `/libspech/.git` do arquivo `.gitignore` para alinhar com a inclusão do diretório no repositório.&#10;&#10;### Mudanças relevantes&#10;- Corrigido: Exclusão redundante no arquivo `.gitignore` referente ao diretório `/libspech`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -658,7 +659,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777950153506</updated>
     </task>
-    <option name="localTasksCounter" value="113" />
+    <task id="LOCAL-00113" summary="### TÍTULO  &#10;Adicionar identificação de usuários em conexões WebSocket e otimizar fluxo de mídia  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não diferenciava as conexões WebSocket para múltiplos usuários, dificultando o gerenciamento de fluxos de mídia e mixagem de áudio.  &#10;- **Solução:** Adicionado parâmetro `ssrc` na URL do WebSocket, identificando os usuários como `rx-*` ou `mic-*` com base no fingerprint. Essa mudança permite melhor organização e distinção dos fluxos de mídia no backend. Também foram realizadas melhorias em handlers de chamada para lidar de forma mais eficiente com corrotinas e eventos de mídia.  &#10;- **Local:** Alterações em `js/router.js`, `plugins/Request/pages/default.html`, e múltiplos handlers SIP (`acceptCall.php`, `startCall.php`, `dtmf.php`).  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Inclusão do parâmetro `ssrc` na conexão WebSocket.  &#10;- **Alterado:** Configuração de sockets RTP em `plugins/Message/handlers/acceptCall.php`.  &#10;- **Corrigido:** Exceção no envio de mensagens DTMF em `dtmf.php`.  &#10;- **Removido:** Código redundante relacionado ao envio manual de pacotes via socket UDP.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Como houve alterações profundas no fluxo de mídia, recomenda-se testes de comportamento em cenários com múltiplos usuários simultâneos.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1777950396334</created>
+      <option name="number" value="00113" />
+      <option name="presentableId" value="LOCAL-00113" />
+      <option name="project" value="LOCAL" />
+      <updated>1777950396334</updated>
+    </task>
+    <option name="localTasksCounter" value="114" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

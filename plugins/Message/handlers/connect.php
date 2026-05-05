@@ -176,7 +176,19 @@ class connect
                     'type' => 'event',
                     'data' => 'callAccept'
                 ]));
+            }
 
+            $ringingCall = \helpers\utils\CallState::findIncomingCallByFp($fingerprint);
+            if ($ringingCall && $ringingCall['status'] === 'ringing') {
+                $socket->push($fd, json_encode([
+                    'type' => 'incomingCall',
+                    'data' => [
+                        'callId' => $ringingCall['call_id'],
+                        'from' => $ringingCall['from_uri'],
+                        'to' => $ringingCall['to_uri'],
+                        'codec' => $ringingCall['codec'],
+                    ],
+                ]));
             }
         });
         $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
@@ -235,6 +247,16 @@ class connect
                 'expires_at' => time() + 1800,
             ]);
         }
+
+        // Re-register every 1500 s (25 min) to refresh before the 1800 s expiry
+        $reRegFp = $data['fp'];
+        $idReRegister = Timer::tick(1500 * 1000, function () use ($socket, $fd, $reRegFp) {
+            $model = ['id' => uniqid('rereg_', true), 'type' => 'register', 'data' => ['fp' => $reRegFp]];
+            \handlers\register::resolve($socket, $model, $fd);
+            cli::pcl("[REGISTER] Re-registro automático fp:{$reRegFp}", 'cyan');
+        });
+        self::addTimerToConnection($fd, $idReRegister);
+
         $phone->close();
         return true;
     }
