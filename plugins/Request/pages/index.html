@@ -30,7 +30,12 @@
 
 
     <!-- status de conexao  -->
-    <div class="">
+    <div class="d-flex align-items-center gap-2">
+        <button id="push-notif-btn" onclick="enablePushMessages()"
+                style="background:none;border:none;color:#adb5bd;font-size:16px;cursor:pointer;padding:4px 6px;line-height:1"
+                title="Ativar notificações de mensagens">
+            <i class="fa-solid fa-bell" id="push-notif-icon"></i>
+        </button>
         <i id="connection-icon" class="fa-solid fa-circle text-success"></i>
         <span id="connection-status">...</span>
     </div>

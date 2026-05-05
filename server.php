@@ -3,6 +3,9 @@
 
 \Swoole\Runtime::enableCoroutine(SWOOLE_HOOK_ALL);
 
+if (file_exists(__DIR__ . '/vendor/autoload.php')) {
+    require __DIR__ . '/vendor/autoload.php';
+}
 
 use helpers\utils\CallState;
 use libspech\Cache\cache as cacheLibSpech;
@@ -351,6 +354,7 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
                     'type' => 'messageNew',
                     'data' => ['message' => $msg]
                 ]);
+                \helpers\utils\WebPushHelper::notifyUser($toUser, $msg);
             }
         }
     }

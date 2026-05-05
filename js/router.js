@@ -75,6 +75,8 @@ const onOpenSocket = (socket) => {
 
     requestBrowserNotificationPermission();
     requestWakeLock();
+    // defer so DOM is ready
+    setTimeout(_updatePushBtnState, 500);
 
     template.displayLoading().then(r => {
         socket.send(JSON.stringify({
@@ -203,6 +205,104 @@ window.requestWakeLock = async function () {
 document.addEventListener('visibilitychange', () => {
     if (document.visibilityState === 'visible') window.requestWakeLock();
 });
+
+// ===== Web Push ============================================================
+
+function urlBase64ToUint8Array(base64String) {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+    const raw = atob(base64);
+    return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+}
+
+function _updatePushBtnState() {
+    const btn = document.getElementById('push-notif-btn');
+    const icon = document.getElementById('push-notif-icon');
+    if (!btn || !icon) return;
+
+    if (!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)) {
+        btn.style.display = 'none';
+        return;
+    }
+
+    if (Notification.permission === 'granted') {
+        icon.className = 'fa-solid fa-bell text-success';
+        btn.title = 'Notificações de mensagens ativas';
+    } else if (Notification.permission === 'denied') {
+        icon.className = 'fa-solid fa-bell-slash text-danger';
+        btn.title = 'Notificações bloqueadas — libere nas configurações do navegador';
+    } else {
+        icon.className = 'fa-solid fa-bell';
+        btn.title = 'Ativar notificações de mensagens';
+    }
+}
+
+async function _getPushSubscription(reg, vapidKey) {
+    let sub = await reg.pushManager.getSubscription();
+    if (sub) {
+        console.log('[PUSH] Subscription reutilizada');
+        return sub;
+    }
+    try {
+        sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        });
+        console.log('[PUSH] Subscription criada');
+        return sub;
+    } catch (e) {
+        console.warn('[PUSH] Falha ao criar subscription', e);
+        return null;
+    }
+}
+
+async function _savePushSubscription(sub) {
+    const fp = (new UserManager()).getValue('fp');
+    const result = await sendRecByToken({
+        fp,
+        subscription: sub.toJSON(),
+    }, 'savePushSubscription');
+    if (result?.success) {
+        console.log('[PUSH] Subscription salva no backend');
+    } else {
+        console.warn('[PUSH] Falha ao salvar subscription', result);
+    }
+}
+
+window.enablePushMessages = async function () {
+    if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
+        console.warn('[PUSH] Push API não suportada neste navegador');
+        return;
+    }
+
+    const perm = await Notification.requestPermission();
+    _updatePushBtnState();
+
+    if (perm !== 'granted') {
+        console.warn('[PUSH] Permissão negada:', perm);
+        if (perm === 'denied') {
+            toast('Notificações bloqueadas. Libere nas configurações do navegador.', 'Notificações', 5000, 'warning');
+        }
+        return;
+    }
+
+    const reg = await navigator.serviceWorker.ready;
+    console.log('[PUSH] Service Worker registrado');
+
+    const keyResp = await sendRecByToken({}, 'getPushPublicKey');
+    const vapidKey = keyResp?.publicKey;
+    if (!vapidKey) {
+        console.warn('[PUSH] Backend sem VAPID key configurada — configure SPECH_PUSH_PUBLIC_KEY no .env');
+        toast('Servidor sem chave VAPID configurada.', 'Push', 4000, 'error');
+        return;
+    }
+
+    const sub = await _getPushSubscription(reg, vapidKey);
+    if (!sub) return;
+
+    await _savePushSubscription(sub);
+    _updatePushBtnState();
+};
 
 // ===== Inbound Call Engine =====
 

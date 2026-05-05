@@ -1,0 +1,5 @@
+{
+  "require": {
+    "minishlink/web-push": "^8.0"
+  }
+}
