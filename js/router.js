@@ -665,6 +665,7 @@ window.renderActiveCallBar = function (partner) {
 
     const bar = document.createElement('div');
     bar.id = 'activeCallBar';
+    bar.className = 'bg-gradient-night';
     bar.innerHTML = `
         <div class="acb-header">
             <div class="acb-grip">
