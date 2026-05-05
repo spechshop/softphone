@@ -92,7 +92,7 @@ class messageSend
                 'type' => 'messageNew',
                 'data' => ['message' => $msg]
             ]);
-            \helpers\utils\WebPushHelper::notifyUser($to, $msg);
+            go(fn() => \helpers\utils\WebPushHelper::notifyUser($to, $msg));
         }
 
         return $socket->push($fd, json_encode([

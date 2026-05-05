@@ -207,7 +207,9 @@
     <script src="/js/router.js"></script>
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/js/sw.js').catch(e => console.warn('[SW] registro falhou', e));
+            navigator.serviceWorker.register('/sw.js', {scope: '/'})
+                .then(r => console.log('[SW] registrado, escopo:', r.scope))
+                .catch(e => console.warn('[SW] registro falhou', e));
         }
     </script>
     <link href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css" rel="stylesheet"/>

@@ -354,7 +354,7 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
                     'type' => 'messageNew',
                     'data' => ['message' => $msg]
                 ]);
-                \helpers\utils\WebPushHelper::notifyUser($toUser, $msg);
+                go(fn() => \helpers\utils\WebPushHelper::notifyUser($toUser, $msg));
             }
         }
     }

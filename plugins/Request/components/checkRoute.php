@@ -18,7 +18,9 @@ class checkRoute
         $staticFiles = cache::global()['interface']['staticFiles'] ?? ['/'];
 
         if (array_key_exists($path, $staticFiles)) {
-
+            $ext = pathinfo($staticFiles[$path], PATHINFO_EXTENSION);
+            $mime = $GLOBALS['interface']['allowExtensions'][$ext] ?? 'application/octet-stream';
+            $response->header('Content-Type', $mime);
             $response->status(200);
             $response->sendfile($staticFiles[$path]);
             return ['break' => true];

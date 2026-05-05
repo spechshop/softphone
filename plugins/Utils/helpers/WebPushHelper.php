@@ -78,7 +78,7 @@ class WebPushHelper
             'title' => 'Nova mensagem',
             'body' => "{$from}: {$body}",
             'tag' => 'spech-message-' . hash('sha1', $from),
-            'url' => '/messages',
+            'url' => '/',
             'from' => $from,
             'messageId' => $message['id'] ?? null,
         ];

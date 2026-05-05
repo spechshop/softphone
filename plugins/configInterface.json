@@ -19,7 +19,8 @@
     "Utils/helpers"
   ],
   "staticFiles": {
-    "/manifest.json": "manifest.json"
+    "/manifest.json": "manifest.json",
+    "/sw.js": "js/sw.js"
   },
   "allowExtensions": {
     "css": "text/css",
