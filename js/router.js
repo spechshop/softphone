@@ -215,7 +215,7 @@ function urlBase64ToUint8Array(base64String) {
     return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
 }
 
-function _updatePushBtnState() {
+async function _updatePushBtnState() {
     const btn = document.getElementById('push-notif-btn');
     const icon = document.getElementById('push-notif-icon');
     if (!btn || !icon) return;
@@ -225,14 +225,24 @@ function _updatePushBtnState() {
         return;
     }
 
-    if (Notification.permission === 'granted') {
-        icon.className = 'fa-solid fa-bell text-success';
-        btn.title = 'Notificações de mensagens ativas';
-    } else if (Notification.permission === 'denied') {
+    if (Notification.permission === 'denied') {
         icon.className = 'fa-solid fa-bell-slash text-danger';
         btn.title = 'Notificações bloqueadas — libere nas configurações do navegador';
-    } else {
-        icon.className = 'fa-solid fa-bell';
+        return;
+    }
+
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        const sub = await reg.pushManager.getSubscription();
+        if (sub) {
+            icon.className = 'fa-solid fa-bell text-success';
+            btn.title = 'Notificações ativas — clique para desativar';
+        } else {
+            icon.className = 'fa-solid fa-bell text-secondary';
+            btn.title = 'Ativar notificações de mensagens';
+        }
+    } catch (_) {
+        icon.className = 'fa-solid fa-bell text-secondary';
         btn.title = 'Ativar notificações de mensagens';
     }
 }
@@ -270,52 +280,47 @@ async function _savePushSubscription(sub) {
 }
 
 window.enablePushMessages = async function () {
-    console.log('[PUSH] enablePushMessages chamado');
-
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        console.warn('[PUSH] Push API não suportada neste navegador');
         toast('Push não suportado neste navegador.', 'Push', 4000, 'error');
         return;
     }
 
-    const regs = await navigator.serviceWorker.getRegistrations();
-    console.log('[PUSH] Service Workers registrados:', regs.map(r => r.scope));
+    const reg = await navigator.serviceWorker.ready;
+    const existing = await reg.pushManager.getSubscription();
 
-    const perm = await Notification.requestPermission();
-    console.log('[PUSH] Permissão de notificação:', perm);
-    _updatePushBtnState();
-
-    if (perm !== 'granted') {
-        console.warn('[PUSH] Permissão negada:', perm);
-        if (perm === 'denied') {
-            toast('Notificações bloqueadas. Libere nas configurações do navegador.', 'Notificações', 5000, 'warning');
-        }
+    // --- DESATIVAR ---
+    if (existing) {
+        await existing.unsubscribe();
+        const fp = (new UserManager()).getValue('fp');
+        sendRecByToken({fp, endpoint: existing.endpoint}, 'removePushSubscription');
+        await _updatePushBtnState();
+        toast('Notificações de mensagens desativadas.', 'Push', 3000, 'info');
         return;
     }
 
-    const reg = await navigator.serviceWorker.ready;
-    console.log('[PUSH] SW ativo — escopo:', reg.scope, '| estado:', reg.active?.state);
+    // --- ATIVAR ---
+    const perm = await Notification.requestPermission();
+    if (perm !== 'granted') {
+        if (perm === 'denied') toast('Notificações bloqueadas. Libere nas configurações do navegador.', 'Aviso', 5000, 'warning');
+        await _updatePushBtnState();
+        return;
+    }
 
     const keyResp = await sendRecByToken({}, 'getPushPublicKey');
-    console.log('[PUSH] Resposta getPushPublicKey:', keyResp);
     const vapidKey = keyResp?.publicKey;
     if (!vapidKey) {
-        console.warn('[PUSH] Backend sem VAPID key — configure SPECH_PUSH_PUBLIC_KEY no .env');
         toast('Servidor sem chave VAPID configurada.', 'Push', 4000, 'error');
         return;
     }
-    console.log('[PUSH] VAPID public key recebida:', vapidKey.substring(0, 20) + '...');
 
     const sub = await _getPushSubscription(reg, vapidKey);
     if (!sub) {
-        console.error('[PUSH] Falha ao criar subscription — verifique VAPID key e HTTPS');
         toast('Falha ao criar subscription push.', 'Push', 4000, 'error');
         return;
     }
-    console.log('[PUSH] Subscription:', JSON.stringify(sub.toJSON()).substring(0, 80) + '...');
 
     await _savePushSubscription(sub);
-    _updatePushBtnState();
+    await _updatePushBtnState();
     toast('Notificações de mensagens ativadas!', 'Push', 3000, 'success');
 };
 

@@ -44,6 +44,17 @@ class WebPushHelper
         cli::pcl("[PUSH:SAVE] OK — {$sipUser} agora tem " . count($data[$sipUser]) . " subscription(s)", 'green');
     }
 
+    public static function removeSubscription(string $sipUser, string $endpoint): void
+    {
+        $data = self::loadSubs();
+        $hash = hash('sha256', $endpoint);
+
+        if (isset($data[$sipUser][$hash])) {
+            unset($data[$sipUser][$hash]);
+            self::saveSubs($data);
+        }
+    }
+
     private static function loadSubs(): array
     {
         if (!file_exists(self::$subFile)) {

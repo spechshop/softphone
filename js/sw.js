@@ -11,7 +11,7 @@ self.addEventListener('push', event => {
 
     const title = data.title || 'Nova mensagem';
     const options = {
-        body: data.body || 'Você recebeu uma nova mensagem',
+        body: data.body || 'Voce recebeu uma nova mensagem',
         icon: data.icon || '/img/pyramid.png',
         badge: data.badge || '/img/pyramid.png',
         tag: data.tag || 'spech-message',
@@ -23,7 +23,13 @@ self.addEventListener('push', event => {
         },
     };
 
-    event.waitUntil(self.registration.showNotification(title, options));
+    event.waitUntil(
+        clients.matchAll({type: 'window', includeUncontrolled: true}).then(list => {
+            // Suprime se o app esta visivel (WebSocket ja entrega em tempo real)
+            if (list.some(c => c.visibilityState === 'visible')) return;
+            return self.registration.showNotification(title, options);
+        })
+    );
 });
 
 self.addEventListener('notificationclick', event => {
