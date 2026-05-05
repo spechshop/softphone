@@ -13,7 +13,9 @@ if (file_exists($envFile)) {
     foreach ($lines as $line) {
         if (strpos($line, '=') !== false && strpos($line, '#') !== 0) {
             [$key, $value] = explode('=', $line, 2);
-            putenv(trim($key) . '=' . trim($value));
+            $value = trim($value);
+            $value = trim($value, "'\"");
+            putenv(trim($key) . '=' . $value);
         }
     }
 }
