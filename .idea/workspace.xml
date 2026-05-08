@@ -23,7 +23,18 @@
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO&#10;Adicionar novos temas visuais e definir &quot;Golden Noir&quot; como padrão&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O sistema de troca de temas era limitado, com poucas opções de personalização, restringindo a variedade e experiência visual do usuário. Além disso, o tema padrão &quot;abyss&quot; não atendia a uma aparência moderna e atrativa para novos usuários.&#10;- **Solução:** Adicionados 9 novos temas visuais (`Golden Noir`, `Ocean Blue`, `Royal Purple`, `Midnight Amethyst`, `Arctic Frost`, `Forest Emerald`, `Bronze Luxe`, `Sapphire Blue`, `Aqua Marine`) ao sistema. Redefinido o tema padrão para &quot;Golden Noir&quot; visando oferecer uma opção de aparência mais moderna e vibrante logo ao inicializar o sistema.&#10;- **Local:** Modificações realizadas no arquivo `themeScript.html`, com ajustes na estrutura de inicialização e nas funções de gerenciamento de temas.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Adicionado:** Novos temas com estilos distintos e ícones associados em `themeScript.html`.&#10;- **Alterado:** Tema padrão redefinido de &quot;abyss&quot; para &quot;golden&quot;.&#10;- **Alterado:** Ajustes em `applyTheme` para priorizar o tema padrão &quot;golden&quot; quando nenhum tema estiver selecionado.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;⚠️ Possível impacto: Alteração poderá causar surpresa a usuários acostumados ao tema &quot;abyss&quot;, exigindo adaptação ao novo tema padrão.&#10;Nenhum outro efeito colateral conhecido até o momento.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Request/modules/themeScript.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/modules/themeScript.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.pt-br.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.pt-br.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/docs/index.html" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/phone.spechshop.com_default(Samsung Galaxy S8+) (1).png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/phone.spechshop.com_default(Samsung Galaxy S8+) (3).png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/phone.spechshop.com_default(Samsung Galaxy S8+).png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/screenshot_audio.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/screenshot_call.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/docs/screenshot_config.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screenshot_audio.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screenshot_call.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/screenshot_config.png" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -35,7 +46,8 @@
       <option value="directory" />
     </option>
   </component>
-  <component name="ComposerSettings">
+  <component name="ComposerSettings" synchronizationState="SYNCHRONIZE">
+    <pharConfigPath>$PROJECT_DIR$/composer.json</pharConfigPath>
     <execution />
   </component>
   <component name="CopilotPersistence">
@@ -44,7 +56,7 @@
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="235" />
+    <option name="cachedIndexableFilesCount" value="243" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -117,7 +129,44 @@
     <commands />
     <urls />
   </component>
-  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="/usr/local/bin/php" />
+  <component name="PhpWorkspaceProjectConfiguration" interpreter_name="/usr/local/bin/php">
+    <include_path>
+      <path value="$PROJECT_DIR$/vendor/spomky-labs/base64url" />
+      <path value="$PROJECT_DIR$/vendor/spomky-labs/pki-framework" />
+      <path value="$PROJECT_DIR$/vendor/web-token/jwt-util-ecc" />
+      <path value="$PROJECT_DIR$/vendor/web-token/jwt-signature" />
+      <path value="$PROJECT_DIR$/vendor/web-token/jwt-key-mgmt" />
+      <path value="$PROJECT_DIR$/vendor/web-token/jwt-library" />
+      <path value="$PROJECT_DIR$/vendor/guzzlehttp/promises" />
+      <path value="$PROJECT_DIR$/vendor/guzzlehttp/guzzle" />
+      <path value="$PROJECT_DIR$/vendor/minishlink/web-push" />
+      <path value="$PROJECT_DIR$/vendor/guzzlehttp/psr7" />
+      <path value="$PROJECT_DIR$/vendor/composer" />
+      <path value="$PROJECT_DIR$/vendor/psr/cache" />
+      <path value="$PROJECT_DIR$/vendor/psr/http-client" />
+      <path value="$PROJECT_DIR$/vendor/psr/container" />
+      <path value="$PROJECT_DIR$/vendor/symfony/deprecation-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/http-client" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-mbstring" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-php83" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-intl-normalizer" />
+      <path value="$PROJECT_DIR$/vendor/symfony/http-client-contracts" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-intl-grapheme" />
+      <path value="$PROJECT_DIR$/vendor/symfony/polyfill-ctype" />
+      <path value="$PROJECT_DIR$/vendor/psr/clock" />
+      <path value="$PROJECT_DIR$/vendor/psr/http-factory" />
+      <path value="$PROJECT_DIR$/vendor/psr/log" />
+      <path value="$PROJECT_DIR$/vendor/psr/http-message" />
+      <path value="$PROJECT_DIR$/vendor/symfony/service-contracts" />
+      <path value="$PROJECT_DIR$/vendor/brick/math" />
+      <path value="$PROJECT_DIR$/vendor/symfony/console" />
+      <path value="$PROJECT_DIR$/vendor/symfony/string" />
+      <path value="$PROJECT_DIR$/vendor/paragonie/constant_time_encoding" />
+      <path value="$PROJECT_DIR$/vendor/paragonie/sodium_compat" />
+      <path value="$PROJECT_DIR$/vendor/web-token/jwt-signature-algorithm-ecdsa" />
+      <path value="$PROJECT_DIR$/vendor/ralouphie/getallheaders" />
+    </include_path>
+  </component>
   <component name="ProblemsViewState">
     <option name="selectedTabId" value="CurrentFile" />
   </component>
@@ -130,40 +179,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "JavaScript Debug.audio.html.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "inbound",
-    "javascript.nodejs.core.library.configured.version": "21.0.0",
-    "javascript.nodejs.core.library.typings.version": "25.6.0",
-    "javascript.preferred.runtime.type.id": "node",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/lotus/projetos/spechphone",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;JavaScript Debug.audio.html.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;inbound&quot;,
+    &quot;javascript.nodejs.core.library.configured.version&quot;: &quot;21.0.0&quot;,
+    &quot;javascript.nodejs.core.library.typings.version&quot;: &quot;25.6.0&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/lotus/projetos/spechphone&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "ChangesTree.GroupingKeys": [
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;ChangesTree.GroupingKeys&quot;: [
+      &quot;repository&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecapSettings">
     <option name="autoUpdateEnabled" value="false" />
   </component>
@@ -270,6 +319,8 @@
       <workItem from="1777934727632" duration="13338000" />
       <workItem from="1777949193746" duration="12924000" />
       <workItem from="1777968728047" duration="19197000" />
+      <workItem from="1778078065933" duration="5000" />
+      <workItem from="1778216777081" duration="982000" />
     </task>
     <task id="LOCAL-00083" summary="Altere o tema visual e adicione seção de capturas de tela em `docs/index.html`&#10;&#10;### Problema&#10;O tema visual da documentação dificultava a leitura em ambientes de baixa luminosidade, e não havia exemplos visuais de telas importantes do projeto, dificultando o entendimento das funcionalidades pelos usuários.&#10;&#10;### Solução&#10;- Alterado o tema para cores adaptadas ao modo escuro, melhorando a legibilidade.&#10;- Adicionada uma seção de capturas de tela em HTML para exibir interfaces significativas do projeto.&#10;- Incluídas imagens de interfaces de configuração, chamadas e processamento de áudio.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Estilo visual no arquivo `docs/index.html` para um tema escuro.&#10;- Adicionado: Seção de capturas de tela na documentação (`docs/index.html`) com seis novas imagens (ex.: `screenshot_config.png`, `screenshot_call.png`).&#10;- Adicionado: Novos arquivos de imagem no diretório `docs/`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -753,13 +804,11 @@
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/modules/themeScript.html</url>
           <line>125</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="40" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/modules/themeScript.html</url>
           <line>151</line>
-          <properties lambdaOrdinal="-1" />
           <option name="timeStamp" value="41" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">

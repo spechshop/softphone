@@ -180,9 +180,11 @@ Main runtime settings including host, port, SSL files, and plugin autoloading pa
 
 ## Screenshots
 
-![Call screen](screenshot_call.png)
-![Audio controls](screenshot_audio.png)
-![Configuration](screenshot_config.png)
+![Dialer Interface](docs/WhatsApp%20Image%202026-05-05%20at%2013.02.27%20(1).jpeg)
+![Active Call with Minimized Bar](docs/WhatsApp%20Image%202026-05-05%20at%2013.02.27%20(2).jpeg)
+![Messaging Interface](docs/WhatsApp%20Image%202026-05-05%20at%2013.02.27.jpeg)
+![Mobile Call Interface](docs/WhatsApp%20Image%202026-05-05%20at%2013.00.45.jpeg)
+![Mobile Floating Widget](docs/WhatsApp%20Image%202026-05-05%20at%2013.03.39.jpeg)
 
 ## License
 

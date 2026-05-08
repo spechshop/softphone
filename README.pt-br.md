@@ -186,9 +186,11 @@ Configurações principais de tempo de execução, incluindo host, porta, arquiv
 
 ## Capturas de Tela
 
-![Tela de chamada](screenshot_call.png)
-![Controles de áudio](screenshot_audio.png)
-![Configuração](screenshot_config.png)
+![Interface do Discador](docs/WhatsApp%20Image%202026-05-05%20at%2013.02.27%20(1).jpeg)
+![Chamada Ativa com Barra Minimizada](docs/WhatsApp%20Image%202026-05-05%20at%2013.02.27%20(2).jpeg)
+![Interface de Mensagens](docs/WhatsApp%20Image%202026-05-05%20at%2013.02.27.jpeg)
+![Interface de Chamada Mobile](docs/WhatsApp%20Image%202026-05-05%20at%2013.00.45.jpeg)
+![Widget Flutuante Mobile](docs/WhatsApp%20Image%202026-05-05%20at%2013.03.39.jpeg)
 
 ## Licença
 

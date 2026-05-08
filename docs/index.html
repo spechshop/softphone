@@ -261,15 +261,15 @@
     </header>
 
     <div class="warning">
-        <strong>⚠️ IMPORTANT:</strong> The project is still in <strong>beta</strong> and under development. Some
-        features, such as <strong>receiving calls</strong>, are yet to be implemented.
+        <strong>⚠️ IMPORTANT:</strong> The project is still in <strong>beta</strong> and under active development.
+        Inbound and outbound calls are functional, but expect updates and potential breaking changes.
     </div>
 
     <section>
         <h2>What is SpechPhone?</h2>
         <p>SpechPhone is a modern <strong>SIP/VoIP softphone</strong> written in <strong>PHP</strong> and optimized with
-            <strong>Swoole</strong>. It allows establishing real-time voice calls, controlling codecs, and integrating
-            with backend tools without depending on external media libraries.</p>
+            <strong>Swoole</strong>. It supports inbound and outbound voice calls, SIP messaging, real-time audio
+            bridging, and integrates with backend tools without depending on external media libraries or WebRTC.</p>
     </section>
 
     <section>
@@ -299,6 +299,14 @@
                 <h4>Browser Ready</h4>
                 <p>Responsive HTML/JS interface with WebSocket support</p>
             </div>
+            <div class="feature-box">
+                <h4>Inbound Calls</h4>
+                <p>Full SIP inbound flow with INVITE/ACK/CANCEL/BYE and RTP ↔ PCM media bridge</p>
+            </div>
+            <div class="feature-box">
+                <h4>SIP Messaging</h4>
+                <p>Integrated send/receive for SIP MESSAGE with real-time chat UI and history</p>
+            </div>
         </div>
     </section>
 
@@ -306,36 +314,36 @@
         <h2>Screenshots</h2>
 
         <div class="screenshot-container">
-            <img alt="SpechPhone Configuration Interface" class="screenshot" src="screenshot_config.png">
-            <p class="screenshot-caption">Configuration Interface - SIP account setup and codec settings</p>
+            <img alt="SpechPhone Dialer Interface" class="screenshot"
+                 src="WhatsApp%20Image%202026-05-05%20at%2013.02.27%20(1).jpeg">
+            <p class="screenshot-caption">Dialer Interface - Phone keypad with call and volume controls</p>
         </div>
 
         <div class="screenshot-container">
-            <img alt="SpechPhone Call Interface" class="screenshot" src="screenshot_call.png">
-            <p class="screenshot-caption">Call Interface - Active call with real-time controls</p>
+            <img alt="SpechPhone Active Call with Minimized Bar" class="screenshot"
+                 src="WhatsApp%20Image%202026-05-05%20at%2013.02.27%20(2).jpeg">
+            <p class="screenshot-caption">Active Call - Real-time audio meters, minimized call bar, and hangup
+                controls</p>
         </div>
 
         <div class="screenshot-container">
-            <img alt="SpechPhone Audio Processing" class="screenshot" src="screenshot_audio.png">
-            <p class="screenshot-caption">Audio Processing - Real-time audio monitoring and codec information</p>
-        </div>
-
-        <div class="screenshot-container">
-            <img alt="SpechPhone Mobile Interface" class="screenshot"
-                 src="phone.spechshop.com_default(Samsung Galaxy S8+).png">
-            <p class="screenshot-caption">Mobile Interface - SpechPhone running on Samsung Galaxy S8+</p>
+            <img alt="SpechPhone Messaging Interface" class="screenshot"
+                 src="WhatsApp%20Image%202026-05-05%20at%2013.02.27.jpeg">
+            <p class="screenshot-caption">Messaging Interface - SIP MESSAGE conversation list with real-time
+                delivery</p>
         </div>
 
         <div class="screenshot-container">
             <img alt="SpechPhone Mobile Call Interface" class="screenshot"
-                 src="phone.spechshop.com_default(Samsung Galaxy S8+) (1).png">
-            <p class="screenshot-caption">Mobile Call Interface - Active call on mobile device</p>
+                 src="WhatsApp%20Image%202026-05-05%20at%2013.00.45.jpeg">
+            <p class="screenshot-caption">Mobile Call Interface - Active call screen with mute, volume, and keyboard
+                controls</p>
         </div>
 
         <div class="screenshot-container">
-            <img alt="SpechPhone Mobile Configuration" class="screenshot"
-                 src="phone.spechshop.com_default(Samsung Galaxy S8+) (3).png">
-            <p class="screenshot-caption">Mobile Configuration - Settings and options on mobile device</p>
+            <img alt="SpechPhone Mobile Floating Widget" class="screenshot"
+                 src="WhatsApp%20Image%202026-05-05%20at%2013.03.39.jpeg">
+            <p class="screenshot-caption">Mobile Floating Widget - Minimized active call overlay on home screen</p>
         </div>
     </section>
 
@@ -352,22 +360,23 @@
 
     <section>
         <h2>Installation</h2>
-        <pre><code># Install system dependencies
-sudo apt update && sudo apt install -y openssl
-
-# Clone the repository
+        <pre><code># Clone the repository
 git clone https://github.com/spechshop/spechphone && cd spechphone
-git clone https://github.com/spechshop/libspech
 
 # Download pcg729 runtime
-curl -L https://github.com/spechshop/pcg729/releases/download/current/php -o php
+wget https://github.com/spechshop/pcg729/releases/download/PCG729/php
+sudo mv php /usr/local/bin/php
+sudo chmod +x /usr/local/bin/php
 
-# Configure runtime
-chmod +x ./php
-sudo cp php /usr/local/bin/php
+# Initialize submodules
+git submodule update --init --recursive
 
-# Start services
-php middleware.php
+# Configure environment
+cp .env.example .env
+# Edit .env and set your SPECH_VAULT_KEY_HEX
+
+# Start services (each in a separate terminal)
+php server.php
 php audio.php</code></pre>
     </section>
 
@@ -393,6 +402,7 @@ php audio.php</code></pre>
             <li><strong>Proxy/SBC Client</strong> for SIP servers via UDP</li>
             <li><strong>Audio Streaming</strong> via WebSocket or RTP</li>
             <li><strong>Monitoring and Recording Services</strong> with native audio utilities</li>
+            <li><strong>Messaging Platform</strong> with SIP MESSAGE and real-time chat interface</li>
         </ul>
     </section>
 
@@ -407,7 +417,7 @@ php audio.php</code></pre>
     </section>
 
     <footer>
-        <p>&copy; 2025 Lotus / berzersks</p>
+        <p>&copy; 2026 Lotus / berzersks</p>
         <p>Licensed under <a href="https://github.com/spechshop/spechphone/blob/main/LICENSE.txt">Apache License 2.0</a>
         </p>
     </footer>
