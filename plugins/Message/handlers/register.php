@@ -46,7 +46,7 @@ class register
         cli::pcl("Registrando no servidor: $sipServer", 'blue');
 
 
-        $modelRegister = $phone->modelRegister();
+        $modelRegister = $phone->modelRegister(1800);
         $modelRegister['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":$phone->socketPortListen;branch=z9hG4bK$phone->callId;rport";
 
 

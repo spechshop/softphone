@@ -208,7 +208,7 @@ class connect
         } catch (\Throwable $e) {
             return false;
         }
-        $modelRegister = $phone->modelRegister();
+        $modelRegister = $phone->modelRegister(1800);
         $modelRegister['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":$phone->socketPortListen;branch=z9hG4bK$phone->callId;rport";
         $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
         for ($n = 3; $n--;) {
