@@ -21,20 +21,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO&#10;Adicionar novos temas visuais e definir &quot;Golden Noir&quot; como padrão&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O sistema de troca de temas era limitado, com poucas opções de personalização, restringindo a variedade e experiência visual do usuário. Além disso, o tema padrão &quot;abyss&quot; não atendia a uma aparência moderna e atrativa para novos usuários.&#10;- **Solução:** Adicionados 9 novos temas visuais (`Golden Noir`, `Ocean Blue`, `Royal Purple`, `Midnight Amethyst`, `Arctic Frost`, `Forest Emerald`, `Bronze Luxe`, `Sapphire Blue`, `Aqua Marine`) ao sistema. Redefinido o tema padrão para &quot;Golden Noir&quot; visando oferecer uma opção de aparência mais moderna e vibrante logo ao inicializar o sistema.&#10;- **Local:** Modificações realizadas no arquivo `themeScript.html`, com ajustes na estrutura de inicialização e nas funções de gerenciamento de temas.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Adicionado:** Novos temas com estilos distintos e ícones associados em `themeScript.html`.&#10;- **Alterado:** Tema padrão redefinido de &quot;abyss&quot; para &quot;golden&quot;.&#10;- **Alterado:** Ajustes em `applyTheme` para priorizar o tema padrão &quot;golden&quot; quando nenhum tema estiver selecionado.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;⚠️ Possível impacto: Alteração poderá causar surpresa a usuários acostumados ao tema &quot;abyss&quot;, exigindo adaptação ao novo tema padrão.&#10;Nenhum outro efeito colateral conhecido até o momento.">
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="Atualizar capturas de tela na documentação e ajustar referências&#10;&#10;### Problema&#10;As capturas de tela na documentação estavam desatualizadas e não refletiam a interface atualizada do SpechPhone. Isso criava uma desconexão entre o manual e a experiência real do usuário.&#10;&#10;### Solução&#10;Atualizadas as capturas de tela nos arquivos de documentação (`README.md`, `README.pt-br.md` e `docs/index.html`). As novas imagens foram incluídas no diretório `docs` e apontam para as interfaces visuais mais recentes do sistema, como tela de discador, chamada ativa, interface de mensagens e widgets flutuantes.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Referências de imagens em `README.md`, `README.pt-br.md` e `docs/index.html` para os novos arquivos.&#10;- Removido: Imagens antigas no diretório `docs/`.&#10;- Adicionado: Novas capturas de tela atualizadas no diretório `docs/`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
+      <change beforePath="$PROJECT_DIR$/.idea/spechphone.iml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/spechphone.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/README.pt-br.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.pt-br.md" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/index.html" beforeDir="false" afterPath="$PROJECT_DIR$/docs/index.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/phone.spechshop.com_default(Samsung Galaxy S8+) (1).png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/phone.spechshop.com_default(Samsung Galaxy S8+) (3).png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/phone.spechshop.com_default(Samsung Galaxy S8+).png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/screenshot_audio.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/screenshot_call.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/docs/screenshot_config.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/screenshot_audio.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/screenshot_call.png" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/screenshot_config.png" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/libspech/trunkController.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/libspech/trunkController.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -90,7 +80,7 @@
         <entry key="$PROJECT_DIR$/libspech" value="master" />
       </map>
     </option>
-    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
+    <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/libspech" />
     <option name="ROOT_SYNC" value="DONT_SYNC" />
   </component>
   <component name="GitHubPullRequestSearchHistory">{
@@ -117,7 +107,7 @@
   <component name="GithubPullRequestsUISettings">{
   &quot;selectedUrlAndAccountId&quot;: {
     &quot;url&quot;: &quot;https://github.com/spechshop/spechphone.git&quot;,
-    &quot;accountId&quot;: &quot;112bf7fc-43a6-4ca6-9ea4-b1fd2030c70d&quot;
+    &quot;accountId&quot;: &quot;8ab904ef-b8e6-44d9-9ea1-c3e9dbd75a69&quot;
   }
 }</component>
   <component name="HighlightingSettingsPerFile">
@@ -179,40 +169,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;JavaScript Debug.audio.html.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;inbound&quot;,
-    &quot;javascript.nodejs.core.library.configured.version&quot;: &quot;21.0.0&quot;,
-    &quot;javascript.nodejs.core.library.typings.version&quot;: &quot;25.6.0&quot;,
-    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/lotus/projetos/spechphone&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "JavaScript Debug.audio.html.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "spech",
+    "javascript.nodejs.core.library.configured.version": "21.0.0",
+    "javascript.nodejs.core.library.typings.version": "25.6.0",
+    "javascript.preferred.runtime.type.id": "node",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/lotus/projetos/spechphone",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;ChangesTree.GroupingKeys&quot;: [
-      &quot;repository&quot;
+  "keyToStringList": {
+    "ChangesTree.GroupingKeys": [
+      "repository"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecapSettings">
     <option name="autoUpdateEnabled" value="false" />
   </component>
@@ -320,15 +310,8 @@
       <workItem from="1777949193746" duration="12924000" />
       <workItem from="1777968728047" duration="19197000" />
       <workItem from="1778078065933" duration="5000" />
-      <workItem from="1778216777081" duration="982000" />
-    </task>
-    <task id="LOCAL-00083" summary="Altere o tema visual e adicione seção de capturas de tela em `docs/index.html`&#10;&#10;### Problema&#10;O tema visual da documentação dificultava a leitura em ambientes de baixa luminosidade, e não havia exemplos visuais de telas importantes do projeto, dificultando o entendimento das funcionalidades pelos usuários.&#10;&#10;### Solução&#10;- Alterado o tema para cores adaptadas ao modo escuro, melhorando a legibilidade.&#10;- Adicionada uma seção de capturas de tela em HTML para exibir interfaces significativas do projeto.&#10;- Incluídas imagens de interfaces de configuração, chamadas e processamento de áudio.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Estilo visual no arquivo `docs/index.html` para um tema escuro.&#10;- Adicionado: Seção de capturas de tela na documentação (`docs/index.html`) com seis novas imagens (ex.: `screenshot_config.png`, `screenshot_call.png`).&#10;- Adicionado: Novos arquivos de imagem no diretório `docs/`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1767621717633</created>
-      <option name="number" value="00083" />
-      <option name="presentableId" value="LOCAL-00083" />
-      <option name="project" value="LOCAL" />
-      <updated>1767621717633</updated>
+      <workItem from="1778216777081" duration="1828000" />
+      <workItem from="1778248637836" duration="338000" />
     </task>
     <task id="LOCAL-00084" summary="Adicione modal interativo para visualização em tela cheia de capturas de tela em `docs/index.html`&#10;&#10;### Problema&#10;A seção de capturas de tela na documentação exibia as imagens de forma estática, limitando a interação e dificultando a visualização em dispositivos com telas menores.&#10;&#10;### Solução&#10;- Implementado modal interativo em HTML, CSS e JavaScript para visualização em tela cheia das capturas de tela.&#10;- Adicionada transição suave e zoom ao passar o cursor sobre as imagens.&#10;- Incluído suporte à navegação intuitiva (clique no modal, botão de fechar e tecla ESC).&#10;&#10;### Mudanças relevantes&#10;- Adicionado: Modal de visualização em tela cheia no arquivo `docs/index.html`.&#10;- Adicionado: Estilos CSS para transições e animações ao abrir o modal.&#10;- Adicionado: Script JavaScript para gerenciamento de eventos do modal e comportamento responsivo.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento. Monitorar o comportamento do modal em dispositivos móveis e navegadores menos comuns.">
       <option name="closed" value="true" />
@@ -714,7 +697,15 @@
       <option name="project" value="LOCAL" />
       <updated>1777999702445</updated>
     </task>
-    <option name="localTasksCounter" value="132" />
+    <task id="LOCAL-00132" summary="Atualizar capturas de tela na documentação e ajustar referências&#10;&#10;### Problema&#10;As capturas de tela na documentação estavam desatualizadas e não refletiam a interface atualizada do SpechPhone. Isso criava uma desconexão entre o manual e a experiência real do usuário.&#10;&#10;### Solução&#10;Atualizadas as capturas de tela nos arquivos de documentação (`README.md`, `README.pt-br.md` e `docs/index.html`). As novas imagens foram incluídas no diretório `docs` e apontam para as interfaces visuais mais recentes do sistema, como tela de discador, chamada ativa, interface de mensagens e widgets flutuantes.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Referências de imagens em `README.md`, `README.pt-br.md` e `docs/index.html` para os novos arquivos.&#10;- Removido: Imagens antigas no diretório `docs/`.&#10;- Adicionado: Novas capturas de tela atualizadas no diretório `docs/`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento.">
+      <option name="closed" value="true" />
+      <created>1778217955251</created>
+      <option name="number" value="00132" />
+      <option name="presentableId" value="LOCAL-00132" />
+      <option name="project" value="LOCAL" />
+      <updated>1778217955252</updated>
+    </task>
+    <option name="localTasksCounter" value="133" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -758,7 +749,6 @@
     </option>
   </component>
   <component name="VcsManagerConfiguration">
-    <MESSAGE value="### TÍTULO  &#10;Adicionar suporte ao sistema de mensagens com interface de chat  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não possuía suporte para envio, recebimento e exibição de mensagens, limitando a comunicação entre usuários.  &#10;- **Solução:** Implementado um sistema completo de mensagens com interface para envio, histórico de conversa, marcação de leitura e notificações em tempo real.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Classes `messageSend`, `messageList`, `messageRead` e `messageHistory` para manipulação de mensagens no backend.  &#10;- **Adicionado:** Classe `messageStore` para gestão de mensagens e conversas no armazenamento persistente.  &#10;- **Adicionado:** Interface de chat no frontend para exibição de conversas e envio de mensagens (`plugins/Request/pages/default.html`, `plugins/Request/pages/index.html`).  &#10;- **Adicionado:** Eventos em tempo real para recebimento de novas mensagens (`server.php`, `js/router.js`).  &#10;- **Alterado:** Adicionados novos estilos e elementos associados ao sistema de mensagens na interface.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: alterações extensivas na interface e no backend podem introduzir instabilidades ou regressões em áreas relacionadas.  &#10;⚠️ Necessário monitoramento pós-deploy para verificar o desempenho e correção de eventuais bugs ao escalar o uso do sistema." />
     <MESSAGE value="Adicionado arquivo trunkController.php para gerenciamento de sessões SIP&#10;&#10;O problema era a ausência de uma implementação genérica para controle de chamadas e sessões SIP no sistema. Isso impactava a integração de operações como INVITE, BYE, OPTIONS e tratamento de eventos DTMF.&#10;&#10;Foi introduzida a classe `trunkController` no arquivo `libspech/plugins/Utils/libspech/trunkController.php`. Essa classe gerencia sockets, estados de chamada, codecs suportados, manipulação de SDP, registro SIP, controle de áudio e callbacks para eventos como falhas, respostas e encerramentos.&#10;&#10;Mudanças Relevantes:&#10;- Adicionado suporte a envio e gestão de pacotes RTP e DTMF.&#10;- Implementadas funções para renderização de mensagens SIP (ex.: OPTIONS e ACK).&#10;- Introduzida lógica para controle de timeout e reconexões automáticas.&#10;&#10;Impactos e Riscos:&#10;⚠️ Possível impacto: comportamento sob alta carga ainda não validado devido à complexidade do processamento SIP e RTP.&#10;⚠️ Necessidade de monitoramento pós-deploy para validar estabilidade e registro.&#10;Nenhum outro efeito colateral conhecido até o momento." />
     <MESSAGE value="### TÍTULO&#10;Adicionar suporte para execução de corrotinas e gerenciamento de mídia RTP/PCM em chamadas SIP&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O sistema de configuração e execução de chamadas não gerenciava corrotinas para processar mídia RTP/PCM de forma assíncrona, impactando a eficiência em fluxos bidirecionais.&#10;- **Solução:** Integrada a biblioteca Swoole para execução de corrotinas, adicionando capacidade de processamento paralelo e estrutura de eventos de mídia em chamadas SIP.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Adicionado:** Corrotinas para gerenciamento de chamadas RTP/PCM utilizando `Swoole\Coroutine` e `MediaChannel` em `plugins/Message/handlers/acceptCall.php`.&#10;- **Adicionado:** Funções para decodificação de mídia (PCMU, PCMA, G729, L16) e retransmissão entre caller e navegador.&#10;- **Adicionado:** Eventos de timeout para gerenciar a desconexão automática de chamadas inativas.&#10;- **Alterado:** Organização do fluxo de gravação RTP/PCM para maior paralelismo e eficiência.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;⚠️ Possível impacto: Mudança na estrutura de chamadas pode alterar a latência e depender do sistema operacional para suporte otimizado a Swoole.  &#10;⚠️ Necessidade de monitoramento pós-deploy para validar estabilidade em cenários de carga elevada.  &#10;Nenhum outro efeito colateral conhecido até o momento." />
     <MESSAGE value="### TÍTULO  &#10;Corrigir envio de mensagens SIP BYE e aprimorar logs no encerramento de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** Na desconexão de chamadas SIP, o fluxo de envio de mensagens BYE apresentava inconsistências na formação de headers SIP e na inclusão de tags obrigatórias, ocasionando erros na comunicação.  &#10;- **Solução:** Atualizado o handler `hangUpCall.php` para garantir a construção correta de headers SIP, incluindo a tag `To`, rota reversa de headers `Record-Route`, e campo `Contact`. Mensagens de log detalhadas foram adicionadas para auditoria e rastreamento de encerramento de chamadas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Headers SIP no envio de BYE em `plugins/Message/handlers/hangUpCall.php`, com suporte à tag `To` e rotas `Record-Route`.  &#10;- **Adicionado:** Mensagens de log detalhadas via `cli::pcl` para monitorar o fluxo de encerramento.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: alterações no fluxo SIP podem impactar integrações que dependam de headers legados no BYE. Recomenda-se testes em ambientes controlados.  &#10;Nenhum outro efeito colateral conhecido até o momento." />
@@ -783,7 +773,8 @@
     <MESSAGE value="### TÍTULO  &#10;Adicionar controles interativos de chamada ativa para mute, alto-falante e minimização  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A barra de chamadas ativas carecia de controles para operações comuns, como silenciar o microfone, ativar/desativar o alto-falante e minimizar a interface em dispositivos móveis. Isso reduzia a usabilidade e tornava a experiência menos intuitiva durante chamadas ativas.  &#10;- **Solução:** Foram adicionados métodos interativos na barra de chamadas para permitir as ações de mute (`_acbToggleMute`), alto-falante (`_acbToggleSpeaker`) e minimização (`_acbToggleMinimize`), com atualizações dinâmicas de estado na interface. Essas alterações incluem ícones contextuais e estilos otimizados para responsividade.  &#10;- **Local:** Alterações realizadas no arquivo `js/router.js` para implementação das funções e eventos de interação e no arquivo `plugins/Request/pages/default.html` para ajustes visuais e novos elementos da interface.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Função `_acbToggleMute` no `router.js` para controle do microfone, incluindo troca de ícones e estado do botão.  &#10;- **Adicionado:** Função `_acbToggleSpeaker` no `router.js` para controle do alto-falante, com atualização de ícones na interface.  &#10;- **Adicionado:** Função `_acbToggleMinimize` no `router.js` para minimizar a barra de chamadas em dispositivos móveis.  &#10;- **Adicionado:** Botões de controle interativo (mute, alto-falante e minimizar) na seção da barra de chamadas em `default.html`.  &#10;- **Alterado:** Estilos no arquivo `default.html` para compatibilidade com novos estados visuais e melhorias na responsividade.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: Alterações no comportamento visual e eventos de interação podem se comportar de forma inconsistente em navegadores legados.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Recomenda-se validar em diferentes dispositivos e navegadores para garantir uniformidade da experiência." />
     <MESSAGE value="### TÍTULO  &#10;Adicionar nova lógica de temas, suporte a modal de escolha e melhorias no sistema&#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema de troca de temas utilizava uma lógica limitada, com base em menus inadequados, dificultando a interação do usuário e a criação/edição de novos temas personalizáveis. Além disso, alguns estilos estavam redundantes ou mal organizados, impactando a manutenção.  &#10;- **Solução:** A lógica foi reescrita para suporte a modais interativos com lista de temas de visualização amigável. O modal inclui botões para editar, remover ou criar novos temas diretamente na interface. Reorganizado o código para maior clareza e para evitar duplicações.  &#10;- **Local:** Alterações principais no arquivo `themeScript.html` incluindo novas funções `openThemeModal`, `refreshThemeGrid`, e `generateThemeCSS`, além do ajuste nas funções relacionadas ao sistema de temas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Modal interativo para seleção e gerenciamento de temas em `themeScript.html`.  &#10;- **Adicionado:** Função `generateThemeCSS` para centralizar a geração de estilos dinâmicos.  &#10;- **Adicionado:** Funções `openThemeModal`, `refreshThemeGrid`, e eventos para criar, editar e deletar temas na interface.  &#10;- **Removido:** Lógica antiga com menus dependentes de botões flutuantes para troca de temas.  &#10;- **Alterado:** Ajustes na lógica de inicialização de temas, definindo “abyss” como padrão.  &#10;- **Alterado:** Melhoria na estrutura de estilo dos botões e suporte responsivo no modal.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: Usuários podem perceber comportamento diferente no botão de seleção de tema, dado o abandono do menu antigo.  &#10;- Nenhum outro efeito colateral conhecido até o momento, mas a lógica de criação/remoção de temas personalizados deve ser monitorada em produção para prevenir inconsistências ou perda de dados." />
     <MESSAGE value="### TÍTULO&#10;Adicionar novos temas visuais e definir &quot;Golden Noir&quot; como padrão&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O sistema de troca de temas era limitado, com poucas opções de personalização, restringindo a variedade e experiência visual do usuário. Além disso, o tema padrão &quot;abyss&quot; não atendia a uma aparência moderna e atrativa para novos usuários.&#10;- **Solução:** Adicionados 9 novos temas visuais (`Golden Noir`, `Ocean Blue`, `Royal Purple`, `Midnight Amethyst`, `Arctic Frost`, `Forest Emerald`, `Bronze Luxe`, `Sapphire Blue`, `Aqua Marine`) ao sistema. Redefinido o tema padrão para &quot;Golden Noir&quot; visando oferecer uma opção de aparência mais moderna e vibrante logo ao inicializar o sistema.&#10;- **Local:** Modificações realizadas no arquivo `themeScript.html`, com ajustes na estrutura de inicialização e nas funções de gerenciamento de temas.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Adicionado:** Novos temas com estilos distintos e ícones associados em `themeScript.html`.&#10;- **Alterado:** Tema padrão redefinido de &quot;abyss&quot; para &quot;golden&quot;.&#10;- **Alterado:** Ajustes em `applyTheme` para priorizar o tema padrão &quot;golden&quot; quando nenhum tema estiver selecionado.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;⚠️ Possível impacto: Alteração poderá causar surpresa a usuários acostumados ao tema &quot;abyss&quot;, exigindo adaptação ao novo tema padrão.&#10;Nenhum outro efeito colateral conhecido até o momento." />
-    <option name="LAST_COMMIT_MESSAGE" value="### TÍTULO&#10;Adicionar novos temas visuais e definir &quot;Golden Noir&quot; como padrão&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O sistema de troca de temas era limitado, com poucas opções de personalização, restringindo a variedade e experiência visual do usuário. Além disso, o tema padrão &quot;abyss&quot; não atendia a uma aparência moderna e atrativa para novos usuários.&#10;- **Solução:** Adicionados 9 novos temas visuais (`Golden Noir`, `Ocean Blue`, `Royal Purple`, `Midnight Amethyst`, `Arctic Frost`, `Forest Emerald`, `Bronze Luxe`, `Sapphire Blue`, `Aqua Marine`) ao sistema. Redefinido o tema padrão para &quot;Golden Noir&quot; visando oferecer uma opção de aparência mais moderna e vibrante logo ao inicializar o sistema.&#10;- **Local:** Modificações realizadas no arquivo `themeScript.html`, com ajustes na estrutura de inicialização e nas funções de gerenciamento de temas.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Adicionado:** Novos temas com estilos distintos e ícones associados em `themeScript.html`.&#10;- **Alterado:** Tema padrão redefinido de &quot;abyss&quot; para &quot;golden&quot;.&#10;- **Alterado:** Ajustes em `applyTheme` para priorizar o tema padrão &quot;golden&quot; quando nenhum tema estiver selecionado.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;⚠️ Possível impacto: Alteração poderá causar surpresa a usuários acostumados ao tema &quot;abyss&quot;, exigindo adaptação ao novo tema padrão.&#10;Nenhum outro efeito colateral conhecido até o momento." />
+    <MESSAGE value="Atualizar capturas de tela na documentação e ajustar referências&#10;&#10;### Problema&#10;As capturas de tela na documentação estavam desatualizadas e não refletiam a interface atualizada do SpechPhone. Isso criava uma desconexão entre o manual e a experiência real do usuário.&#10;&#10;### Solução&#10;Atualizadas as capturas de tela nos arquivos de documentação (`README.md`, `README.pt-br.md` e `docs/index.html`). As novas imagens foram incluídas no diretório `docs` e apontam para as interfaces visuais mais recentes do sistema, como tela de discador, chamada ativa, interface de mensagens e widgets flutuantes.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Referências de imagens em `README.md`, `README.pt-br.md` e `docs/index.html` para os novos arquivos.&#10;- Removido: Imagens antigas no diretório `docs/`.&#10;- Adicionado: Novas capturas de tela atualizadas no diretório `docs/`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
+    <option name="LAST_COMMIT_MESSAGE" value="Atualizar capturas de tela na documentação e ajustar referências&#10;&#10;### Problema&#10;As capturas de tela na documentação estavam desatualizadas e não refletiam a interface atualizada do SpechPhone. Isso criava uma desconexão entre o manual e a experiência real do usuário.&#10;&#10;### Solução&#10;Atualizadas as capturas de tela nos arquivos de documentação (`README.md`, `README.pt-br.md` e `docs/index.html`). As novas imagens foram incluídas no diretório `docs` e apontam para as interfaces visuais mais recentes do sistema, como tela de discador, chamada ativa, interface de mensagens e widgets flutuantes.&#10;&#10;### Mudanças relevantes&#10;- Alterado: Referências de imagens em `README.md`, `README.pt-br.md` e `docs/index.html` para os novos arquivos.&#10;- Removido: Imagens antigas no diretório `docs/`.&#10;- Adicionado: Novas capturas de tela atualizadas no diretório `docs/`.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento." />
     <option name="OPTIMIZE_IMPORTS_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REFORMAT_BEFORE_PROJECT_COMMIT" value="true" />
     <option name="REARRANGE_BEFORE_PROJECT_COMMIT" value="true" />
