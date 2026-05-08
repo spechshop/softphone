@@ -3,6 +3,7 @@
 namespace plugins\Start;
 
 use FilesystemIterator;
+use helpers\utils\Registrar;
 use RecursiveDirectoryIterator;
 use RecursiveTreeIterator;
 use Swoole\Table;
@@ -31,6 +32,13 @@ class server
             $idKey = explode('.', $e[count($e) - 1])[0];
             \cache::subDefine('cachePages', $idKey, \bufferPages::get($idKey, __DIR__));
         }
+
+
+        Registrar::init();
+        Registrar::bootstrap($server);
+        Timer::tick(Registrar::TICK_INTERVAL_MS, function () use ($server) {
+            go(fn() => Registrar::tick($server));
+        });
 
 
     }

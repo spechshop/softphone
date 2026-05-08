@@ -83,6 +83,11 @@ class spechphoneVault
         return array_key_exists($key, $this->data ?? []);
     }
 
+    public function keys(): array
+    {
+        return array_keys($this->data);
+    }
+
     public function incr(string $key, int|float $by = 1): int|float
     {
         return $this->atomicNumberOp($key, +$by);
