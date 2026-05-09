@@ -23,6 +23,8 @@
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Corrigir fluxo de mídia e condições de encerramento na chamada&#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O tratamento de fluxo de mídia e estado ativo da chamada não era robusto, possibilitando comportamentos inesperados ao finalizar chamadas, como consumo excessivo de CPU em corrotinas ou bloqueios no recebimento de pacotes RTP.  &#10;- **Solução:** Ajustado o loop de recepção de RTP no arquivo `acceptCall.php` para validar de forma consistente os estados `callActive` e `receiveBye`, garantindo encerramento adequado. Otimizada a lógica de espera ao reduzir ciclos longos causados por pacotes RTP inválidos ou ausentes.  &#10;- **Local:** Alterações realizadas em `plugins/Message/handlers/acceptCall.php` no tratamento da variável `$raw` e ciclo principal de recepção de mídia.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Alterado:** Condições no loop principal para monitorar `callActive` e `receiveBye`.  &#10;- **Alterado:** Alteração do tamanho do buffer no método `recvfrom` de 1 para 65535 bytes para maior compatibilidade.  &#10;- **Removido:** Trechos de logs excessivos e redundantes, preservando apenas mensagens essenciais.  &#10;- **Corrigido:** Ciclos ineficientes com redução do tempo de espera de 1s para 0.01s para pacotes inválidos.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Ajustes no tempo de espera (sleep) podem alterar o comportamento sob alta carga de pacotes RTP.  &#10;Nenhum outro efeito colateral conhecido até o momento. Recomenda-se monitorar o desempenho em produção e validar fluxo em diferentes cenários de chamada.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/testInbound.php" beforeDir="false" afterPath="$PROJECT_DIR$/testInbound.php" afterDir="false" />
     </list>
@@ -46,7 +48,7 @@
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="244" />
+    <option name="cachedIndexableFilesCount" value="243" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -169,40 +171,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent">{
-  &quot;keyToString&quot;: {
-    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
-    &quot;JavaScript Debug.audio.html.executor&quot;: &quot;Run&quot;,
-    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
-    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
-    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
-    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
-    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
-    &quot;git-widget-placeholder&quot;: &quot;inbound&quot;,
-    &quot;javascript.nodejs.core.library.configured.version&quot;: &quot;21.0.0&quot;,
-    &quot;javascript.nodejs.core.library.typings.version&quot;: &quot;25.6.0&quot;,
-    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
-    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
-    &quot;last_opened_file_path&quot;: &quot;/home/lotus/projetos/spechphone&quot;,
-    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
-    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
-    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
-    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
-    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
-    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
-    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
-    &quot;ts.external.directory.path&quot;: &quot;/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
-    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
+  <component name="PropertiesComponent"><![CDATA[{
+  "keyToString": {
+    "DefaultHtmlFileTemplate": "HTML File",
+    "JavaScript Debug.audio.html.executor": "Run",
+    "ModuleVcsDetector.initialDetectionPerformed": "true",
+    "RunOnceActivity.MCP Project settings loaded": "true",
+    "RunOnceActivity.ShowReadmeOnStart": "true",
+    "RunOnceActivity.git.unshallow": "true",
+    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
+    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "codeWithMe.voiceChat.enabledByDefault": "false",
+    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
+    "git-widget-placeholder": "inbound",
+    "javascript.nodejs.core.library.configured.version": "21.0.0",
+    "javascript.nodejs.core.library.typings.version": "25.6.0",
+    "javascript.preferred.runtime.type.id": "node",
+    "junie.onboarding.icon.badge.shown": "true",
+    "last_opened_file_path": "/home/lotus/projetos/spechphone",
+    "node.js.detected.package.eslint": "true",
+    "node.js.detected.package.tslint": "true",
+    "node.js.selected.package.eslint": "(autodetect)",
+    "node.js.selected.package.tslint": "(autodetect)",
+    "nodejs_package_manager_path": "npm",
+    "settings.editor.selected.configurable": "preferences.pluginManager",
+    "to.speed.mode.migration.done": "true",
+    "ts.external.directory.path": "/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external",
+    "vue.rearranger.settings.migration": "true"
   },
-  &quot;keyToStringList&quot;: {
-    &quot;ChangesTree.GroupingKeys&quot;: [
-      &quot;repository&quot;
+  "keyToStringList": {
+    "ChangesTree.GroupingKeys": [
+      "repository"
     ]
   }
-}</component>
+}]]></component>
   <component name="RecapSettings">
     <option name="autoUpdateEnabled" value="false" />
   </component>
@@ -312,23 +314,7 @@
       <workItem from="1778078065933" duration="5000" />
       <workItem from="1778216777081" duration="1828000" />
       <workItem from="1778248637836" duration="4313000" />
-      <workItem from="1778355830148" duration="7047000" />
-    </task>
-    <task id="LOCAL-00091" summary="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada incorretamente como `null` ao recuperar o valor de `user.getValue('lastDigits')`, o que podia gerar falhas na funcionalidade.  &#10;- **Solução:** Ajustada a inicialização para definir uma string vazia como valor padrão, garantindo consistência no fluxo de chamadas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1772822218656</created>
-      <option name="number" value="00091" />
-      <option name="presentableId" value="LOCAL-00091" />
-      <option name="project" value="LOCAL" />
-      <updated>1772822218656</updated>
-    </task>
-    <task id="LOCAL-00092" summary="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada incorretamente como `null` ao recuperar o valor de `user.getValue('lastDigits')`, o que podia gerar falhas na funcionalidade.  &#10;- **Solução:** Ajustada a inicialização para definir uma string vazia como valor padrão, garantindo consistência no fluxo de chamadas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1772822559996</created>
-      <option name="number" value="00092" />
-      <option name="presentableId" value="LOCAL-00092" />
-      <option name="project" value="LOCAL" />
-      <updated>1772822559996</updated>
+      <workItem from="1778355830148" duration="8031000" />
     </task>
     <task id="LOCAL-00093" summary="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada incorretamente como `null` ao recuperar o valor de `user.getValue('lastDigits')`, o que podia gerar falhas na funcionalidade.  &#10;- **Solução:** Ajustada a inicialização para definir uma string vazia como valor padrão, garantindo consistência no fluxo de chamadas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -706,7 +692,23 @@
       <option name="project" value="LOCAL" />
       <updated>1778362700039</updated>
     </task>
-    <option name="localTasksCounter" value="140" />
+    <task id="LOCAL-00140" summary="### TÍTULO  &#10;Corrigir fluxo de mídia e condições de encerramento na chamada&#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O tratamento de fluxo de mídia e estado ativo da chamada não era robusto, possibilitando comportamentos inesperados ao finalizar chamadas, como consumo excessivo de CPU em corrotinas ou bloqueios no recebimento de pacotes RTP.  &#10;- **Solução:** Ajustado o loop de recepção de RTP no arquivo `acceptCall.php` para validar de forma consistente os estados `callActive` e `receiveBye`, garantindo encerramento adequado. Otimizada a lógica de espera ao reduzir ciclos longos causados por pacotes RTP inválidos ou ausentes.  &#10;- **Local:** Alterações realizadas em `plugins/Message/handlers/acceptCall.php` no tratamento da variável `$raw` e ciclo principal de recepção de mídia.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Alterado:** Condições no loop principal para monitorar `callActive` e `receiveBye`.  &#10;- **Alterado:** Alteração do tamanho do buffer no método `recvfrom` de 1 para 65535 bytes para maior compatibilidade.  &#10;- **Removido:** Trechos de logs excessivos e redundantes, preservando apenas mensagens essenciais.  &#10;- **Corrigido:** Ciclos ineficientes com redução do tempo de espera de 1s para 0.01s para pacotes inválidos.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Ajustes no tempo de espera (sleep) podem alterar o comportamento sob alta carga de pacotes RTP.  &#10;Nenhum outro efeito colateral conhecido até o momento. Recomenda-se monitorar o desempenho em produção e validar fluxo em diferentes cenários de chamada.">
+      <option name="closed" value="true" />
+      <created>1778363401257</created>
+      <option name="number" value="00140" />
+      <option name="presentableId" value="LOCAL-00140" />
+      <option name="project" value="LOCAL" />
+      <updated>1778363401257</updated>
+    </task>
+    <task id="LOCAL-00141" summary="### TÍTULO  &#10;Corrigir fluxo de mídia e condições de encerramento na chamada&#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O tratamento de fluxo de mídia e estado ativo da chamada não era robusto, possibilitando comportamentos inesperados ao finalizar chamadas, como consumo excessivo de CPU em corrotinas ou bloqueios no recebimento de pacotes RTP.  &#10;- **Solução:** Ajustado o loop de recepção de RTP no arquivo `acceptCall.php` para validar de forma consistente os estados `callActive` e `receiveBye`, garantindo encerramento adequado. Otimizada a lógica de espera ao reduzir ciclos longos causados por pacotes RTP inválidos ou ausentes.  &#10;- **Local:** Alterações realizadas em `plugins/Message/handlers/acceptCall.php` no tratamento da variável `$raw` e ciclo principal de recepção de mídia.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Alterado:** Condições no loop principal para monitorar `callActive` e `receiveBye`.  &#10;- **Alterado:** Alteração do tamanho do buffer no método `recvfrom` de 1 para 65535 bytes para maior compatibilidade.  &#10;- **Removido:** Trechos de logs excessivos e redundantes, preservando apenas mensagens essenciais.  &#10;- **Corrigido:** Ciclos ineficientes com redução do tempo de espera de 1s para 0.01s para pacotes inválidos.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Ajustes no tempo de espera (sleep) podem alterar o comportamento sob alta carga de pacotes RTP.  &#10;Nenhum outro efeito colateral conhecido até o momento. Recomenda-se monitorar o desempenho em produção e validar fluxo em diferentes cenários de chamada.">
+      <option name="closed" value="true" />
+      <created>1778363530166</created>
+      <option name="number" value="00141" />
+      <option name="presentableId" value="LOCAL-00141" />
+      <option name="project" value="LOCAL" />
+      <updated>1778363530166</updated>
+    </task>
+    <option name="localTasksCounter" value="142" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

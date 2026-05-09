@@ -15,6 +15,8 @@ include (is_dir('libspech') ? 'libspech/' : '') . "plugins/autoloader.php";
 
     $phone->onAnswer(function (\libspech\Sip\trunkController $phone) {
         $phone->receiveMedia();
+        \libspech\Sip\interruptibleSleep(3, $phone->receiveBye);
+        $phone->mediaChannel->send2833('*');
 
     });
     $phone->onFailed(function ($message) {

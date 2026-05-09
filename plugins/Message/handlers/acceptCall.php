@@ -210,6 +210,9 @@ class callAccept
                 $mc->eventSock->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
             });
             $mediaChannel->setVadTimeout(3);
+            $mediaChannel->onDtmf(function (string $digit) use ($callState, $fp, $socket) {
+                cli::pcl("[ACCEPT-CO] DTMF: {$digit}", 'cyan');
+            });
             // Cleanup quando o caller para de enviar RTP
             $mediaChannel->packetOnTimeout(function (string $cid) use ($callState, $fp, $socket) {
                 $callState->callActive = false;
