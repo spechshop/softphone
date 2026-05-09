@@ -6,6 +6,7 @@ use helpers\utils\CallState;
 use helpers\utils\SdpHelper;
 use libspech\Cli\cli;
 use libspech\Network\network;
+use libspech\Packet\renderMessages;
 use libspech\Rtp\MediaChannel;
 use libspech\Sip\sip;
 use Swoole\Coroutine;
@@ -61,24 +62,21 @@ class callAccept
         }
         $inviteHeaders = json_decode($call['invite_headers_json'], true);
         $inviteSdp = json_decode($call['invite_sdp_json'], true);
-        cli::pcl("[ACCEPT] Call-ID:{$callId} fp:{$fp}", 'yellow');
-        cli::pcl("[ACCEPT] Destino SIP {$call['remote_ip']}:{$call['remote_port']}", 'yellow');
-        cli::pcl("[ACCEPT] Via: " . ($inviteHeaders['Via'][0] ?? 'N/A'), 'yellow');
+
         $sdpParsed = SdpHelper::parseRemoteSdp($inviteSdp ?? []);
         $chosenCodec = SdpHelper::chooseCodec($sdpParsed['codecs']);
-        cli::pcl("[ACCEPT] SDP remoto {$sdpParsed['ip']}:{$sdpParsed['port']} codecs:" . implode(',', array_column($sdpParsed['codecs'], 'name')), 'yellow');
         if (!$chosenCodec) {
-            cli::pcl("[ACCEPT] Nenhum codec compatível — enviando 606", 'red');
             $socket->sendto($call['remote_ip'], $call['remote_port'], \libspech\Packet\renderMessages::baseResponse($inviteHeaders, "606", "Not Acceptable"));
             CallState::$incomingCalls->del($callId);
             return false;
         }
-        cli::pcl("[ACCEPT] Codec: {$chosenCodec['name']}/{$chosenCodec['rate']} pt:{$chosenCodec['pt']}", 'yellow');
+
+
         $localRtpPort = network::getFreePort('udp');
         $localIp = network::getLocalIp();
         $localSdp = SdpHelper::buildLocalSdp($localIp, $localRtpPort, $chosenCodec, $sdpParsed['telephone_event']);
-        var_dump($localSdp);
-        cli::pcl("[ACCEPT] SDP local — porta RTP:{$localRtpPort} (" . strlen($localSdp) . " bytes)", 'yellow');
+
+
         $responseHeaders = [
             'Via' => $inviteHeaders['Via'],
             'From' => $inviteHeaders['From'],
@@ -104,7 +102,7 @@ class callAccept
             'headers' => $responseHeaders,
             'body' => $localSdp,
         ]);
-        cli::pcl($renderOK);
+
         $socket->sendto($call['remote_ip'], $call['remote_port'], $renderOK);
         CallState::$incomingCalls->set($callId, array_merge($call, [
             'status' => 'accepted',
@@ -156,7 +154,7 @@ class callAccept
                 }
             }
         }
-        Coroutine::create(function () use ($socket, $fd, $callId, $fp, $localRtpPort, $localIp, $sdpParsed, $pt, $codecName, $frequency, $channels, $ssrc, $userFrequency, $callState, $userData) {
+        Coroutine::create(function () use ($responseHeaders, $socket, $fd, $callId, $fp, $localRtpPort, $localIp, $sdpParsed, $pt, $codecName, $frequency, $channels, $ssrc, $userFrequency, $callState, $userData) {
             $rtpSocket = new \SocketMutable(AF_INET, SOCK_DGRAM, 0);
             $bindOk = $rtpSocket->bind('0.0.0.0', $localRtpPort);
             cli::pcl("[ACCEPT-CO] bind({$localIp}:{$localRtpPort}) => " . ($bindOk ? 'OK' : 'FALHOU'), $bindOk ? 'cyan' : 'red');
@@ -215,7 +213,7 @@ class callAccept
                 $mediaChannel->send2833($digit);
             });
             // Cleanup quando o caller para de enviar RTP
-            $mediaChannel->packetOnTimeout(function (string $cid) use ($callState, $fp, $socket) {
+            $mediaChannel->packetOnTimeout(function (string $cid) use ($sdpParsed, $responseHeaders, $callState, $fp, $socket) {
                 $callState->callActive = false;
                 \libspech\Cache\cache::unset('coroutinesProcess', $fp);
                 \helpers\utils\CallState::$incomingCalls->del($cid);
@@ -233,6 +231,14 @@ class callAccept
                     ]));
                 }
                 cli::pcl("[ACCEPT-CO] RTP timeout — chamada encerrada Call-ID:{$cid}", 'red');
+                $modelBye = renderMessages::generateBye($responseHeaders);
+                $renderBye = sip::renderSolution($modelBye);
+                $socket->sendto($sdpParsed['ip'], $sdpParsed['port'], $renderBye);
+                cli::pcl("[ACCEPT-CO] Bye enviado para {$sdpParsed['ip']}:{$sdpParsed['port']}", 'cyan');
+
+
+                // enviar bye
+
             });
             $mediaChannel->active = true;
             // Browser → Caller: lê PCM do relay porta 9600 → codifica → envia RTP
