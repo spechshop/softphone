@@ -212,7 +212,6 @@ class callAccept
             $mediaChannel->setVadTimeout(3);
             $mediaChannel->onDtmf(function (string $digit) use ($callState, $fp, $socket, &$mediaChannel) {
                 cli::pcl("[ACCEPT-CO] DTMF: {$digit}", 'cyan');
-                sleep(1);
                 $mediaChannel->send2833($digit);
             });
             // Cleanup quando o caller para de enviar RTP
