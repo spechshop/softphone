@@ -51,7 +51,13 @@ class dtmf
             try {
                 $phone->send2833($dtmf);
             } catch (\Throwable $e) {
-                var_dump($phone);
+                try {
+                    $phone->mediaChannel->send2833($dtmf);
+                } catch (\Throwable $e) {
+                    cli::pcl("[DTMF] Error sending DTMF: {$e->getMessage()}", 'red');
+                }
+
+
                 cli::pcl("[DTMF] Error sending DTMF: {$e->getMessage()}", 'red');
             }
 

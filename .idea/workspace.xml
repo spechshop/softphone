@@ -22,7 +22,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Garantir encerramento e envio do BYE em chamadas SIP com timeout RTP  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** Em casos de timeout RTP, o encerramento da chamada não garantia o envio do BYE ao endpoint remoto, deixando sessões abertas indevidamente.  &#10;- **Solução:** Implementado envio do BYE no evento de timeout RTP, utilizando `renderMessages::generateBye` com base nos cabeçalhos da sessão SIP.  &#10;- **Local:** Alterações realizadas no arquivo `plugins/Message/handlers/acceptCall.php` dentro do método `packetOnTimeout`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Geração e envio de mensagem BYE no evento de timeout RTP para finalizar chamadas de forma apropriada.  &#10;- **Adicionado:** Mensagem de log para indicar envio de BYE ao endpoint remoto no encerramento por timeout.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento. Recomenda-se observar o comportamento em produção quanto a possíveis diferenças no timing de encerramento de chamadas.">
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/dtmf.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/dtmf.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -311,15 +311,7 @@
       <workItem from="1778216777081" duration="1828000" />
       <workItem from="1778248637836" duration="4313000" />
       <workItem from="1778355830148" duration="8624000" />
-      <workItem from="1778365047391" duration="314000" />
-    </task>
-    <task id="LOCAL-00099" summary="### TÍTULO&#10;Ajustar organização de tags SVG e otimizar metadados no logotipo&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O logotipo em SVG continha inconsistências na organização das tags, resultando em código menos legível e maior dificuldade na manutenção. Além disso, o uso do metadado do `og:image` apontava para um arquivo desatualizado.&#10;- **Solução:** Reorganizadas as tags do arquivo `logo.svg` para melhorar a legibilidade e consistência do código. Atualizado o valor do metadado `og:image` em `plugins/Request/modules/includes/head.html` para apontar para o novo arquivo otimizado.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Alterado:** Estrutura e organização das tags no arquivo `logo.svg`.&#10;- **Alterado:** Caminho do metadado `og:image` para o logotipo atualizado em `plugins/Request/modules/includes/head.html`.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1773457019289</created>
-      <option name="number" value="00099" />
-      <option name="presentableId" value="LOCAL-00099" />
-      <option name="project" value="LOCAL" />
-      <updated>1773457019289</updated>
+      <workItem from="1778365047391" duration="514000" />
     </task>
     <task id="LOCAL-00100" summary="### TÍTULO  &#10;Alterar proporções e estilos do logotipo para melhor consistência visual  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** As dimensões do logotipo no arquivo `logo.svg` não estavam otimizadas para exibição em dispositivos com diferentes resoluções, causando inconsistências visuais. Além disso, faltavam estilos para maior clareza do texto em telas menores.  &#10;- **Solução:** Atualizadas as dimensões gerais do logotipo, ajustando a largura de 600 para 480 e a altura de 140 para 135, proporcionando melhor adequação visual. Adicionado peso à fonte nos textos e reposicionados os elementos para melhorar a legibilidade.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Alterado:** Dimensões do elemento `&lt;rect&gt;` no arquivo `logo.svg` (largura e altura).  &#10;- **Alterado:** Adição de `font-weight` e reposicionamento dos textos no arquivo `logo.svg`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -705,7 +697,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778365099138</updated>
     </task>
-    <option name="localTasksCounter" value="148" />
+    <task id="LOCAL-00148" summary="### TÍTULO  &#10;Garantir encerramento e envio do BYE em chamadas SIP com timeout RTP  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** Em casos de timeout RTP, o encerramento da chamada não garantia o envio do BYE ao endpoint remoto, deixando sessões abertas indevidamente.  &#10;- **Solução:** Implementado envio do BYE no evento de timeout RTP, utilizando `renderMessages::generateBye` com base nos cabeçalhos da sessão SIP.  &#10;- **Local:** Alterações realizadas no arquivo `plugins/Message/handlers/acceptCall.php` dentro do método `packetOnTimeout`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Geração e envio de mensagem BYE no evento de timeout RTP para finalizar chamadas de forma apropriada.  &#10;- **Adicionado:** Mensagem de log para indicar envio de BYE ao endpoint remoto no encerramento por timeout.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento. Recomenda-se observar o comportamento em produção quanto a possíveis diferenças no timing de encerramento de chamadas.">
+      <option name="closed" value="true" />
+      <created>1778365387595</created>
+      <option name="number" value="00148" />
+      <option name="presentableId" value="LOCAL-00148" />
+      <option name="project" value="LOCAL" />
+      <updated>1778365387595</updated>
+    </task>
+    <option name="localTasksCounter" value="149" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
