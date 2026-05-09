@@ -51,6 +51,7 @@ class dtmf
             try {
                 $phone->send2833($dtmf);
             } catch (\Throwable $e) {
+                var_dump($phone);
                 cli::pcl("[DTMF] Error sending DTMF: {$e->getMessage()}", 'red');
             }
 
