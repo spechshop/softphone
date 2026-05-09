@@ -214,29 +214,51 @@ class callAccept
                 $id = implode(':', array_values($peer));
                 $mc->eventSock->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
             });
-
+            $mediaChannel->setVadTimeout(3);
+            // Cleanup quando o caller para de enviar RTP
+            $mediaChannel->packetOnTimeout(function (string $cid) use ($callState, $fp, $socket) {
+                $callState->callActive = false;
+                \libspech\Cache\cache::unset('coroutinesProcess', $fp);
+                \helpers\utils\CallState::$incomingCalls->del($cid);
+                foreach (\libspech\Cache\cache::get('connections')[$fp] ?? [] as $clientFd) {
+                    $socket->push($clientFd, json_encode([
+                        'type' => 'event',
+                        'data' => 'bye',
+                    ]));
+                    $socket->push($clientFd, json_encode([
+                        'type' => 'notify',
+                        'data' => [
+                            'type' => 'bg-warning text-white',
+                            'message' => 'Chamada encerrada por inatividade RTP',
+                        ],
+                    ]));
+                }
+                cli::pcl("[ACCEPT-CO] RTP timeout — chamada encerrada Call-ID:{$cid}", 'red');
+            });
             $mediaChannel->active = true;
             // Browser → Caller: lê PCM do relay porta 9600 → codifica → envia RTP
             Coroutine::create(function () use (&$mediaChannel, $sdpParsed, $codecName, $frequency, $callState, $userFrequency) {
                 cli::pcl("[ACCEPT-CO] Browser→Caller coroutine iniciada", 'cyan');
+                //$mediaChannel->eventSock->sendto('127.0.0.1', 9600, str_repeat('0', 12));
                 $pcmBuffer = '';
                 $SRC_RATE = $userFrequency;
                 $PCM_FRAME_BYTES = (int)($SRC_RATE * 0.02) * 2;
-                cli::pcl("CallActive: {$callState->callActive} - ReceiveBye: {$callState->receiveBye}", 'bold_blue');
-
-
-
-                while ($callState->callActive && !$callState->receiveBye) {
+                while (true) {
                     $peer = null;
-                    $raw = $mediaChannel->eventSock->recvfrom($peer, 10);
+                    $raw = $mediaChannel->eventSock->recvfrom($peer, 1);
+
 
                     if (!$callState->callActive || $callState->receiveBye) {
                         cli::pcl("[ACCEPT-CO] Recebendo bye", 'red');
                         break;
                     }
 
+
                     if (!$raw || strlen($raw) < 12) {
-                        Coroutine::sleep(0.01);
+                        cli::pcl("[ACCEPT-CO] Raw data is invalid or too short", 'red');
+
+                        var_dump(strlen($raw));
+                        Coroutine::sleep(1);
                         continue;
                     }
                     $pcmBuffer .= explode('__::__', $raw, 2)[0];

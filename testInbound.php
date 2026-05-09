@@ -11,7 +11,6 @@ include (is_dir('libspech') ? 'libspech/' : '') . "plugins/autoloader.php";
     $phone->setCallerId('discadora');
     $phone->mountLineCodecSDP('PCMA/8000');
     $phone->defineAudioFile('libspech/extra/assets/music.wav');
-    $phone->enableVAD();
 
 
     $phone->onAnswer(function (\libspech\Sip\trunkController $phone) {
