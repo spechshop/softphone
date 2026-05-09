@@ -23,10 +23,7 @@
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Corrigir fluxo de mídia e condições de encerramento na chamada&#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O tratamento de fluxo de mídia e estado ativo da chamada não era robusto, possibilitando comportamentos inesperados ao finalizar chamadas, como consumo excessivo de CPU em corrotinas ou bloqueios no recebimento de pacotes RTP.  &#10;- **Solução:** Ajustado o loop de recepção de RTP no arquivo `acceptCall.php` para validar de forma consistente os estados `callActive` e `receiveBye`, garantindo encerramento adequado. Otimizada a lógica de espera ao reduzir ciclos longos causados por pacotes RTP inválidos ou ausentes.  &#10;- **Local:** Alterações realizadas em `plugins/Message/handlers/acceptCall.php` no tratamento da variável `$raw` e ciclo principal de recepção de mídia.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Alterado:** Condições no loop principal para monitorar `callActive` e `receiveBye`.  &#10;- **Alterado:** Alteração do tamanho do buffer no método `recvfrom` de 1 para 65535 bytes para maior compatibilidade.  &#10;- **Removido:** Trechos de logs excessivos e redundantes, preservando apenas mensagens essenciais.  &#10;- **Corrigido:** Ciclos ineficientes com redução do tempo de espera de 1s para 0.01s para pacotes inválidos.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Ajustes no tempo de espera (sleep) podem alterar o comportamento sob alta carga de pacotes RTP.  &#10;Nenhum outro efeito colateral conhecido até o momento. Recomenda-se monitorar o desempenho em produção e validar fluxo em diferentes cenários de chamada.">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/testInbound.php" beforeDir="false" afterPath="$PROJECT_DIR$/testInbound.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -314,15 +311,7 @@
       <workItem from="1778078065933" duration="5000" />
       <workItem from="1778216777081" duration="1828000" />
       <workItem from="1778248637836" duration="4313000" />
-      <workItem from="1778355830148" duration="8031000" />
-    </task>
-    <task id="LOCAL-00093" summary="### TÍTULO  &#10;Corrigir inicialização de variável `digits` no fluxo de chamadas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A variável `digits` era inicializada incorretamente como `null` ao recuperar o valor de `user.getValue('lastDigits')`, o que podia gerar falhas na funcionalidade.  &#10;- **Solução:** Ajustada a inicialização para definir uma string vazia como valor padrão, garantindo consistência no fluxo de chamadas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Inicialização da variável `digits` no método `startCall` (`plugins/Request/pages/default.html`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1772822635831</created>
-      <option name="number" value="00093" />
-      <option name="presentableId" value="LOCAL-00093" />
-      <option name="project" value="LOCAL" />
-      <updated>1772822635831</updated>
+      <workItem from="1778355830148" duration="8165000" />
     </task>
     <task id="LOCAL-00094" summary="### TÍTULO  &#10;Substituir Fingerprint2 por geração de ID único para armazenamento local  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O uso do Fingerprint2 para gerar identificadores de dispositivo era inflexível e apresentava limitações em cenários onde permissões ou configurações do navegador impediam a execução completa da biblioteca.  &#10;- **Solução:** Substituído o Fingerprint2 pela geração de um ID único aleatório utilizando `Date.now()` e partes randômicas, garantindo maior flexibilidade e independência de bibliotecas externas.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Removido:** Dependência do Fingerprint2 para geração de identificadores no arquivo `js/jquery.toast.min.js`.  &#10;- **Adicionado:** Função `generateUniqueDeviceId` para criação de IDs únicos persistidos localmente.  &#10;- **Alterado:** Lógica de recuperação ou geração de token em memória local (`localStorage`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento. A mudança dispensa a necessidade de dependências externas e simplifica o fluxo de inicialização.">
       <option name="closed" value="true" />
@@ -708,7 +697,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778363530166</updated>
     </task>
-    <option name="localTasksCounter" value="142" />
+    <task id="LOCAL-00142" summary="### TÍTULO  &#10;Corrigir fluxo de mídia e condições de encerramento na chamada&#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O tratamento de fluxo de mídia e estado ativo da chamada não era robusto, possibilitando comportamentos inesperados ao finalizar chamadas, como consumo excessivo de CPU em corrotinas ou bloqueios no recebimento de pacotes RTP.  &#10;- **Solução:** Ajustado o loop de recepção de RTP no arquivo `acceptCall.php` para validar de forma consistente os estados `callActive` e `receiveBye`, garantindo encerramento adequado. Otimizada a lógica de espera ao reduzir ciclos longos causados por pacotes RTP inválidos ou ausentes.  &#10;- **Local:** Alterações realizadas em `plugins/Message/handlers/acceptCall.php` no tratamento da variável `$raw` e ciclo principal de recepção de mídia.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Alterado:** Condições no loop principal para monitorar `callActive` e `receiveBye`.  &#10;- **Alterado:** Alteração do tamanho do buffer no método `recvfrom` de 1 para 65535 bytes para maior compatibilidade.  &#10;- **Removido:** Trechos de logs excessivos e redundantes, preservando apenas mensagens essenciais.  &#10;- **Corrigido:** Ciclos ineficientes com redução do tempo de espera de 1s para 0.01s para pacotes inválidos.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Ajustes no tempo de espera (sleep) podem alterar o comportamento sob alta carga de pacotes RTP.  &#10;Nenhum outro efeito colateral conhecido até o momento. Recomenda-se monitorar o desempenho em produção e validar fluxo em diferentes cenários de chamada.">
+      <option name="closed" value="true" />
+      <created>1778364381478</created>
+      <option name="number" value="00142" />
+      <option name="presentableId" value="LOCAL-00142" />
+      <option name="project" value="LOCAL" />
+      <updated>1778364381478</updated>
+    </task>
+    <option name="localTasksCounter" value="143" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
