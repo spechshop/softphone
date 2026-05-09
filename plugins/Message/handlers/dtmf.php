@@ -3,6 +3,7 @@
 namespace handlers;
 
 use cache;
+use libspech\Cli\cli;
 use libspech\Sip\trunkController;
 
 class dtmf
@@ -50,6 +51,7 @@ class dtmf
             try {
                 $phone->send2833($dtmf);
             } catch (\Throwable $e) {
+                cli::pcl("[DTMF] Error sending DTMF: {$e->getMessage()}", 'red');
             }
 
 

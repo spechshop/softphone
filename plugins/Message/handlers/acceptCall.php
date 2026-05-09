@@ -3,6 +3,7 @@
 namespace handlers;
 
 use helpers\utils\CallState;
+use helpers\utils\InboundCallSession;
 use helpers\utils\SdpHelper;
 use libspech\Cli\cli;
 use libspech\Network\network;
@@ -135,11 +136,14 @@ class callAccept
         $userFrequency = (int)(explode('/', $userCodec)[1] ?? 8000);
         // State object — flags shared with the media coroutine.
         // Stored in coroutinesProcess so BYE handler and hangUpCall can signal stop.
-        $callState = new \stdClass();
-        $callState->receiveBye = false;
-        $callState->callActive = true;
-        $callState->error = false;
+        // Also exposes send2833() so the DTMF handler can push RFC 2833 packets
+        // through the same MediaChannel used by this inbound call.
+        $callState = new InboundCallSession();
         $callState->callId = $callId;
+        $callState->remoteIp = $sdpParsed['ip'];
+        $callState->remotePort = (int)$sdpParsed['port'];
+        $callState->ptTelephoneEvent = (int)($sdpParsed['telephone_event']['pt'] ?? 101);
+        $callState->telephoneEventClockRate = (int)($sdpParsed['telephone_event']['rate'] ?? 8000);
         \libspech\Cache\cache::subDefine('coroutinesProcess', $fp, $callState);
         $pt = $chosenCodec['pt'];
         $codecName = $chosenCodec['name'];
@@ -161,6 +165,7 @@ class callAccept
             $bindOk = $rtpSocket->bind('0.0.0.0', $localRtpPort);
             cli::pcl("[ACCEPT-CO] bind({$localIp}:{$localRtpPort}) => " . ($bindOk ? 'OK' : 'FALHOU'), $bindOk ? 'cyan' : 'red');
             $mediaChannel = new MediaChannel($rtpSocket, $callId);
+            $callState->mediaChannel = $mediaChannel;
             $mediaChannel->portList = $localRtpPort;
             $mediaChannel->codecMapper = [$pt => strtoupper("{$codecName}/{$frequency}/{$channels}")];
             $mediaChannel->registerPtCodecs($mediaChannel->codecMapper);
@@ -181,6 +186,7 @@ class callAccept
                 'frequency' => $frequency,
                 'channels' => $channels,
             ]);
+            $mediaChannel->enableVAD();
 
 
             // Caller → Browser: decodifica RTP do caller → PCM → relay porta 9600
@@ -239,16 +245,20 @@ class callAccept
                 $PCM_FRAME_BYTES = (int)($SRC_RATE * 0.02) * 2;
                 while (true) {
                     $peer = null;
-                    $raw = $mediaChannel->eventSock->recvfrom($peer, 0.2);
+                    $raw = $mediaChannel->eventSock->recvfrom($peer, 1);
+
+
                     if (!$callState->callActive || $callState->receiveBye) {
                         cli::pcl("[ACCEPT-CO] Recebendo bye", 'red');
                         break;
                     }
-                    if (!$mediaChannel->active) {
-                        cli::pcl("[ACCEPT-CO] MediaChannel não está ativo", 'red');
-                        break;
-                    }
+
+
                     if (!$raw || strlen($raw) < 12) {
+                        cli::pcl("[ACCEPT-CO] Raw data is invalid or too short", 'red');
+
+                        var_dump(strlen($raw));
+                        Coroutine::sleep(1);
                         continue;
                     }
                     $pcmBuffer .= explode('__::__', $raw, 2)[0];
@@ -277,8 +287,9 @@ class callAccept
                 }
                 cli::pcl("[ACCEPT-CO] Browser→Caller coroutine encerrada", 'red');
             });
-            $mediaChannel->connectTimeout = 1;
+
             $mediaChannel->start();
+            $mediaChannel->close();
             cli::pcl("[ACCEPT-CO] mediaChannel->start() chamado — aguardando RTP do caller", 'cyan');
         });
         return true;

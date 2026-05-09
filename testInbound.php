@@ -2,25 +2,21 @@
 
 use libspech\Cli\cli;
 
-include (is_dir('libspech' ? 'libspech/' : '')) . "plugins/autoloader.php";;
+include (is_dir('libspech') ? 'libspech/' : '') . "plugins/autoloader.php";
 
 \co\run(function () {
 
 
-    $phone = new \libspech\Sip\trunkController('lotus', '', \libspech\Network\network::getLocalIp(), $port);
+    $phone = new \libspech\Sip\trunkController(getenv(), '', 'phone.spechshop.com');
     $phone->setCallerId('discadora');
     $phone->mountLineCodecSDP('PCMA/8000');
-    $phone->defineAudioFile('extra/assets/music.wav');
+    $phone->defineAudioFile('libspech/extra/assets/music.wav');
+    $phone->enableVAD();
 
 
     $phone->onAnswer(function (\libspech\Sip\trunkController $phone) {
         $phone->receiveMedia();
-        $phone->defineAudioFile('extra/assets/music.wav');
-        \Swoole\Coroutine::sleep(3);
-        //$phone->stopAudioFile();
-        $phone->send2833('9');
-        \Swoole\Coroutine::sleep(10);
-        $phone->bye();
+
     });
     $phone->onFailed(function ($message) {
         cli::pcl("Chamada falhou: $message", "bold_red");

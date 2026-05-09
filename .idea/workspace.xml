@@ -22,8 +22,13 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Implementar classe `Registrar` para gerenciar estados e registros SIP  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** Não havia uma implementação centralizada para gerenciamento do ciclo de vida de registros SIP, como estados, expiração e atualizações periódicas, dificultando a confiabilidade nos processos de registro.  &#10;- **Solução:** Foi criada a classe `Registrar` para encapsular a lógica de inicialização, registro, atualizações periódicas (via `tick`) e armazenamento de estados SIP em memória usando `Swoole\Table`.  &#10;- **Local:** Implementação da classe no arquivo `plugins/Utils/helpers/Registrar.php`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Classe `Registrar` com constantes de configuração e métodos para inicialização de estados, registro de dispositivos e gerenciamento de tempo e falhas.  &#10;- **Adicionado:** Integração de registros SIP com validações, lógica de autenticação e reenvio usando os métodos `registerOne` e `tick`.  &#10;- **Alterado:** Adicionado método `keys()` no arquivo `plugins/Request/components/spechphoneVault.php` para manipulação eficiente de dados armazenados.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Sob alta carga de dispositivos, o uso de tarefas assíncronas e tabelas do Swoole pode aumentar o consumo de memória e processamento.  &#10;Nenhum outro efeito colateral conhecido até o momento. Monitorar comportamento do registro SIP em ambientes críticos de produção.">
+      <change beforePath="$PROJECT_DIR$/.env" beforeDir="false" afterPath="$PROJECT_DIR$/.env" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/dtmf.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/dtmf.php" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/testInbound.php" beforeDir="false" afterPath="$PROJECT_DIR$/testInbound.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -45,7 +50,7 @@
     </persistenceIdMap>
   </component>
   <component name="EmbeddingIndexingInfo">
-    <option name="cachedIndexableFilesCount" value="243" />
+    <option name="cachedIndexableFilesCount" value="244" />
     <option name="fileBasedEmbeddingIndicesEnabled" value="true" />
   </component>
   <component name="FileTemplateManagerImpl">
@@ -168,40 +173,40 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "DefaultHtmlFileTemplate": "HTML File",
-    "JavaScript Debug.audio.html.executor": "Run",
-    "ModuleVcsDetector.initialDetectionPerformed": "true",
-    "RunOnceActivity.MCP Project settings loaded": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "RunOnceActivity.git.unshallow": "true",
-    "RunOnceActivity.typescript.service.memoryLimit.init": "true",
-    "SHARE_PROJECT_CONFIGURATION_FILES": "true",
-    "codeWithMe.voiceChat.enabledByDefault": "false",
-    "com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1": "true",
-    "git-widget-placeholder": "inbound",
-    "javascript.nodejs.core.library.configured.version": "21.0.0",
-    "javascript.nodejs.core.library.typings.version": "25.6.0",
-    "javascript.preferred.runtime.type.id": "node",
-    "junie.onboarding.icon.badge.shown": "true",
-    "last_opened_file_path": "/home/lotus/projetos/spechphone",
-    "node.js.detected.package.eslint": "true",
-    "node.js.detected.package.tslint": "true",
-    "node.js.selected.package.eslint": "(autodetect)",
-    "node.js.selected.package.tslint": "(autodetect)",
-    "nodejs_package_manager_path": "npm",
-    "settings.editor.selected.configurable": "preferences.pluginManager",
-    "to.speed.mode.migration.done": "true",
-    "ts.external.directory.path": "/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external",
-    "vue.rearranger.settings.migration": "true"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;DefaultHtmlFileTemplate&quot;: &quot;HTML File&quot;,
+    &quot;JavaScript Debug.audio.html.executor&quot;: &quot;Run&quot;,
+    &quot;ModuleVcsDetector.initialDetectionPerformed&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.MCP Project settings loaded&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.git.unshallow&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.typescript.service.memoryLimit.init&quot;: &quot;true&quot;,
+    &quot;SHARE_PROJECT_CONFIGURATION_FILES&quot;: &quot;true&quot;,
+    &quot;codeWithMe.voiceChat.enabledByDefault&quot;: &quot;false&quot;,
+    &quot;com.intellij.ml.llm.matterhorn.ej.ui.settings.DefaultModelSelectionForGA.v1&quot;: &quot;true&quot;,
+    &quot;git-widget-placeholder&quot;: &quot;inbound&quot;,
+    &quot;javascript.nodejs.core.library.configured.version&quot;: &quot;21.0.0&quot;,
+    &quot;javascript.nodejs.core.library.typings.version&quot;: &quot;25.6.0&quot;,
+    &quot;javascript.preferred.runtime.type.id&quot;: &quot;node&quot;,
+    &quot;junie.onboarding.icon.badge.shown&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;/home/lotus/projetos/spechphone&quot;,
+    &quot;node.js.detected.package.eslint&quot;: &quot;true&quot;,
+    &quot;node.js.detected.package.tslint&quot;: &quot;true&quot;,
+    &quot;node.js.selected.package.eslint&quot;: &quot;(autodetect)&quot;,
+    &quot;node.js.selected.package.tslint&quot;: &quot;(autodetect)&quot;,
+    &quot;nodejs_package_manager_path&quot;: &quot;npm&quot;,
+    &quot;settings.editor.selected.configurable&quot;: &quot;preferences.pluginManager&quot;,
+    &quot;to.speed.mode.migration.done&quot;: &quot;true&quot;,
+    &quot;ts.external.directory.path&quot;: &quot;/snap/phpstorm/585/plugins/javascript-plugin/jsLanguageServicesImpl/external&quot;,
+    &quot;vue.rearranger.settings.migration&quot;: &quot;true&quot;
   },
-  "keyToStringList": {
-    "ChangesTree.GroupingKeys": [
-      "repository"
+  &quot;keyToStringList&quot;: {
+    &quot;ChangesTree.GroupingKeys&quot;: [
+      &quot;repository&quot;
     ]
   }
-}]]></component>
+}</component>
   <component name="RecapSettings">
     <option name="autoUpdateEnabled" value="false" />
   </component>
@@ -310,15 +315,8 @@
       <workItem from="1777968728047" duration="19197000" />
       <workItem from="1778078065933" duration="5000" />
       <workItem from="1778216777081" duration="1828000" />
-      <workItem from="1778248637836" duration="3691000" />
-    </task>
-    <task id="LOCAL-00087" summary="### TÍTULO  &#10;Corrigir validações no registro SIP e aprimorar persistência de dados  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema 1:** Faltavam validações para campos obrigatórios (`sipServer`, `sipUser`, `sipPass`) no registro SIP, causando falhas silenciosas no processo.  &#10;- **Problema 2:** Persistência de dados sensíveis dependia de caminhos inválidos ou inacessíveis, levando a exceções runtime.  &#10;&#10;- **Correções realizadas:**  &#10;  - Adicionadas validações explícitas no fluxo de registro SIP para campos obrigatórios, garantindo notificações em tempo real via WebSocket.  &#10;  - Implementado o método `resolvePath` no `spechphoneVault` para criar diretórios automaticamente ou usar fallback seguro em caso de erro no diretório original.  &#10;  - Alterado o mecanismo de escrita de arquivos (`atomicWrite`) para validar permissões no diretório e notificar erros adequadamente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações obrigatórias para `sipServer`, `sipUser` e `sipPass` (`plugins/Message/handlers/register.php`).  &#10;- **Adicionado:** Função `resolvePath` para gerenciamento seguro de diretórios no `spechphoneVault` (`plugins/Request/components/spechphoneVault.php`).  &#10;- **Alterado:** Tratamento de erros em `atomicWrite` e melhorias na notificação de falhas.  &#10;- **Modificado:** Implementações relacionadas ao registro SIP no arquivo `connect.php`.  &#10;- **Alterado:** Porta padrão do projeto de `443` para `9501` (`plugins/configInterface.json`).  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: O aumento de validações pode rejeitar registros antigos incompletos.  &#10;- ⚠️ Dependência obrigatória das permissões de sistema de arquivos e extensões como `libsodium`.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de registro em ambientes de produção.">
-      <option name="closed" value="true" />
-      <created>1767767292576</created>
-      <option name="number" value="00087" />
-      <option name="presentableId" value="LOCAL-00087" />
-      <option name="project" value="LOCAL" />
-      <updated>1767767292576</updated>
+      <workItem from="1778248637836" duration="4313000" />
+      <workItem from="1778355830148" duration="4713000" />
     </task>
     <task id="LOCAL-00088" summary="### TÍTULO  &#10;Adicionar validações obrigatórias no fluxo de chamada em WebSocket  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A ausência de validações para campos obrigatórios (`sipUser`, `sipPass`, `sipServer`) nos dados do usuário permitia fluxos incorretos ao iniciar chamadas, resultando em falhas silenciosas.  &#10;- **Solução:** Adicionada checagem explícita para campos obrigatórios no arquivo `startCall.php`. Caso algum campo não esteja preenchido, o sistema retorna uma notificação via WebSocket, informando o campo ausente.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Validações para `sipUser`, `sipPass` e `sipServer` no fluxo de chamada para verificar a integridade dos dados (`plugins/Message/handlers/startCall.php`).  &#10;- **Alterado:** Mensagens de retorno em WebSocket para incluir feedback imediato em caso de erros.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;- ⚠️ Possível impacto: Usuários com dados incompletos poderão ter suas chamadas bloqueadas após a validação.  &#10;- Nenhum outro efeito colateral conhecido até o momento. Monitoramento recomendado para erros no fluxo de chamada em produção.">
       <option name="closed" value="true" />
@@ -704,7 +702,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778252365239</updated>
     </task>
-    <option name="localTasksCounter" value="136" />
+    <task id="LOCAL-00136" summary="### TÍTULO  &#10;Implementar classe `Registrar` para gerenciar estados e registros SIP  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** Não havia uma implementação centralizada para gerenciamento do ciclo de vida de registros SIP, como estados, expiração e atualizações periódicas, dificultando a confiabilidade nos processos de registro.  &#10;- **Solução:** Foi criada a classe `Registrar` para encapsular a lógica de inicialização, registro, atualizações periódicas (via `tick`) e armazenamento de estados SIP em memória usando `Swoole\Table`.  &#10;- **Local:** Implementação da classe no arquivo `plugins/Utils/helpers/Registrar.php`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Classe `Registrar` com constantes de configuração e métodos para inicialização de estados, registro de dispositivos e gerenciamento de tempo e falhas.  &#10;- **Adicionado:** Integração de registros SIP com validações, lógica de autenticação e reenvio usando os métodos `registerOne` e `tick`.  &#10;- **Alterado:** Adicionado método `keys()` no arquivo `plugins/Request/components/spechphoneVault.php` para manipulação eficiente de dados armazenados.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Sob alta carga de dispositivos, o uso de tarefas assíncronas e tabelas do Swoole pode aumentar o consumo de memória e processamento.  &#10;Nenhum outro efeito colateral conhecido até o momento. Monitorar comportamento do registro SIP em ambientes críticos de produção.">
+      <option name="closed" value="true" />
+      <created>1778253108484</created>
+      <option name="number" value="00136" />
+      <option name="presentableId" value="LOCAL-00136" />
+      <option name="project" value="LOCAL" />
+      <updated>1778253108484</updated>
+    </task>
+    <option name="localTasksCounter" value="137" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
