@@ -133,12 +133,8 @@ class callAccept
         $userFrequency = (int)(explode('/', $userCodec)[1] ?? 8000);
         // State object — flags shared with the media coroutine.
         // Stored in coroutinesProcess so BYE handler and hangUpCall can signal stop.
-        $callState = new \stdClass();
-        $callState->receiveBye = false;
-        $callState->callActive = true;
-        $callState->error = false;
-        $callState->callId = $callId;
-        \libspech\Cache\cache::subDefine('coroutinesProcess', $fp, $callState);
+
+
         $pt = $chosenCodec['pt'];
         $codecName = $chosenCodec['name'];
         $frequency = $chosenCodec['rate'];
@@ -155,6 +151,8 @@ class callAccept
             }
         }
         Coroutine::create(function () use ($responseHeaders, $socket, $fd, $callId, $fp, $localRtpPort, $localIp, $sdpParsed, $pt, $codecName, $frequency, $channels, $ssrc, $userFrequency, $callState, $userData) {
+
+
             $rtpSocket = new \SocketMutable(AF_INET, SOCK_DGRAM, 0);
             $bindOk = $rtpSocket->bind('0.0.0.0', $localRtpPort);
             cli::pcl("[ACCEPT-CO] bind({$localIp}:{$localRtpPort}) => " . ($bindOk ? 'OK' : 'FALHOU'), $bindOk ? 'cyan' : 'red');
@@ -182,7 +180,7 @@ class callAccept
             $mediaChannel->enableVAD();
 
 
-            // Caller → Browser: decodifica RTP do caller → PCM → relay porta 9600
+
             $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtp, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan) use ($callId, $portHandler, $userFrequency, $frequency, $codecName) {
                 if (strlen($rtp->payloadRaw) < 1) {
                     return;
@@ -212,7 +210,6 @@ class callAccept
                 cli::pcl("[ACCEPT-CO] DTMF: {$digit}", 'cyan');
                 $mediaChannel->send2833($digit);
             });
-            // Cleanup quando o caller para de enviar RTP
             $mediaChannel->packetOnTimeout(function (string $cid) use ($sdpParsed, $responseHeaders, $callState, $fp, $socket) {
                 $callState->callActive = false;
                 \libspech\Cache\cache::unset('coroutinesProcess', $fp);
@@ -241,7 +238,18 @@ class callAccept
 
             });
             $mediaChannel->active = true;
-            // Browser → Caller: lê PCM do relay porta 9600 → codifica → envia RTP
+            $callState = new \stdClass();
+            $callState->receiveBye = false;
+            $callState->callActive = true;
+            $callState->error = false;
+            $callState->callId = $callId;
+            $callState->mediaChannel = $mediaChannel;
+
+
+            \libspech\Cache\cache::subDefine('coroutinesProcess', $fp, $callState);
+
+
+
             Coroutine::create(function () use (&$mediaChannel, $sdpParsed, $codecName, $frequency, $callState, $userFrequency) {
                 cli::pcl("[ACCEPT-CO] Browser→Caller coroutine iniciada", 'cyan');
                 //$mediaChannel->eventSock->sendto('127.0.0.1', 9600, str_repeat('0', 12));
