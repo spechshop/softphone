@@ -239,26 +239,20 @@ class callAccept
             // Browser → Caller: lê PCM do relay porta 9600 → codifica → envia RTP
             Coroutine::create(function () use (&$mediaChannel, $sdpParsed, $codecName, $frequency, $callState, $userFrequency) {
                 cli::pcl("[ACCEPT-CO] Browser→Caller coroutine iniciada", 'cyan');
-                //$mediaChannel->eventSock->sendto('127.0.0.1', 9600, str_repeat('0', 12));
                 $pcmBuffer = '';
                 $SRC_RATE = $userFrequency;
                 $PCM_FRAME_BYTES = (int)($SRC_RATE * 0.02) * 2;
-                while (true) {
+                while ($callState->callActive && !$callState->receiveBye) {
                     $peer = null;
-                    $raw = $mediaChannel->eventSock->recvfrom($peer, 1);
-
+                    $raw = $mediaChannel->eventSock->recvfrom($peer, 65535);
 
                     if (!$callState->callActive || $callState->receiveBye) {
                         cli::pcl("[ACCEPT-CO] Recebendo bye", 'red');
                         break;
                     }
 
-
                     if (!$raw || strlen($raw) < 12) {
-                        cli::pcl("[ACCEPT-CO] Raw data is invalid or too short", 'red');
-
-                        var_dump(strlen($raw));
-                        Coroutine::sleep(1);
+                        Coroutine::sleep(0.01);
                         continue;
                     }
                     $pcmBuffer .= explode('__::__', $raw, 2)[0];

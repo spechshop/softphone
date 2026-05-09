@@ -7,7 +7,7 @@ include (is_dir('libspech') ? 'libspech/' : '') . "plugins/autoloader.php";
 \co\run(function () {
 
 
-    $phone = new \libspech\Sip\trunkController(getenv(), '', 'phone.spechshop.com');
+    $phone = new \libspech\Sip\trunkController('notebook', 'duda2025', 'phone.spechshop.com');
     $phone->setCallerId('discadora');
     $phone->mountLineCodecSDP('PCMA/8000');
     $phone->defineAudioFile('libspech/extra/assets/music.wav');
