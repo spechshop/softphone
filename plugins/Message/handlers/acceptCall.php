@@ -4,6 +4,7 @@ namespace handlers;
 
 use helpers\utils\CallState;
 use helpers\utils\SdpHelper;
+use libspech\Cache\cache;
 use libspech\Cli\cli;
 use libspech\Network\network;
 use libspech\Packet\renderMessages;
@@ -113,6 +114,15 @@ class callAccept
             'frequency' => $chosenCodec['rate'],
             'updated_at' => time(),
         ]));
+        $callState = cache::get('coroutinesProcess')[$fp] ?? new \stdClass();
+        $callState->receiveBye = false;
+        $callState->callActive = true;
+        $callState->error = false;
+        $callState->callId = $callId;
+        \libspech\Cache\cache::subDefine('coroutinesProcess', $fp, $callState);
+
+
+
         foreach (\libspech\Cache\cache::get('connections')[$fp] ?? [] as $clientFd) {
             $socket->push($clientFd, json_encode([
                 'type' => 'event',
@@ -238,14 +248,12 @@ class callAccept
 
             });
             $mediaChannel->active = true;
-            $callState = new \stdClass();
+            $callState = cache::get('coroutinesProcess')[$fp] ?? new \stdClass();
             $callState->receiveBye = false;
             $callState->callActive = true;
             $callState->error = false;
             $callState->callId = $callId;
             $callState->mediaChannel = $mediaChannel;
-
-
             \libspech\Cache\cache::subDefine('coroutinesProcess', $fp, $callState);
 
 
