@@ -294,7 +294,7 @@
             }
         };
 
-        let currentTheme = localStorage.getItem('selectedTheme') || 'golden';
+        let currentTheme = localStorage.getItem('selectedTheme') || 'moonlight';
         let isMenuOpen = false;
         let themeStyleElement = null;
 
@@ -1134,11 +1134,13 @@
             applyTheme(currentTheme); // Restaura o tema atual
         };
 
+        // Expõe para a aba Configurações
+        window.openThemeModal = openThemeModal;
+
         // Inicializa
         document.addEventListener('DOMContentLoaded', () => {
             loadCustomThemes();
             applyTheme(currentTheme);
-            createThemeButton();
         });
 
     })();

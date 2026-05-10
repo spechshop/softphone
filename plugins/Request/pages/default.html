@@ -242,6 +242,17 @@
                     <i class="fa-sharp-duotone fa-solid fa-volume-high fa-xl" id="speakerIcon"></i>
                 </button>
             </div>
+
+            <div class="call-aux-row mt-2 px-2"
+                 style="display: flex; flex-direction: row-reverse; justify-content: flex-start; align-items: center; gap: 8px;">
+                <button class="btn" id="btnAutoAccept" style="padding: 8px 12px; background: transparent; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; min-width: 52px;"
+                        title="Auto-atender chamadas recebidas"
+                        type="button">
+                    <b id="btnAutoAcceptLabel"
+                       style="color: rgba(255,255,255,0.55); font-size: 14px; letter-spacing: 1px;">AA</b>
+                </button>
+            </div>
+
             <div class="px-3 mb-2">
                 <div class="mb-3">
                     <label class="mini mb-1" style="display: flex; align-items: center; gap: 8px;">
@@ -456,6 +467,17 @@
             <div class="mini mt-3" id="cfgState">Nenhuma alteração pendente.</div>
         </div>
 
+        <div class="card bg-dark p-3 mt-3">
+            <div class="section-title">Aparência</div>
+            <div class="divider"></div>
+            <button class="btn btn-soft w-100" onclick="if (typeof window.openThemeModal === 'function') window.openThemeModal();"
+                    type="button">
+                <i class="fa-solid fa-palette me-2"
+                   style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></i>
+                <span>Trocar Tema</span>
+            </button>
+        </div>
+
 
     </section>
 
@@ -480,7 +502,7 @@
             .msg-view-wrap {
                 display: flex;
                 flex-direction: column;
-                height: calc(100vh - 220px);
+                height: calc(100vh - 280px);
             }
 
             /* Conversation list items */
@@ -1374,6 +1396,68 @@
     }
     window.digits = "";
 
+    // ===== Auto-atender (AA) =====
+    window.autoAcceptEnabled = user.getValue('autoAcceptEnabled') === true;
+
+    function renderAutoAcceptBtn() {
+        const btn = document.getElementById('btnAutoAccept');
+        const label = document.getElementById('btnAutoAcceptLabel');
+        if (!btn || !label) return;
+        if (window.autoAcceptEnabled) {
+            btn.style.background = 'rgba(34,197,94,0.18)';
+            btn.style.borderColor = '#22c55e';
+            label.style.color = '#22c55e';
+        } else {
+            btn.style.background = 'transparent';
+            btn.style.borderColor = 'rgba(255,255,255,0.15)';
+            label.style.color = 'rgba(255,255,255,0.55)';
+        }
+    }
+
+    document.getElementById('btnAutoAccept').addEventListener('click', () => {
+        window.autoAcceptEnabled = !window.autoAcceptEnabled;
+        user.updateUserData('autoAcceptEnabled', window.autoAcceptEnabled);
+        renderAutoAcceptBtn();
+        if (typeof bootstrap !== 'undefined' && bootstrap.showToast) {
+            bootstrap.showToast({
+                header: 'Auto-atender',
+                body: window.autoAcceptEnabled ? 'Ativado: chamadas serão atendidas automaticamente.' : 'Desativado.',
+                toastClass: window.autoAcceptEnabled ? 'bg-success' : 'bg-secondary',
+                colorHeader: 'text-white',
+            });
+        }
+        // Se já há uma chamada tocando agora, atende imediatamente
+        if (window.autoAcceptEnabled
+            && window.inboundCallState
+            && window.inboundCallState.status === 'incoming'
+            && typeof window.acceptIncomingCall === 'function') {
+            window.acceptIncomingCall();
+        }
+    });
+    renderAutoAcceptBtn();
+
+    // Encadeia handler de chamada recebida para auto-atender
+    (function () {
+        const original = window.handleIncomingCall;
+        if (typeof original !== 'function' || original.__aaWrapped) return;
+        const wrapped = function (data) {
+            const r = original.apply(this, arguments);
+            if (window.autoAcceptEnabled) {
+                setTimeout(() => {
+                    if (window.inboundCallState
+                        && window.inboundCallState.status === 'incoming'
+                        && window.inboundCallState.currentCallId === data.callId
+                        && typeof window.acceptIncomingCall === 'function') {
+                        window.acceptIncomingCall();
+                    }
+                }, 250);
+            }
+            return r;
+        };
+        wrapped.__aaWrapped = true;
+        window.handleIncomingCall = wrapped;
+    })();
+
     // Estado do microfone - inicializado ANTES de startCall
     let isMicStop = (user.getValue('isMicStop') !== null) ? user.getValue('isMicStop') : true;
     console.log('🎤 Estado inicial do microfone:', isMicStop ? 'desligado' : 'ligado');
@@ -1827,7 +1911,7 @@
 
         const sampleRate = audioContext ? audioContext.sampleRate : 8000;
         const userFp = user.getValue('fp') || 'anon';
-        const wsUrl = `${proto}//${infoURI().host}:8888?fp=${fp}&ssrc=mic-${userFp}&sampleRate=${sampleRate}`;
+        const wsUrl = `${proto}//${infoURI().host}:8889?fp=${fp}&ssrc=mic-${userFp}&sampleRate=${sampleRate}`;
 
         // Fecha conexão anterior se existir
         if (websocket && websocket.readyState === WebSocket.OPEN) {

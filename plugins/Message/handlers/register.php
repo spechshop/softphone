@@ -44,6 +44,7 @@ class register
         }
 
         cli::pcl("Registrando no servidor: $sipServer", 'blue');
+        var_dump($phone->register());
 
 
         $modelRegister = $phone->modelRegister(1800);
@@ -51,19 +52,26 @@ class register
 
 
         $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
-        for (; ;) {
+        for ($n = 3; $n--;) {
             $peer = [];
-            $res = $phone->socket->recvfrom($peer, 5);
+            $res = $phone->socket->recvfrom($peer, 1);
+            cli::pcl($res);
+            if (!$res) {
+                continue;
+            }
             $receive = sip::parse($res);
+            if ($receive['method'] == '401') {
+                $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
+                $nonce = value($wwwAuthenticate, 'nonce="', '"');
+                $realm = value($wwwAuthenticate, 'realm="', '"');
+                $response = sip::generateAuthorizationHeader($phone->username, $realm, $phone->password, $nonce, 'sip:' . $phone->host, 'REGISTER');
+                $modelRegister['headers']['Authorization'][0] = $response;
+                $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
+                break;
+            } elseif ($receive['method'] == '200') {
 
-
-            $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
-            $nonce = value($wwwAuthenticate, 'nonce="', '"');
-            $realm = value($wwwAuthenticate, 'realm="', '"');
-            $response = sip::generateAuthorizationHeader($phone->username, $realm, $phone->password, $nonce, 'sip:' . $phone->host, 'REGISTER');
-            $modelRegister['headers']['Authorization'][0] = $response;
-            $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
-            break;
+                break;
+            }
         }
         if (CallState::$sipBindings !== null) {
             CallState::$sipBindings->set($sipUser, [

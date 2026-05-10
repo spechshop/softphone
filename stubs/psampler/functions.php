@@ -427,7 +427,7 @@ function generateclassstubs(array $allowFilters)
 }
 
 
-function liststubfolders($dir = '/home/lotus/PROJETOS/spechphone/stubs')
+function liststubfolders($dir = '/home/lotus/projetos/spechphone/stubs')
 {
     return class_exists(\mixed::class) ? \mixed::class : \stdClass::class;
 }

@@ -1,6 +1,7 @@
 <?php
 
 use libspech\Cache\cache;
+use libspech\Cli\cli;
 use Swoole\Coroutine\Socket;
 use Swoole\Http\Request;
 use Swoole\Http\Response;
@@ -17,6 +18,10 @@ $clients = [];
 $clientInfo = [];
 $buffers = [];
 $lastSeen = [];
+$lastLog = [];
+$lastLogHandshake = [];
+$lastLogPeer = [];
+$lastLogNoClient = [];
 $frameQueue = [];
 $jitterBuffer = [];
 $packetTimestamps = [];
@@ -176,6 +181,10 @@ $server->on("start", function (Server $server) use (
     &$packetTimestamps,
     &$streamKeys,
     &$lastSeen,
+    &$lastLog,
+    &$lastLogHandshake,
+    &$lastLogPeer,
+    &$lastLogNoClient,
     &$channelDecode,
     $BUFFER_TARGET,
     $JITTER_BUFFER_SIZE,
@@ -226,6 +235,10 @@ $server->on("start", function (Server $server) use (
         &$jitterBuffer,
         &$packetTimestamps,
         &$lastSeen,
+        &$lastLog,
+        &$lastLogHandshake,
+        &$lastLogPeer,
+        &$lastLogNoClient,
         &$channelDecode,
         &$udpPeers,
         $BUFFER_TARGET,
@@ -266,6 +279,7 @@ $server->on("start", function (Server $server) use (
                 continue;
             }
 
+
             [$rtpRaw, $stream, $ssrc, $portHandle, $userFrequencyRaw, $frequencyRaw] = $realData;
 
             $userFrequency = (int)$userFrequencyRaw;
@@ -281,17 +295,38 @@ $server->on("start", function (Server $server) use (
             if ($frameTarget <= 0) {
                 continue;
             }
+            $lastSeen[$stream][$ssrc] ??= time();
+            $peerKey = "{$peer['address']}:{$peer['port']}";
+
+            // Log a cada 5 segundos para evitar spam
+            if (time() % 5 === 0 && !isset($lastLog[$stream][$ssrc][time()])) {
+                $lastLog[$stream][$ssrc][time()] = true;
+                cli::pcl("[{$lastSeen[$stream][$ssrc]}] UDP: {$peerKey} {$stream}/{$ssrc} {$frequency}Hz {$userFrequency}Hz", 'green');
+            }
+
 
             /**
              * Handshake para descobrir peer UDP reverso.
              */
             if (empty($peer['address']) && empty($peer['port']) && !empty($portHandle)) {
+                $peerKey = "{$portHandle}";
+
+                if (time() % 5 === 0 && !isset($lastLogHandshake[$stream][$ssrc][time()])) {
+                    $lastLogHandshake[$stream][$ssrc][time()] = true;
+                    cli::pcl("[{$lastSeen[$stream][$ssrc]}] UDP Handshake: {$peerKey} {$stream}/{$ssrc} {$frequency}Hz {$userFrequency}Hz", 'yellow');
+                }
+
                 $udp->sendto('127.0.0.1', (int)$portHandle, SOCKET_EREMOTE);
                 $udp->recvfrom($peer, 1);
             }
 
             if (!empty($peer['address']) && !empty($peer['port'])) {
                 $peerKey = "{$peer['address']}:{$peer['port']}";
+
+                if (time() % 5 === 0 && !isset($lastLogPeer[$stream][$ssrc][time()])) {
+                    $lastLogPeer[$stream][$ssrc][time()] = true;
+                    cli::pcl("[{$lastSeen[$stream][$ssrc]}] UDP Peer: {$peerKey} {$stream}/{$ssrc} {$frequency}Hz {$userFrequency}Hz", 'yellow');
+                }
 
                 $udpPeers[$stream] ??= [];
                 $udpPeers[$stream][$peerKey] = [
@@ -304,6 +339,11 @@ $server->on("start", function (Server $server) use (
              * Se não tem browser ouvindo essa stream, não acumula buffer à toa.
              */
             if (empty($clients[$stream])) {
+                if (time() % 10 === 0 && !isset($lastLogNoClient[$stream][$ssrc][time()])) {
+                    $lastLogNoClient[$stream][$ssrc][time()] = true;
+                    cli::pcl("[{$lastSeen[$stream][$ssrc]}] UDP No Client: {$peerKey} {$stream}/{$ssrc} {$frequency}Hz {$userFrequency}Hz", 'red');
+                }
+
                 unset(
                     $buffers[$stream],
                     $frameQueue[$stream],
@@ -429,6 +469,10 @@ $server->on("start", function (Server $server) use (
                     if (empty($clients[$streamId])) {
                         unset(
                             $lastSeen[$streamId],
+                            $lastLog[$streamId],
+                            $lastLogHandshake[$streamId],
+                            $lastLogPeer[$streamId],
+                            $lastLogNoClient[$streamId],
                             $buffers[$streamId],
                             $frameQueue[$streamId],
                             $jitterBuffer[$streamId],
@@ -460,6 +504,10 @@ $server->on("start", function (Server $server) use (
                     if (empty($lastSeen[$streamId])) {
                         unset(
                             $lastSeen[$streamId],
+                            $lastLog[$streamId],
+                            $lastLogHandshake[$streamId],
+                            $lastLogPeer[$streamId],
+                            $lastLogNoClient[$streamId],
                             $buffers[$streamId],
                             $frameQueue[$streamId],
                             $jitterBuffer[$streamId],
@@ -629,6 +677,10 @@ $server->on("close", function ($serv, int $fd) use (
     &$jitterBuffer,
     &$packetTimestamps,
     &$lastSeen,
+    &$lastLog,
+    &$lastLogHandshake,
+    &$lastLogPeer,
+    &$lastLogNoClient,
     &$udpPeers
 ) {
     closeUdpSendSocketForFd($fd, $udpSendSockets);
@@ -652,6 +704,10 @@ $server->on("close", function ($serv, int $fd) use (
                 $jitterBuffer[$stream],
                 $packetTimestamps[$stream],
                 $lastSeen[$stream],
+                $lastLog[$stream],
+                $lastLogHandshake[$stream],
+                $lastLogPeer[$stream],
+                $lastLogNoClient[$stream],
                 $udpPeers[$stream]
             );
 
@@ -678,6 +734,10 @@ $server->on("close", function ($serv, int $fd) use (
                     $jitterBuffer[$streamId],
                     $packetTimestamps[$streamId],
                     $lastSeen[$streamId],
+                    $lastLog[$streamId],
+                    $lastLogHandshake[$streamId],
+                    $lastLogPeer[$streamId],
+                    $lastLogNoClient[$streamId],
                     $udpPeers[$streamId]
                 );
 
