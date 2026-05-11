@@ -127,6 +127,46 @@ class WebPushHelper
         }
     }
 
+    public static function notifyIncomingCall(string $sipUser, array $call): void
+    {
+        cli::pcl("[PUSH:CALL] Disparando push de chamada para sipUser={$sipUser}", 'cyan');
+
+        $data = self::loadSubs();
+        $subscriptions = $data[$sipUser] ?? [];
+        if (empty($subscriptions)) {
+            cli::pcl("[PUSH:CALL] Nenhuma subscription encontrada para {$sipUser} — push não enviado", 'yellow');
+            return;
+        }
+
+        $fromUser = \libspech\Sip\sip::extractURI($call['from'] ?? '')['user'] ?? 'Desconhecido';
+        $callId = $call['callId'] ?? '';
+
+        $payload = [
+            'type' => 'call',
+            'title' => 'Chamada recebida',
+            'body' => "{$fromUser} está chamando",
+            'tag' => 'spech-call-' . hash('sha1', $callId),
+            'url' => '/',
+            'from' => $fromUser,
+            'callId' => $callId,
+        ];
+
+        $expired = [];
+        foreach ($subscriptions as $hash => $sub) {
+            $ok = self::send($sub, $payload);
+            if (!$ok) {
+                $expired[] = $hash;
+            }
+        }
+
+        if (!empty($expired)) {
+            foreach ($expired as $hash) {
+                unset($data[$sipUser][$hash]);
+            }
+            self::saveSubs($data);
+        }
+    }
+
     public static function send(array $subscription, array $payload): bool
     {
         $auth = self::buildAuth();

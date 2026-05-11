@@ -215,9 +215,71 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         cli::pcl("[INBOUND] Usuário {$toUser} → fp:{$fp}", 'cyan');
 
         if (empty(cache::get('connections')[$fp] ?? [])) {
-            $socket->sendto($info['address'], $info['port'], renderMessages::baseResponse($parse['headers'], "480", "Temporarily Unavailable"));
-            cli::pcl("[INBOUND] fp:{$fp} não tem conexão WebSocket ativa, 480 enviado", 'red');
-            return;
+            $pendingToTag = bin2hex(random_bytes(4));
+            $pendingFromTag = '';
+            if (preg_match('/;tag=([^;>\s\r\n]+)/i', $parse['headers']['From'][0] ?? '', $m)) $pendingFromTag = $m[1];
+            $pendingInviteCseq = explode(' ', $parse['headers']['CSeq'][0] ?? '')[0] ?? '';
+
+            CallState::$incomingCalls->set($callId, [
+                'call_id' => $callId,
+                'fp' => $fp,
+                'status' => 'pending_user',
+                'from_uri' => $parse['headers']['From'][0] ?? '',
+                'to_uri' => $parse['headers']['To'][0] ?? '',
+                'remote_ip' => $info['address'],
+                'remote_port' => $info['port'],
+                'remote_rtp_ip' => $sdpParsed['ip'],
+                'remote_rtp_port' => $sdpParsed['port'],
+                'local_rtp_port' => 0,
+                'codec' => $chosenCodec['name'],
+                'frequency' => $chosenCodec['rate'],
+                'owner_worker_id' => 0,
+                'invite_headers_json' => json_encode($parse['headers']),
+                'invite_sdp_json' => json_encode($parse['sdp'] ?? []),
+                'tx_key' => $txKey,
+                'to_tag' => $pendingToTag,
+                'from_tag' => $pendingFromTag,
+                'invite_cseq' => $pendingInviteCseq,
+                'last_response_code' => 100,
+                'created_at' => time(),
+                'updated_at' => time(),
+            ]);
+
+            cli::pcl("[INBOUND] fp:{$fp} sem WS ativo — enviando push e aguardando reconexão (até 15s)", 'yellow');
+
+            $fromHeader = $parse['headers']['From'][0] ?? '';
+            go(fn() => \helpers\utils\WebPushHelper::notifyIncomingCall($toUser, [
+                'from' => $fromHeader,
+                'callId' => $callId,
+            ]));
+
+            $maxWaitMs = 15000;
+            $pollIntervalMs = 500;
+            $waited = 0;
+            $cameOnline = false;
+            while ($waited < $maxWaitMs) {
+                \Swoole\Coroutine::sleep($pollIntervalMs / 1000);
+                $waited += $pollIntervalMs;
+                if (!CallState::$incomingCalls->exist($callId)) {
+                    cli::pcl("[INBOUND] Call-ID:{$callId} removido durante espera (CANCEL recebido), abortando", 'yellow');
+                    return;
+                }
+                if (!empty(cache::get('connections')[$fp] ?? [])) {
+                    $cameOnline = true;
+                    break;
+                }
+            }
+
+            if (!$cameOnline) {
+                $finalHdrs = $parse['headers'];
+                $finalHdrs['To'][0] = ($finalHdrs['To'][0] ?? '') . ';tag=' . $pendingToTag;
+                $socket->sendto($info['address'], $info['port'], renderMessages::baseResponse($finalHdrs, "480", "Temporarily Unavailable"));
+                CallState::$incomingCalls->del($callId);
+                cli::pcl("[INBOUND] fp:{$fp} não reconectou em {$maxWaitMs}ms, 480 enviado", 'red');
+                return;
+            }
+
+            cli::pcl("[INBOUND] fp:{$fp} reconectou após {$waited}ms — continuando fluxo", 'green');
         }
 
         if (CallState::hasActiveCallForFp($fp) || isset((cache::get('coroutinesProcess') ?? [])[$fp])) {
