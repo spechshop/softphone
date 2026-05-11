@@ -59,7 +59,7 @@ WebRTC.
 - **CallMediaBridge**: Orquestra o fluxo RTP ↔ PCM. Faz a ponte entre os pacotes RTP da pilha SIP e o fluxo PCM do
   navegador via um relay UDP interno.
 - **audio.php**: Um servidor dedicado que gerencia o WebSocket de áudio do navegador (:8888) e o relay UDP interno (:
-  9600). Trata jitter buffering, mixagem e reamostragem (resampling).
+  9966). Trata jitter buffering, mixagem e reamostragem (resampling).
 - **SdpHelper**: Helper para parsing de SDP remoto, seleção de codecs compatíveis e geração de respostas SDP locais para
   negociação de sessão.
 - **Corrotinas Swoole**: O núcleo do caminho de mídia, permitindo o processamento assíncrono de pacotes RTP/PCM sem

@@ -289,7 +289,7 @@ class startCall
             if (strlen($pcmData) < 12) return;
 
             // resample
-            $phone->globalInfo['eventSock']->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
+            $phone->globalInfo['eventSock']->sendto('127.0.0.1', 9966, "{$pcmData}__::__{$phone->callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
         });
 
 
@@ -305,7 +305,7 @@ class startCall
                 // handshake inicial (mantido)
                 $phone->globalInfo['eventSock']->sendto(
                     '127.0.0.1',
-                    9600,
+                    9966,
                     str_repeat('0', 12)
                 );
 
@@ -322,7 +322,7 @@ class startCall
 
                 $phone->globalInfo['eventSock']->sendto(
                     '127.0.0.1',
-                    9600,
+                    9966,
                     str_repeat('0', 12)
                 );
                 while (true) {
@@ -468,7 +468,7 @@ class startCall
 
             $chunks = str_split($pcmChunk, 320);
             foreach ($chunks as $pcmChunk) {
-                $eventSock->sendto('127.0.0.1', 9600, "{$pcmChunk}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$codec}__::__{$frequency}");
+                $eventSock->sendto('127.0.0.1', 9966, "{$pcmChunk}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$codec}__::__{$frequency}");
             }
 
 

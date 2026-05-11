@@ -52,7 +52,7 @@ Na aba de Áudio, é possível visualizar e selecionar os codecs disponíveis:
 > **Bastidores Técnicos:**
 > A mágica acontece na integração entre o `startCall.php` e o servidor de áudio `audio.php`:
 > - **Pipeline de Áudio (Sem WebRTC)**: O navegador envia/recebe PCM raw via WebSocket (porta 8888) para o `audio.php`.
-> - **Bridge UDP**: O `audio.php` encaminha esse áudio via UDP local (porta 9600) para a corrotina da chamada.
+> - **Bridge UDP**: O `audio.php` encaminha esse áudio via UDP local (porta 9966) para a corrotina da chamada.
 > - **Transcoding Nativo**: O PHP recebe o PCM, aplica a codificação selecionada (ex: comprime para G.729 ou Opus)
     usando a biblioteca `libspech` e envia para o tronco SIP. O processo inverso (decodificação) ocorre na chegada dos
     pacotes RTP, garantindo compatibilidade universal sem depender de codecs do browser.
@@ -60,8 +60,8 @@ Na aba de Áudio, é possível visualizar e selecionar os codecs disponíveis:
 > 📄 audio.php:54
 > ```php
 > $udp = new Swoole\Coroutine\Socket(AF_INET, SOCK_DGRAM, 0);
-> $udp->bind("0.0.0.0", 9600);
-> echo "🎧 Servidor UDP aguardando pacotes em 9600...\n";
+> $udp->bind("0.0.0.0", 9966);
+> echo "🎧 Servidor UDP aguardando pacotes em 9966...\n";
 > ```
 
 ## ⚙️ Configuração SIP Simplificada

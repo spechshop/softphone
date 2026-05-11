@@ -248,12 +248,12 @@ $server->on("start", function (Server $server) use (
     ) {
         $udp = new Socket(AF_INET, SOCK_DGRAM, 0);
 
-        if (!$udp->bind("0.0.0.0", 9600)) {
-            echo "❌ Falha ao bindar UDP 0.0.0.0:9600\n";
+        if (!$udp->bind("0.0.0.0", 9966)) {
+            echo "❌ Falha ao bindar UDP 0.0.0.0:9966\n";
             return;
         }
 
-        echo "🎧 Servidor UDP aguardando pacotes em 9600...\n";
+        echo "🎧 Servidor UDP aguardando pacotes em 9966...\n";
 
         $lastGC = time();
 

@@ -220,7 +220,7 @@ class callAccept
             $id = implode(':', array_values($peer));
             //cli::pcl("[ACCEPT-CO] RTP received from {$id} codec:{$codecName} pt:{$rtp->payloadType} freq:{$frequency} ssrc:{$rtp->ssrc}}", 'cyan');
 
-            $mc->eventSock->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
+            $mc->eventSock->sendto('127.0.0.1', 9966, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
         });
         $mediaChannel->setVadTimeout(3);
         $mediaChannel->onDtmf(function (string $digit) use ($callState, $fp, $socket, &$mediaChannel) {
@@ -265,7 +265,7 @@ class callAccept
 
         $mediaChannel->onStart(function () use (&$mediaChannel, $sdpParsed, $codecName, $frequency, &$callState, $userFrequency) {
             cli::pcl("[ACCEPT-CO] Browser→Caller coroutine iniciada", 'cyan');
-            //$mediaChannel->eventSock->sendto('127.0.0.1', 9600, str_repeat('0', 12));
+            //$mediaChannel->eventSock->sendto('127.0.0.1', 9966, str_repeat('0', 12));
             $pcmBuffer = '';
             $SRC_RATE = $userFrequency;
             $PCM_FRAME_BYTES = (int)($SRC_RATE * 0.02) * 2;

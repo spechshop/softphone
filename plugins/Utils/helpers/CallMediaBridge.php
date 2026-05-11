@@ -21,7 +21,7 @@ class CallMediaBridge
      * Wire up the full media pipeline for a call.
      *
      * - Creates a local eventSock (UDP) for communicating with audio.php.
-     * - Registers onReceivePcm so decoded RTP is forwarded to audio.php:9600.
+     * - Registers onReceivePcm so decoded RTP is forwarded to audio.php:9966.
      * - Calls $phone->receiveMedia() to start the RTP receive coroutine.
      * - Spawns a coroutine for the Browser-Mic → encode → RTP transmit loop.
      *
@@ -51,7 +51,7 @@ class CallMediaBridge
             $id = implode(':', array_values($peer));
             $ph->globalInfo['eventSock']->sendto(
                 '127.0.0.1',
-                9600,
+                9966,
                 "{$pcmData}__::__{$ph->callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}"
             );
         });
@@ -63,7 +63,7 @@ class CallMediaBridge
             cli::pcl("[Media] Iniciando loop Browser Mic → RTP", "green");
 
             // Handshake para registro do peer no audio.php
-            $phone->globalInfo['eventSock']->sendto('127.0.0.1', 9600, str_repeat('0', 12));
+            $phone->globalInfo['eventSock']->sendto('127.0.0.1', 9966, str_repeat('0', 12));
 
             $pcmBuffer = '';
             $FRAME_MS = 20;

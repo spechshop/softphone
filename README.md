@@ -58,7 +58,7 @@ WebRTC.
 - **CallMediaBridge**: Orchestrates the RTP ↔ PCM flow. It bridges the SIP stack's RTP packets with the browser's PCM
   stream via a UDP relay.
 - **audio.php**: A dedicated server that manages the browser's audio WebSocket (:8888) and the internal UDP relay (:
-  9600). It handles jitter buffering, mixing, and resamping.
+  9966). It handles jitter buffering, mixing, and resamping.
 - **SdpHelper**: Helper for parsing remote SDP, selecting compatible codecs, and generating local SDP answers for
   session negotiation.
 - **Swoole Coroutines**: The core of the media path, allowing asynchronous processing of RTP/PCM packets without
