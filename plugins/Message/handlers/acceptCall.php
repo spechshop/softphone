@@ -219,7 +219,7 @@ class callAccept
                 $pcmData = resampler($pcmData, $frequency, $userFrequency);
             }
             $id = implode(':', array_values($peer));
-            cli::pcl("[ACCEPT-CO] RTP received from {$id} codec:{$codecName} pt:{$rtp->payloadType} freq:{$frequency} ssrc:{$rtp->ssrc}}", 'cyan');
+            //cli::pcl("[ACCEPT-CO] RTP received from {$id} codec:{$codecName} pt:{$rtp->payloadType} freq:{$frequency} ssrc:{$rtp->ssrc}}", 'cyan');
 
             $mc->eventSock->sendto('127.0.0.1', 9600, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
         });
