@@ -331,15 +331,7 @@
       <workItem from="1778377926810" duration="25134000" />
       <workItem from="1778479287354" duration="1254000" />
       <workItem from="1778481601630" duration="919000" />
-      <workItem from="1778482792914" duration="6029000" />
-    </task>
-    <task id="LOCAL-00122" summary="### TÍTULO  &#10;Corrigir tratamento de valores no `plugins/autoload.php` para evitar caracteres desnecessários  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** Valores de variáveis de ambiente podiam incluir aspas ou espaços extras, impactando leituras e execuções dependentes dessas variáveis.  &#10;- **Solução:** Implementado trim adicional nos valores para remover aspas simples ou duplas, além de espaços extras no início ou fim.  &#10;- **Local:** Ajuste no método de leitura de variáveis do arquivo `plugins/autoload.php`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Remoção de caracteres extras (aspas, espaços) nos valores das variáveis tratadas em `plugins/autoload.php`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1777983969294</created>
-      <option name="number" value="00122" />
-      <option name="presentableId" value="LOCAL-00122" />
-      <option name="project" value="LOCAL" />
-      <updated>1777983969294</updated>
+      <workItem from="1778482792914" duration="6085000" />
     </task>
     <task id="LOCAL-00123" summary="### TÍTULO&#10;Aprimorar lógica de toasts e correção de altura acumulada em notificações&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** A lógica de posicionamento e remoção de toasts acumulava inconsistências ao modificar `toastHeight`, resultando em desalinhamentos no layout ao exibir múltiplas notificações.&#10;- **Solução:** Ajustada a fórmula de cálculo de altura em `removeToast` para evitar valores residuais, utilizando `Math.max` para garantir um valor não-negativo. Alterada a seleção de elementos para utilizar `data-spech-toast`, otimizando o gerenciamento de toasts.&#10;- **Local:** Alterações realizadas em `plugins/Request/modules/includes/head.html`.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Alterado:** Lógica de cálculo de altura no método `removeToast`.&#10;- **Alterado:** Seleção otimizada de toasts para reposicionamento com o atributo `data-spech-toast`.&#10;- **Adicionado:** Propriedade `data-spech-toast` para identificação exclusiva de toasts.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -725,7 +717,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778488759789</updated>
     </task>
-    <option name="localTasksCounter" value="171" />
+    <task id="LOCAL-00171" summary="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <option name="closed" value="true" />
+      <created>1778488829208</created>
+      <option name="number" value="00171" />
+      <option name="presentableId" value="LOCAL-00171" />
+      <option name="project" value="LOCAL" />
+      <updated>1778488829208</updated>
+    </task>
+    <option name="localTasksCounter" value="172" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
