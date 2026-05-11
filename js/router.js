@@ -983,7 +983,6 @@ const onMessageSocket = (event, socket) => {
         case 'changeCallId':
             if (window.currentCallId === data.data) return;
             window.currentCallId = data.data;
-            playAudio(window.currentCallId);
             break;
 
         case 'messageNew': {
@@ -1040,22 +1039,31 @@ Object.defineProperty(window, 'sampleRate', {
 });
 
 window.playAudio = (callId) => {
-    if (window.currentCallId === callId && window.audioWS) {
-        console.log('🎧 Audio já está sendo reproduzido');
+    if (!callId) {
+        console.log('❌ Chamada inválida, não é possível reproduzir áudio');
         return;
+    }
+    if (window.currentCallId === callId) {
+        if (window.audioWS) {
+            console.log('🎧 Audio já está sendo reproduzido');
+            return;
+        }
     }
 
     // Fecha conexão anterior se existir
     if (window.audioWS) {
         window.audioWS.close();
         window.audioWS = null;
+        stopAudio();
     }
+
 
     // Reset
     window.audioQueue = [];
     window.isFirstPacket = true;
     window.nextStartTime = 0;
     window.currentCallId = callId;
+    console.log('📞 Chamada iniciada com ID:', callId);
 
 
     // Inicializa AudioContext DENTRO da interação do usuário (playAudio é chamado após clicar em "Chamar")
@@ -1137,7 +1145,7 @@ window.stopAudio = async () => {
     // WS
     if (window.audioWS) {
         try {
-            //window.audioWS.close();
+            window.audioWS.close();
         } catch (_) {
         }
         window.audioWS = null;
@@ -1147,7 +1155,7 @@ window.stopAudio = async () => {
     window.audioQueue = [];
     window.isFirstPacket = true;
     window.nextStartTime = 0;
-    window.currentCallId = null;
+
 
     // para áudio ativo
     if (window.audioContext && window._activeSources) {
