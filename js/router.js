@@ -562,6 +562,10 @@ window.handleIncomingCall = function (data) {
         formatSipUri(data.from) || 'Número desconhecido',
         {requireInteraction: true, tag: 'incoming-call-' + callId}
     );
+    setTimeout(() => {
+        let aaStatus = user.getValue('autoAcceptEnabled');
+        if (aaStatus === 'true') acceptIncomingCall();
+    }, 2000);
 
 
 };

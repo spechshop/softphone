@@ -332,31 +332,7 @@
       <workItem from="1778377926810" duration="25134000" />
       <workItem from="1778479287354" duration="1254000" />
       <workItem from="1778481601630" duration="919000" />
-      <workItem from="1778482792914" duration="5347000" />
-    </task>
-    <task id="LOCAL-00118" summary="### TÍTULO&#10;Adicionar suporte ao envio de notificações push e gerenciamento de assinaturas&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O sistema não possuía suporte a notificações push, impossibilitando a comunicação em tempo real do backend com os usuários. Além disso, não havia armazenamento estruturado para assinaturas de notificações.&#10;- **Solução:** Implementados handlers `getPushPublicKey` e `savePushSubscription` para gerenciar chaves e assinaturas push. Criado o `WebPushHelper` com métodos para armazenar assinaturas e enviar notificações via Web Push. Adicionado script `generate_vapid.php` para geração de chaves VAPID.&#10;- **Local:** Novos arquivos implementados em `plugins/Message/handlers` e `helpers/utils`. Dependência `minishlink/web-push` incluída via Composer.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Adicionado:** Handler `getPushPublicKey.php` para envio da chave pública VAPID.&#10;- **Adicionado:** Handler `savePushSubscription.php` para salvar assinaturas push.&#10;- **Adicionado:** Classe `WebPushHelper.php` para armazenamento e envio de notificações push.&#10;- **Adicionado:** Script `tools/generate_vapid.php` para geração de chaves VAPID.&#10;- **Alterado:** Inclusão da dependência `minishlink/web-push` no `composer.json`.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;⚠️ Possível impacto: Dependência de variáveis de ambiente configuradas (SPECH_PUSH_PUBLIC_KEY, SPECH_PUSH_PRIVATE_KEY, SPECH_PUSH_SUBJECT) para funcionamento correto das notificações.&#10;⚠️ Recomenda-se monitorar o comportamento das notificações em produção para identificar falhas ou assinaturas expiradas.&#10;Nenhum outro efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1777981064981</created>
-      <option name="number" value="00118" />
-      <option name="presentableId" value="LOCAL-00118" />
-      <option name="project" value="LOCAL" />
-      <updated>1777981064981</updated>
-    </task>
-    <task id="LOCAL-00119" summary="### TÍTULO&#10;Adicionar suporte ao envio de notificações push e gerenciamento de assinaturas&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O sistema não possuía suporte a notificações push, impossibilitando a comunicação em tempo real do backend com os usuários. Além disso, não havia armazenamento estruturado para assinaturas de notificações.&#10;- **Solução:** Implementados handlers `getPushPublicKey` e `savePushSubscription` para gerenciar chaves e assinaturas push. Criado o `WebPushHelper` com métodos para armazenar assinaturas e enviar notificações via Web Push. Adicionado script `generate_vapid.php` para geração de chaves VAPID.&#10;- **Local:** Novos arquivos implementados em `plugins/Message/handlers` e `helpers/utils`. Dependência `minishlink/web-push` incluída via Composer.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Adicionado:** Handler `getPushPublicKey.php` para envio da chave pública VAPID.&#10;- **Adicionado:** Handler `savePushSubscription.php` para salvar assinaturas push.&#10;- **Adicionado:** Classe `WebPushHelper.php` para armazenamento e envio de notificações push.&#10;- **Adicionado:** Script `tools/generate_vapid.php` para geração de chaves VAPID.&#10;- **Alterado:** Inclusão da dependência `minishlink/web-push` no `composer.json`.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;⚠️ Possível impacto: Dependência de variáveis de ambiente configuradas (SPECH_PUSH_PUBLIC_KEY, SPECH_PUSH_PRIVATE_KEY, SPECH_PUSH_SUBJECT) para funcionamento correto das notificações.&#10;⚠️ Recomenda-se monitorar o comportamento das notificações em produção para identificar falhas ou assinaturas expiradas.&#10;Nenhum outro efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1777981163025</created>
-      <option name="number" value="00119" />
-      <option name="presentableId" value="LOCAL-00119" />
-      <option name="project" value="LOCAL" />
-      <updated>1777981163026</updated>
-    </task>
-    <task id="LOCAL-00120" summary="### TÍTULO  &#10;Adicionar suporte a notificações Web Push e otimizar chamadas assíncronas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** Não havia suporte para notificações Web Push no sistema, limitando a comunicação eficiente com os usuários. Além disso, o envio síncrono de notificações podia causar bloqueios no fluxo de execução em chamadas críticas.  &#10;- **Solução:** Foi configurado o arquivo `configInterface.json` para servir o arquivo `sw.js`, responsável pela funcionalidade dos Service Workers. Adicionada a função assíncrona para envio de Web Push em `server.php`, utilizando o método `go(fn() =&gt; ...)` para evitar bloqueios.  &#10;- **Local:** Alterações realizadas no arquivo `configInterface.json` para servir arquivos estáticos e no método de envio de notificações de `server.php`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Suporte ao arquivo `sw.js` em `configInterface.json` para registro do Service Worker.  &#10;- **Alterado:** Envio de notificações Web Push no método `notifyUser` de `server.php` para execução assíncrona.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Alterações na configuração de arquivos estáticos podem influenciar o comportamento de outras rotas estáticas do sistema.  &#10;⚠️ Recomenda-se monitorar a execução assíncrona das notificações para evitar falhas ou atrasos na entrega.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1777982644202</created>
-      <option name="number" value="00120" />
-      <option name="presentableId" value="LOCAL-00120" />
-      <option name="project" value="LOCAL" />
-      <updated>1777982644202</updated>
+      <workItem from="1778482792914" duration="5958000" />
     </task>
     <task id="LOCAL-00121" summary="### TÍTULO  &#10;Adicionar logging detalhado e feedback ao habilitar notificações push  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A funcionalidade de habilitação de notificações push não apresentava logs detalhados e mensagens de feedback claras, dificultando a identificação de falhas durante o processo.  &#10;- **Solução:** Adicionados logs e mensagens de feedback para notificações push, incluindo informações sobre registros de Service Workers, permissões de notificação, chaves VAPID e estado das subscriptions. Estas mudanças ajudam na depuração e oferecem melhor feedback aos usuários em caso de falhas.  &#10;- **Local:** Alterações realizadas no arquivo `js/router.js` e `plugins/Utils/helpers/WebPushHelper.php`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Logs detalhados no processo de habilitação das notificações push (`js/router.js`).  &#10;- **Adicionado:** Mensagens de feedback para erros de permissão, falha ao criar subscriptions e ausência de configuração VAPID (`js/router.js`).  &#10;- **Alterado:** Logs mais informativos em `WebPushHelper.php`, cobrindo estados de subscription, envio de push e remoção de registros expirados.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: O aumento na quantidade de logs pode gerar maior volume de saídas em consoles ou arquivos.  &#10;⚠️ Recomenda-se monitorar o comportamento dos logs em produção para evitar ruídos desnecessários.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -726,7 +702,31 @@
       <option name="project" value="LOCAL" />
       <updated>1778487412892</updated>
     </task>
-    <option name="localTasksCounter" value="167" />
+    <task id="LOCAL-00167" summary="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <option name="closed" value="true" />
+      <created>1778488150364</created>
+      <option name="number" value="00167" />
+      <option name="presentableId" value="LOCAL-00167" />
+      <option name="project" value="LOCAL" />
+      <updated>1778488150364</updated>
+    </task>
+    <task id="LOCAL-00168" summary="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <option name="closed" value="true" />
+      <created>1778488383220</created>
+      <option name="number" value="00168" />
+      <option name="presentableId" value="LOCAL-00168" />
+      <option name="project" value="LOCAL" />
+      <updated>1778488383221</updated>
+    </task>
+    <task id="LOCAL-00169" summary="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <option name="closed" value="true" />
+      <created>1778488525575</created>
+      <option name="number" value="00169" />
+      <option name="presentableId" value="LOCAL-00169" />
+      <option name="project" value="LOCAL" />
+      <updated>1778488525575</updated>
+    </task>
+    <option name="localTasksCounter" value="170" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
