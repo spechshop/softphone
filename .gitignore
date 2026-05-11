@@ -6,6 +6,7 @@
 /.idea/shelf/Uncommitted_changes_before_Update_at_05_01_2026_10_02__Changes_.xml
 .env
 vendor
+.idea
 composer.lock
 st
 /stubs/
