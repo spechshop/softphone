@@ -22,36 +22,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### TÍTULO  &#10;Corrigir inconsistências de estado na manipulação de chamadas SIP ativas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A lógica de atualização e persistência do estado das chamadas SIP apresentava inconsistências, como falta de sincronia entre o estado ativo da chamada e os eventos recebidos.  &#10;- **Solução:** Ajustada a manipulação da variável `callState` para garantir que o estado seja recuperado ou iniciado de forma consistente ao longo do fluxo. Persistência atualizada no arquivo `acceptCall.php` utilizando `cache::subDefine`.  &#10;- **Local:** Alterações no arquivo `plugins/Message/handlers/acceptCall.php`, com foco na manipulação e persistência da variável `callState`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Recuperação e inicialização consistente de `callState` a partir de `cache::get` no início do fluxo.  &#10;- **Adicionado:** Persistência do estado atualizado de chamadas no cache através de `subDefine`.  &#10;- **Alterado:** Movimento de inicializações duplicadas de `callState` para locais mais centralizados no fluxo.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento. Recomenda-se realizar monitoramento para identificar possíveis discrepâncias em condições de alta carga.">
-      <change beforePath="$PROJECT_DIR$/.gitignore" beforeDir="false" afterPath="$PROJECT_DIR$/.gitignore" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/audio.php" beforeDir="false" afterPath="$PROJECT_DIR$/audio.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/composer.json" beforeDir="false" afterPath="$PROJECT_DIR$/composer.json" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/css/buildCurl.css" beforeDir="false" afterPath="$PROJECT_DIR$/css/buildCurl.css" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/libspech" beforeDir="false" afterPath="$PROJECT_DIR$/libspech" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" beforeDir="false" afterPath="$PROJECT_DIR$/libspech/plugins/Utils/sip/mediaChannel.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/acceptCall.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Message/handlers/register.php" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Message/handlers/register.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Request/modules/includes/head.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/modules/includes/head.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Request/modules/themeScript.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/modules/themeScript.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubGen.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubGen.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/LPCM.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/LPCM.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/Resampler.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/Resampler.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/bcg729/co/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/bcg729/co/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/bcg729/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/bcg729/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/bcg729/swoole/coroutine/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/bcg729/swoole/coroutine/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/bcg729/swoole/coroutine/http/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/bcg729/swoole/coroutine/http/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/bcg729Channel.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/bcg729Channel.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/opus/co/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/opus/co/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/opus/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/opus/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/opus/swoole/coroutine/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/opus/swoole/coroutine/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/opus/swoole/coroutine/http/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/opus/swoole/coroutine/http/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/opusChannel.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/opusChannel.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/psampler/co/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/psampler/co/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/psampler/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/psampler/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/psampler/swoole/coroutine/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/psampler/swoole/coroutine/functions.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/psampler/swoole/coroutine/http/functions.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubs/psampler/swoole/coroutine/http/functions.php" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -356,15 +328,7 @@
       <workItem from="1778355830148" duration="8624000" />
       <workItem from="1778365047391" duration="684000" />
       <workItem from="1778365972241" duration="245000" />
-      <workItem from="1778377926810" duration="14282000" />
-    </task>
-    <task id="LOCAL-00102" summary="Adicionado suporte para setup completo de áudio bidirecional RTP ↔ PCM&#10;&#10;### Problema&#10;Faltava um fluxo centralizado para configurar e gerenciar a ponte de mídia RTP ↔ PCM, essencial para chamadas de áudio em tempo real. Além disso, não havia estrutura dedicada para gerenciar estados de chamadas SIP.&#10;&#10;### Solução&#10;- Criada a classe `CallMediaBridge` para gerenciar o pipeline bidirecional de áudio, incluindo decodificação RTP ↔ PCM e envio para o `audio.php`.&#10;- Implementada a classe `CallState` para controlar tabelas compartilhadas com informações de chamadas SIP, como registros ativos e recebidos.&#10;- Adicionada a classe `SdpHelper` para manipulação e criação de SDP de forma eficiente.&#10;&#10;### Mudanças relevantes&#10;- **Adicionado:** `CallMediaBridge` para pipeline bidirecional de mídia.&#10;- **Adicionado:** `CallState` para gerenciar chamadas e bindings no namespace `helpers\utils`.&#10;- **Adicionado:** Manipulação de SDP com a classe `SdpHelper` para codecs e sessões.&#10;- **Alterado:** `server.php` para incluir lógica SIP e manipulação de pacotes.&#10;- **Alterado:** `register.php` e `saveConfig.php` corrigindo fluxo de registro SIP.&#10;&#10;### Impactos, Riscos ou Limitações&#10;⚠️ Possível impacto: mudanças extensivas no fluxo de mídia e registro SIP podem introduzir instabilidades iniciais.&#10;⚠️ Necessidade de monitoramento pós-deploy para verificar comportamentos em alta carga de chamadas.">
-      <option name="closed" value="true" />
-      <created>1777875230275</created>
-      <option name="number" value="00102" />
-      <option name="presentableId" value="LOCAL-00102" />
-      <option name="project" value="LOCAL" />
-      <updated>1777875230276</updated>
+      <workItem from="1778377926810" duration="15441000" />
     </task>
     <task id="LOCAL-00103" summary="### TÍTULO  &#10;Adicionar suporte ao sistema de mensagens com interface de chat  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não possuía suporte para envio, recebimento e exibição de mensagens, limitando a comunicação entre usuários.  &#10;- **Solução:** Implementado um sistema completo de mensagens com interface para envio, histórico de conversa, marcação de leitura e notificações em tempo real.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Classes `messageSend`, `messageList`, `messageRead` e `messageHistory` para manipulação de mensagens no backend.  &#10;- **Adicionado:** Classe `messageStore` para gestão de mensagens e conversas no armazenamento persistente.  &#10;- **Adicionado:** Interface de chat no frontend para exibição de conversas e envio de mensagens (`plugins/Request/pages/default.html`, `plugins/Request/pages/index.html`).  &#10;- **Adicionado:** Eventos em tempo real para recebimento de novas mensagens (`server.php`, `js/router.js`).  &#10;- **Alterado:** Adicionados novos estilos e elementos associados ao sistema de mensagens na interface.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: alterações extensivas na interface e no backend podem introduzir instabilidades ou regressões em áreas relacionadas.  &#10;⚠️ Necessário monitoramento pós-deploy para verificar o desempenho e correção de eventuais bugs ao escalar o uso do sistema.">
       <option name="closed" value="true" />
@@ -750,7 +714,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778366125595</updated>
     </task>
-    <option name="localTasksCounter" value="151" />
+    <task id="LOCAL-00151" summary="### TÍTULO  &#10;Corrigir inconsistências de estado na manipulação de chamadas SIP ativas  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A lógica de atualização e persistência do estado das chamadas SIP apresentava inconsistências, como falta de sincronia entre o estado ativo da chamada e os eventos recebidos.  &#10;- **Solução:** Ajustada a manipulação da variável `callState` para garantir que o estado seja recuperado ou iniciado de forma consistente ao longo do fluxo. Persistência atualizada no arquivo `acceptCall.php` utilizando `cache::subDefine`.  &#10;- **Local:** Alterações no arquivo `plugins/Message/handlers/acceptCall.php`, com foco na manipulação e persistência da variável `callState`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Recuperação e inicialização consistente de `callState` a partir de `cache::get` no início do fluxo.  &#10;- **Adicionado:** Persistência do estado atualizado de chamadas no cache através de `subDefine`.  &#10;- **Alterado:** Movimento de inicializações duplicadas de `callState` para locais mais centralizados no fluxo.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento. Recomenda-se realizar monitoramento para identificar possíveis discrepâncias em condições de alta carga.">
+      <option name="closed" value="true" />
+      <created>1778398102678</created>
+      <option name="number" value="00151" />
+      <option name="presentableId" value="LOCAL-00151" />
+      <option name="project" value="LOCAL" />
+      <updated>1778398102678</updated>
+    </task>
+    <option name="localTasksCounter" value="152" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -829,12 +801,12 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>1463</line>
+          <line>1464</line>
           <option name="timeStamp" value="29" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>2156</line>
+          <line>2157</line>
           <option name="timeStamp" value="33" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="javascript">
