@@ -253,13 +253,13 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
                 'callId' => $callId,
             ]));
 
-            $maxWaitMs = 15000;
-            $pollIntervalMs = 500;
-            $waited = 0;
+
             $cameOnline = false;
-            while ($waited < $maxWaitMs) {
-                \Swoole\Coroutine::sleep($pollIntervalMs / 1000);
-                $waited += $pollIntervalMs;
+            $maxWait = 30;
+            $waited = 0;
+            for ($n = $maxWait; $n--;) {
+                \Swoole\Coroutine::sleep(1);
+                $waited += 1;
                 if (!CallState::$incomingCalls->exist($callId)) {
                     cli::pcl("[INBOUND] Call-ID:{$callId} removido durante espera (CANCEL recebido), abortando", 'yellow');
                     return;
@@ -275,11 +275,11 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
                 $finalHdrs['To'][0] = ($finalHdrs['To'][0] ?? '') . ';tag=' . $pendingToTag;
                 $socket->sendto($info['address'], $info['port'], renderMessages::baseResponse($finalHdrs, "480", "Temporarily Unavailable"));
                 CallState::$incomingCalls->del($callId);
-                cli::pcl("[INBOUND] fp:{$fp} não reconectou em {$maxWaitMs}ms, 480 enviado", 'red');
+                cli::pcl("[INBOUND] fp:{$fp} não reconectou em {$maxWait}s, 480 enviado", 'red');
                 return;
             }
 
-            cli::pcl("[INBOUND] fp:{$fp} reconectou após {$waited}ms — continuando fluxo", 'green');
+            cli::pcl("[INBOUND] fp:{$fp} reconectou após {$waited}s — continuando fluxo", 'green');
         }
 
         if (CallState::hasActiveCallForFp($fp) || isset((cache::get('coroutinesProcess') ?? [])[$fp])) {
@@ -421,9 +421,6 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         }
     }
 });
-
-
-
 
 
 $server->start();
