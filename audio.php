@@ -47,7 +47,7 @@ $server->set([
     'ssl_cert_file' => 'fullchain.pem',
     'ssl_key_file' => 'privkey.pem',
     'enable_coroutine' => true,
-    'open_tcp_nodelay' => true,
+
 ]);
 
 /**

@@ -31,7 +31,6 @@ class callAccept
             ]));
         }
         if (CallState::$incomingCalls === null || !CallState::$incomingCalls->exist($callId)) {
-            cli::pcl("[ACCEPT] Chamada não encontrada Call-ID:{$callId}", 'red');
             return $socket->push($fd, json_encode([
                 'type' => 'notify',
                 'data' => [
@@ -42,7 +41,6 @@ class callAccept
         }
         $call = CallState::$incomingCalls->get($callId);
         if ($call['fp'] !== $fp) {
-            cli::pcl("[ACCEPT] fp:{$fp} não é dono do Call-ID:{$callId} (dono:{$call['fp']})", 'red');
             return $socket->push($fd, json_encode([
                 'type' => 'notify',
                 'data' => [
@@ -52,7 +50,6 @@ class callAccept
             ]));
         }
         if ($call['status'] !== 'ringing') {
-            cli::pcl("[ACCEPT] Chamada já em status '{$call['status']}', ignorando Call-ID:{$callId}", 'yellow');
             return $socket->push($fd, json_encode([
                 'type' => 'notify',
                 'data' => [
@@ -96,7 +93,6 @@ class callAccept
         if (array_key_exists('Route', $inviteHeaders)) {
             $responseHeaders['Route'] = $inviteHeaders['Route'];
         }
-        cli::pcl("[ACCEPT] Enviando 200 OK → {$call['remote_ip']}:{$call['remote_port']} To-tag:{$call['to_tag']}", 'green');
         $renderOK = sip::renderSolution([
             'method' => '200',
             'methodForParser' => 'SIP/2.0 200 OK',
@@ -135,7 +131,6 @@ class callAccept
                 ],
             ]));
         }
-        cli::pcl("[ACCEPT] 200 OK enviado com sucesso Call-ID:{$callId}", 'green');
         // ── Media bridge ──────────────────────────────────────────────────────
         $userData = $vault->get($fp);
         $userCodec = $userData['codec'] ?? 'PCMA/8000';
@@ -163,7 +158,7 @@ class callAccept
 
         $rtpSocket = new \SocketMutable(AF_INET, SOCK_DGRAM, 0);
         $bindOk = $rtpSocket->bind('0.0.0.0', $localRtpPort);
-        cli::pcl("[ACCEPT-CO] bind({$localIp}:{$localRtpPort}) => " . ($bindOk ? 'OK' : 'FALHOU'), $bindOk ? 'cyan' : 'red');
+        cli::pcl("[ACCEPT-CO] bind({$localIp}:{$localRtpPort}) => " . ($bindOk ? 'OK' : 'FALHOU'), $bindOk ? 'bold_green' : 'bold_red');
 
 
         $mediaChannel = new MediaChannel($rtpSocket, $callId);
@@ -215,9 +210,8 @@ class callAccept
             }
 
 
-            if ($frequency !== $userFrequency) {
-                $pcmData = resampler($pcmData, $frequency, $userFrequency);
-            }
+            // NÃO resample aqui — audio.php faz a única conversão para userFrequency.
+            // Se resamplear duas vezes o áudio fica em "câmera lenta" (drift acumulado).
             $id = implode(':', array_values($peer));
             //cli::pcl("[ACCEPT-CO] RTP received from {$id} codec:{$codecName} pt:{$rtp->payloadType} freq:{$frequency} ssrc:{$rtp->ssrc}}", 'cyan');
 
@@ -264,7 +258,7 @@ class callAccept
         $callState->mediaChannel = $mediaChannel;
         \libspech\Cache\cache::subDefine('coroutinesProcess', $fp, $callState);
 
-        $mediaChannel->onStart(function () use (&$mediaChannel, $sdpParsed, $codecName, $frequency, $callState, $userFrequency) {
+        $mediaChannel->onStart(function () use (&$mediaChannel, $sdpParsed, $codecName, $frequency, &$callState, $userFrequency) {
             cli::pcl("[ACCEPT-CO] Browser→Caller coroutine iniciada", 'cyan');
             //$mediaChannel->eventSock->sendto('127.0.0.1', 9600, str_repeat('0', 12));
             $pcmBuffer = '';
@@ -313,7 +307,7 @@ class callAccept
                 }
             }
 
-            sleep(5);
+
             cli::pcl(date('H:i:s') . " [ACCEPT-CO] Browser→Caller coroutine encerrada", 'red');
         }
         );

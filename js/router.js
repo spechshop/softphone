@@ -1084,7 +1084,6 @@ window.playAudio = (callId) => {
     if (!window.speakerGainNode) {
         window.speakerGainNode = window.audioContext.createGain();
         window.speakerGainNode.connect(window.audioContext.destination);
-        // Tenta pegar o valor inicial do slider se ele existir na página, senão usa o localStorage
         const callVol = document.getElementById('callVol');
         if (callVol) {
             window.speakerGainNode.gain.value = callVol.value / 100;

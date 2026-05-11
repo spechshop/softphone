@@ -1462,7 +1462,7 @@
     let isMicStop = (user.getValue('isMicStop') !== null) ? user.getValue('isMicStop') : true;
     console.log('🎤 Estado inicial do microfone:', isMicStop ? 'desligado' : 'ligado');
 
-    window.startCall = () => {
+    window.startCall = async () => {
 
         var digits = window.digits;
         if (!digits) {
@@ -1484,6 +1484,27 @@
 
         if (typeof addToHistory === 'function') addToHistory(digitsCall);
 
+        // Garante que o microfone está pronto ANTES de iniciar o pedido,
+        // assim quando o outro lado atender já temos PCM saindo na hora.
+        if (!isMicStop && !isRecording) {
+            console.log('🎤 Pré-aquecendo microfone antes do StartCall');
+            try {
+                await startAudioCapture();
+            } catch (e) {
+                console.warn('⚠️ Falha ao iniciar microfone antes da chamada:', e);
+                bootstrap.showToast({
+                    header: 'Microfone',
+                    body: 'Não foi possível ativar o microfone. A chamada vai prosseguir sem áudio do mic.',
+                    toastClass: 'bg-warning',
+                    colorHeader: 'text-white',
+                });
+            }
+        } else if (isMicStop) {
+            console.log('🔇 Microfone permanece desligado (preferência salva)');
+        } else {
+            console.log('🎤 Microfone já ativo');
+        }
+
         sendRecByToken({
             digits: digitsCall,
             codec: getSelectedCodec(),
@@ -1492,14 +1513,6 @@
             btnCall.style.display = 'none';
             btnHangup.style.display = '';
 
-            // Só inicia o microfone se não estiver no estado "parado"
-            console.log('📞 Chamada iniciada. Estado do microfone:', isMicStop ? 'parado' : 'ativo');
-            if (!isMicStop) {
-                console.log('🎤 Iniciando captura de áudio automaticamente');
-                startAudioCapture();
-            } else {
-                console.log('🔇 Microfone permanece desligado (conforme preferência salva)');
-            }
             startCallTimer();
 
             // Aguarda currentCallId ser definido antes de chamar playAudio
