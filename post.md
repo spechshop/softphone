@@ -100,6 +100,6 @@ O projeto está em fase **Beta** e o desenvolvimento continua ativo, focado agor
 implementar o recebimento de chamadas.
 
 🔗 **Confira o código e contribua no GitHub:
-** [https://github.com/spechshop/spechphone](https://github.com/spechshop/spechphone)
+** [https://github.com/spechshop/softphone](https://github.com/spechshop/softphone)
 
 Fiquem ligados para mais novidades! 🚀

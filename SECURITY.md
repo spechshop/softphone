@@ -233,7 +233,7 @@ Avisos de segurança serão publicados:
 
 Para questões de segurança urgentes ou sensíveis:
 
-- **GitHub Security Advisory**: https://github.com/spechshop/spechphone/security/advisories
+- **GitHub Security Advisory**: https://github.com/spechshop/softphone/security/advisories
 - **Email**: Verifique o perfil dos mantenedores no GitHub
 
 ## Recursos Adicionais

@@ -113,7 +113,7 @@ WebRTC.
 ## Installation
 
 ```bash
-git clone https://github.com/spechshop/spechphone
+git clone https://github.com/spechshop/softphone
 cd spechphone
 git clone https://github.com/spechshop/libspech
 wget https://github.com/spechshop/pcg729/releases/download/PCG729/php
