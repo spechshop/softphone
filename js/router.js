@@ -1171,7 +1171,7 @@ window.isSpeakerMuted = false;
 function processAudioData(arrayBuffer) {
     // Descarta pacotes se o speaker estiver mutado
     if (window.isSpeakerMuted) {
-        return;
+        //return;
     }
 
     if (window.isFirstPacket) {
