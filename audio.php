@@ -41,7 +41,7 @@ cache::define('rateCall', 8000);
 /**
  * Configuração do servidor WebSocket de áudio.
  */
-$server = new Server("0.0.0.0", 8888, SWOOLE_BASE, SWOOLE_SOCK_TCP | SWOOLE_SSL);
+$server = new Server("0.0.0.0", 8889, SWOOLE_BASE, SWOOLE_SOCK_TCP | SWOOLE_SSL);
 
 $server->set([
     'ssl_cert_file' => 'fullchain.pem',

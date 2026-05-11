@@ -374,13 +374,13 @@ section {
 .dial-pad {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    padding: 8px;
+    gap: 9px;
+    padding: 6px;
 }
 
 .dial-btn {
 
-    border-radius: 18px;
+    border-radius: 16px;
     border: 1px solid var(--border);
     background: transparent !important;
     color: var(--text);
@@ -389,7 +389,14 @@ section {
     align-items: center;
     justify-content: center;
     cursor: pointer;
+    padding: 10px 6px;
+    min-height: 60px;
 
+}
+
+.dial-btn .fs-3 {
+    font-size: 1.5rem !important;
+    line-height: 1;
 }
 
 .dial-btn:active {
@@ -407,16 +414,17 @@ section {
 }
 
 .dial-btn .n {
-    font-size: 26px;
+    font-size: 23px;
     line-height: 1;
     font-weight: 400;
 }
 
 .dial-btn .l {
-    font-size: 11px;
+    font-size: 10px;
     color: var(--muted);
-    margin-top: 4px;
+    margin-top: 3px;
     letter-spacing: 1px;
+    line-height: 1;
 }
 
 .action-row {
