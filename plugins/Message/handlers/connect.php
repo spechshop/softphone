@@ -199,6 +199,10 @@ class connect
         }
 
         $userDatas = $vault->get($data['fp']);
+        if (array_any($Rules, fn($rule) => empty($userDatas[$rule]))) {
+            return false;
+        }
+
         $sipServer = $userDatas['sipServer'];
         $sipUser = $userDatas['sipUser'];
         $sipPass = $userDatas['sipPass'];
