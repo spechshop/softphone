@@ -1426,49 +1426,84 @@
                 colorHeader: 'text-white',
             });
         }
-        // Se já há uma chamada tocando agora, clica no botão atender (após pequeno atraso)
+        // Se já há uma chamada tocando agora, aguarda o botão estar visível e clica.
         if (window.autoAcceptEnabled
             && window.inboundCallState
             && window.inboundCallState.status === 'incoming') {
-            const currentId = window.inboundCallState.currentCallId;
-            setTimeout(() => {
-                if (!window.inboundCallState
-                    || window.inboundCallState.status !== 'incoming'
-                    || window.inboundCallState.currentCallId !== currentId) {
-                    return;
-                }
-                const btn = document.getElementById('ib-btn-accept');
-                if (btn) {
-                    btn.click();
-                } else if (typeof window.acceptIncomingCall === 'function') {
-                    window.acceptIncomingCall();
-                }
-            }, 1500);
+            waitForAcceptButtonVisible(window.inboundCallState.currentCallId);
         }
     });
     renderAutoAcceptBtn();
+
+    // Atraso (ms) adicional após o botão "Atender" estar visível na tela,
+    // para o usuário ter a chance de ver a notificação antes do auto-clique.
+    window.AA_VISIBLE_GRACE_MS = 800;
+    // Tempo máximo (ms) de espera pelo botão aparecer antes de desistir do AA.
+    window.AA_MAX_WAIT_MS = 15000;
+
+    // Espera o botão #ib-btn-accept estar realmente renderizado/visível na tela
+    // e a aba em foco. Só então executa onReady(btn). Cancela se a chamada
+    // mudar de estado ou se o callId não bater mais.
+    function waitForAcceptButtonVisible(callId, onReady) {
+        const startedAt = Date.now();
+        let rafId = null;
+
+        const isSameCall = () => window.inboundCallState
+            && window.inboundCallState.status === 'incoming'
+            && window.inboundCallState.currentCallId === callId;
+
+        const isVisible = (el) => {
+            if (!el || !el.isConnected) return false;
+            if (el.disabled) return false;
+            if (el.offsetParent === null) return false;
+            const r = el.getBoundingClientRect();
+            if (r.width <= 0 || r.height <= 0) return false;
+            const cs = window.getComputedStyle(el);
+            if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) === 0) return false;
+            if (document.visibilityState !== 'visible') return false;
+            return true;
+        };
+
+        const tick = () => {
+            if (!isSameCall()) {
+                rafId = null;
+                return;
+            }
+            if (Date.now() - startedAt > window.AA_MAX_WAIT_MS) {
+                console.warn('[AA] timeout aguardando botão Atender ficar visível');
+                rafId = null;
+                return;
+            }
+            const btn = document.getElementById('ib-btn-accept');
+            if (isVisible(btn)) {
+                // Confirma com 2 RAFs (garante 1 frame de paint após visível)
+                // e então aplica o tempo de cortesia para o usuário ver a tela.
+                requestAnimationFrame(() => requestAnimationFrame(() => {
+                    if (!isSameCall()) return;
+                    setTimeout(() => {
+                        if (!isSameCall()) return;
+                        const b = document.getElementById('ib-btn-accept');
+                        if (b && isVisible(b)) {
+                            b.click();
+                        }
+                    }, window.AA_VISIBLE_GRACE_MS);
+                }));
+                rafId = null;
+                return;
+            }
+            rafId = requestAnimationFrame(tick);
+        };
+        rafId = requestAnimationFrame(tick);
+    }
 
     // Encadeia handler de chamada recebida para auto-atender
     (function () {
         const original = window.handleIncomingCall;
         if (typeof original !== 'function' || original.__aaWrapped) return;
-        const AA_DELAY_MS = 1500;
         const wrapped = function (data) {
             const r = original.apply(this, arguments);
-            if (window.autoAcceptEnabled) {
-                setTimeout(() => {
-                    if (!window.inboundCallState
-                        || window.inboundCallState.status !== 'incoming'
-                        || window.inboundCallState.currentCallId !== data.callId) {
-                        return;
-                    }
-                    const btn = document.getElementById('ib-btn-accept');
-                    if (btn) {
-                        btn.click();
-                    } else if (typeof window.acceptIncomingCall === 'function') {
-                        window.acceptIncomingCall();
-                    }
-                }, AA_DELAY_MS);
+            if (window.autoAcceptEnabled && data && data.callId) {
+                waitForAcceptButtonVisible(data.callId);
             }
             return r;
         };
