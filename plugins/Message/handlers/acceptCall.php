@@ -124,6 +124,11 @@ class callAccept
                 'data' => 'callAccept',
             ]));
             $socket->push($clientFd, json_encode([
+                'type' => 'event',
+                'data' => 'callActive',
+            ]));
+
+            $socket->push($clientFd, json_encode([
                 'type' => 'notify',
                 'data' => [
                     'type' => 'bg-success text-white',
