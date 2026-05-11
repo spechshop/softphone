@@ -1040,9 +1040,9 @@ Object.defineProperty(window, 'sampleRate', {
 });
 
 window.playAudio = (callId) => {
-    if (window.currentCallId === callId) {
+    if (window.currentCallId === callId && window.audioWS) {
         console.log('🎧 Audio já está sendo reproduzido');
-
+        return;
     }
 
     // Fecha conexão anterior se existir
