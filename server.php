@@ -346,19 +346,6 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         return;
     }
 
-    if ($parse['method'] === 'ACK') {
-        $callId = $parse['headers']['Call-ID'][0];
-        if (CallState::$incomingCalls->exist($callId)) {
-            $row = CallState::$incomingCalls->get($callId);
-            CallState::$incomingCalls->set($callId, array_merge($row, ['status' => 'active', 'updated_at' => time()]));
-            $fp = $row['fp'];
-            foreach (cache::get('connections')[$fp] ?? [] as $clientFd) {
-                $socket->push($clientFd, json_encode(['type' => 'event', 'data' => 'callActive']));
-            }
-            cli::pcl("[INBOUND] ACK Call-ID:{$callId} — chamada ativa", 'green');
-        }
-        return;
-    }
 
     if ($parse['method'] === 'CANCEL') {
         $callId = $parse['headers']['Call-ID'][0];

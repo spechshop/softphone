@@ -21,7 +21,10 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound" />
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -329,15 +332,7 @@
       <workItem from="1778377926810" duration="25134000" />
       <workItem from="1778479287354" duration="1254000" />
       <workItem from="1778481601630" duration="919000" />
-      <workItem from="1778482792914" duration="4357000" />
-    </task>
-    <task id="LOCAL-00117" summary="### TÍTULO  &#10;Adicionar suporte a Service Workers e notificações no SpechPhone  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O SpechPhone não possuía suporte a notificações de navegador e manutenção de estado em segundo plano, prejudicando a experiência do usuário com chamadas e mensagens quando o app não estava visível.  &#10;- **Solução:** Adicionados Service Workers para suporte a notificações nativas, além de funcionalidade de Wake Lock para manter a tela ativa durante uso prolongado. Novos métodos para solicitação e envio de notificações foram implementados no `router.js`. O arquivo `manifest.json` foi criado para maior integração ao PWA.  &#10;- **Local:** Módulo `router.js` atualizado com as funções `sendBrowserNotification`, `requestBrowserNotificationPermission` e `requestWakeLock`, além de modificações em `head.html` para registro do Service Worker e inclusão do arquivo `manifest.json`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Arquivo `js/sw.js` para registro de eventos do Service Worker.  &#10;- **Adicionado:** Arquivo `manifest.json` para configurações do PWA.  &#10;- **Adicionado:** Suporte a notificações e Wake Lock no arquivo `router.js`.  &#10;- **Alterado:** Registro do Service Worker e link para `manifest.json` em `head.html`.  &#10;- **Alterado:** Configuração para servir o arquivo `manifest.json` por meio do plugin `configInterface.json`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Alterações no comportamento de notificações e integração com navegadores podem apresentar comportamento inconsistente em dispositivos mais antigos.  &#10;⚠️ Monitorar falhas ou atrasos no registro de Service Workers em ambiente de produção.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1777974709179</created>
-      <option name="number" value="00117" />
-      <option name="presentableId" value="LOCAL-00117" />
-      <option name="project" value="LOCAL" />
-      <updated>1777974709180</updated>
+      <workItem from="1778482792914" duration="5347000" />
     </task>
     <task id="LOCAL-00118" summary="### TÍTULO&#10;Adicionar suporte ao envio de notificações push e gerenciamento de assinaturas&#10;&#10;### CORPO DO COMMIT&#10;- **Problema:** O sistema não possuía suporte a notificações push, impossibilitando a comunicação em tempo real do backend com os usuários. Além disso, não havia armazenamento estruturado para assinaturas de notificações.&#10;- **Solução:** Implementados handlers `getPushPublicKey` e `savePushSubscription` para gerenciar chaves e assinaturas push. Criado o `WebPushHelper` com métodos para armazenar assinaturas e enviar notificações via Web Push. Adicionado script `generate_vapid.php` para geração de chaves VAPID.&#10;- **Local:** Novos arquivos implementados em `plugins/Message/handlers` e `helpers/utils`. Dependência `minishlink/web-push` incluída via Composer.&#10;&#10;### MUDANÇAS RELEVANTES&#10;- **Adicionado:** Handler `getPushPublicKey.php` para envio da chave pública VAPID.&#10;- **Adicionado:** Handler `savePushSubscription.php` para salvar assinaturas push.&#10;- **Adicionado:** Classe `WebPushHelper.php` para armazenamento e envio de notificações push.&#10;- **Adicionado:** Script `tools/generate_vapid.php` para geração de chaves VAPID.&#10;- **Alterado:** Inclusão da dependência `minishlink/web-push` no `composer.json`.&#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES&#10;⚠️ Possível impacto: Dependência de variáveis de ambiente configuradas (SPECH_PUSH_PUBLIC_KEY, SPECH_PUSH_PRIVATE_KEY, SPECH_PUSH_SUBJECT) para funcionamento correto das notificações.&#10;⚠️ Recomenda-se monitorar o comportamento das notificações em produção para identificar falhas ou assinaturas expiradas.&#10;Nenhum outro efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -723,7 +718,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778486434098</updated>
     </task>
-    <option name="localTasksCounter" value="166" />
+    <task id="LOCAL-00166" summary="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <option name="closed" value="true" />
+      <created>1778487412892</created>
+      <option name="number" value="00166" />
+      <option name="presentableId" value="LOCAL-00166" />
+      <option name="project" value="LOCAL" />
+      <updated>1778487412892</updated>
+    </task>
+    <option name="localTasksCounter" value="167" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -802,11 +805,6 @@
       <breakpoints>
         <line-breakpoint enabled="true" type="javascript">
           <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
-          <line>1442</line>
-          <option name="timeStamp" value="29" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" type="javascript">
-          <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
           <line>2148</line>
           <option name="timeStamp" value="33" />
         </line-breakpoint>
@@ -819,6 +817,18 @@
           <url>file://$PROJECT_DIR$/plugins/Request/modules/themeScript.html</url>
           <line>151</line>
           <option name="timeStamp" value="41" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
+          <line>2254</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="45" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" type="javascript">
+          <url>file://$PROJECT_DIR$/plugins/Request/pages/default.html</url>
+          <line>1696</line>
+          <properties lambdaOrdinal="-1" />
+          <option name="timeStamp" value="46" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="php">
           <url>file://$PROJECT_DIR$/plugins/Message/handlers/saveConfig.php</url>
