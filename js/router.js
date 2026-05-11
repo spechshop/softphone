@@ -570,6 +570,7 @@ window.handleIncomingCall = function (data) {
 
 
 window.handleCallActive = function () {
+    console.trace('Invocado por:')
     if (window.inboundCallState.direction !== 'inbound') return;
     if (!['accepting', 'incoming'].includes(window.inboundCallState.status)) return;
     console.log('[CALL] chamada ativa');
