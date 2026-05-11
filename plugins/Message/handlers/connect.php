@@ -37,6 +37,7 @@ class connect
 
             $userDatas = $vault->get($data['fp']);
 
+
             if (!empty($userDatas['sipUser']) && CallState::$sipBindings !== null) {
                 CallState::$sipBindings->set($userDatas['sipUser'], [
                     'fp' => $data['fp'],

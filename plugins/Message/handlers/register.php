@@ -27,15 +27,15 @@ class register
         if (!$vault->exists($data['fp'])) return false;
 
         $userDatas = $vault->get($data['fp']);
+        $needInputs = ['sipServer', 'sipUser', 'sipPass'];
+        if (array_any($needInputs, fn($input) => empty($userDatas[$input]))) {
+            return false;
+        }
+
         $sipServer = $userDatas['sipServer'];
         $sipUser = $userDatas['sipUser'];
         $sipPass = $userDatas['sipPass'];
-        $needInputs = ['sipServer', 'sipUser', 'sipPass'];
-        foreach ($needInputs as $input) {
-            if (empty($userDatas[$input])) {
-                return false;
-            }
-        }
+
 
         try {
             $phone = new \libspech\Sip\trunkController($sipUser, $sipPass, $sipServer);
@@ -43,8 +43,7 @@ class register
             return false;
         }
 
-        cli::pcl("Registrando no servidor: $sipServer", 'blue');
-        var_dump($phone->register());
+
 
 
         $modelRegister = $phone->modelRegister(1800);
