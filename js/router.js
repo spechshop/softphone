@@ -1063,7 +1063,7 @@ window.playAudio = (callId) => {
     window.isFirstPacket = true;
     window.nextStartTime = 0;
     window.currentCallId = callId;
-    console.log('📞 Chamada iniciada com ID:', callId);
+    console.log('✅ ✅ ✅ ✅ 📞 Chamada iniciada com ID:', callId);
 
 
     // Inicializa AudioContext DENTRO da interação do usuário (playAudio é chamado após clicar em "Chamar")
