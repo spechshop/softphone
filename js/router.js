@@ -1115,7 +1115,8 @@ window.playAudio = (callId) => {
     // Determina protocolo WebSocket
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const userFp = (new UserManager()).getValue('fp') || 'anon';
-    const wsUrl = `${protocol}//${infoURI().host}:8889?fp=${callId}&ssrc=rx-${userFp}`;
+    const sampleRate = window.sampleRate || 8000;
+    const wsUrl = `${protocol}//${infoURI().host}:8889?fp=${callId}&ssrc=rx-${userFp}&sampleRate=${sampleRate}`;
 
     window.audioWS = new WebSocket(wsUrl);
     window.audioWS.binaryType = "arraybuffer";
