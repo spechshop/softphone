@@ -128,6 +128,17 @@ class connect
             $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
             if ($vault->exists($data['fp'])) {
                 $userDatas = $vault->get($data['fp']);
+                $Rules = ['sipServer', 'sipUser', 'sipPass'];
+                 if (array_any($Rules, fn($rule) => empty($userDatas[$rule]))) {
+                     return $socket->push($fd, json_encode([
+                         'type' => 'notify',
+                         'data' => [
+                             'type' => 'bg-danger text-white',
+                             'message' => 'Clique em Config. e adicione os dados do seu servidor SIP'
+                         ]
+                     ]));
+                }
+
 
                 $lastPacket = $userDatas['lastPacket'];
                 $renderURI = $lastPacket['headers']['From'][0] ?? '';
