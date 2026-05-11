@@ -564,7 +564,7 @@ window.handleIncomingCall = function (data) {
     );
     setTimeout(() => {
         let aaStatus = user.getValue('autoAcceptEnabled');
-        if (aaStatus === 'true') acceptIncomingCall();
+        if (aaStatus === true) acceptIncomingCall();
     }, 2000);
 
 

@@ -22,7 +22,6 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -332,15 +331,7 @@
       <workItem from="1778377926810" duration="25134000" />
       <workItem from="1778479287354" duration="1254000" />
       <workItem from="1778481601630" duration="919000" />
-      <workItem from="1778482792914" duration="5958000" />
-    </task>
-    <task id="LOCAL-00121" summary="### TÍTULO  &#10;Adicionar logging detalhado e feedback ao habilitar notificações push  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A funcionalidade de habilitação de notificações push não apresentava logs detalhados e mensagens de feedback claras, dificultando a identificação de falhas durante o processo.  &#10;- **Solução:** Adicionados logs e mensagens de feedback para notificações push, incluindo informações sobre registros de Service Workers, permissões de notificação, chaves VAPID e estado das subscriptions. Estas mudanças ajudam na depuração e oferecem melhor feedback aos usuários em caso de falhas.  &#10;- **Local:** Alterações realizadas no arquivo `js/router.js` e `plugins/Utils/helpers/WebPushHelper.php`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Logs detalhados no processo de habilitação das notificações push (`js/router.js`).  &#10;- **Adicionado:** Mensagens de feedback para erros de permissão, falha ao criar subscriptions e ausência de configuração VAPID (`js/router.js`).  &#10;- **Alterado:** Logs mais informativos em `WebPushHelper.php`, cobrindo estados de subscription, envio de push e remoção de registros expirados.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: O aumento na quantidade de logs pode gerar maior volume de saídas em consoles ou arquivos.  &#10;⚠️ Recomenda-se monitorar o comportamento dos logs em produção para evitar ruídos desnecessários.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1777983596105</created>
-      <option name="number" value="00121" />
-      <option name="presentableId" value="LOCAL-00121" />
-      <option name="project" value="LOCAL" />
-      <updated>1777983596106</updated>
+      <workItem from="1778482792914" duration="6029000" />
     </task>
     <task id="LOCAL-00122" summary="### TÍTULO  &#10;Corrigir tratamento de valores no `plugins/autoload.php` para evitar caracteres desnecessários  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** Valores de variáveis de ambiente podiam incluir aspas ou espaços extras, impactando leituras e execuções dependentes dessas variáveis.  &#10;- **Solução:** Implementado trim adicional nos valores para remover aspas simples ou duplas, além de espaços extras no início ou fim.  &#10;- **Local:** Ajuste no método de leitura de variáveis do arquivo `plugins/autoload.php`.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Corrigido:** Remoção de caracteres extras (aspas, espaços) nos valores das variáveis tratadas em `plugins/autoload.php`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -726,7 +717,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778488525575</updated>
     </task>
-    <option name="localTasksCounter" value="170" />
+    <task id="LOCAL-00170" summary="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <option name="closed" value="true" />
+      <created>1778488759789</created>
+      <option name="number" value="00170" />
+      <option name="presentableId" value="LOCAL-00170" />
+      <option name="project" value="LOCAL" />
+      <updated>1778488759789</updated>
+    </task>
+    <option name="localTasksCounter" value="171" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
