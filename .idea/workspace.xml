@@ -22,9 +22,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/plugins/Request/pages/default.html" beforeDir="false" afterPath="$PROJECT_DIR$/plugins/Request/pages/default.html" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -333,15 +331,7 @@
       <workItem from="1778377926810" duration="25134000" />
       <workItem from="1778479287354" duration="1254000" />
       <workItem from="1778481601630" duration="919000" />
-      <workItem from="1778482792914" duration="2029000" />
-    </task>
-    <task id="LOCAL-00112" summary="### TÍTULO  &#10;Adicionar identificação de usuários em conexões WebSocket e otimizar fluxo de mídia  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não diferenciava as conexões WebSocket para múltiplos usuários, dificultando o gerenciamento de fluxos de mídia e mixagem de áudio.  &#10;- **Solução:** Adicionado parâmetro `ssrc` na URL do WebSocket, identificando os usuários como `rx-*` ou `mic-*` com base no fingerprint. Essa mudança permite melhor organização e distinção dos fluxos de mídia no backend. Também foram realizadas melhorias em handlers de chamada para lidar de forma mais eficiente com corrotinas e eventos de mídia.  &#10;- **Local:** Alterações em `js/router.js`, `plugins/Request/pages/default.html`, e múltiplos handlers SIP (`acceptCall.php`, `startCall.php`, `dtmf.php`).  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Inclusão do parâmetro `ssrc` na conexão WebSocket.  &#10;- **Alterado:** Configuração de sockets RTP em `plugins/Message/handlers/acceptCall.php`.  &#10;- **Corrigido:** Exceção no envio de mensagens DTMF em `dtmf.php`.  &#10;- **Removido:** Código redundante relacionado ao envio manual de pacotes via socket UDP.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Como houve alterações profundas no fluxo de mídia, recomenda-se testes de comportamento em cenários com múltiplos usuários simultâneos.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1777950153506</created>
-      <option name="number" value="00112" />
-      <option name="presentableId" value="LOCAL-00112" />
-      <option name="project" value="LOCAL" />
-      <updated>1777950153506</updated>
+      <workItem from="1778482792914" duration="2270000" />
     </task>
     <task id="LOCAL-00113" summary="### TÍTULO  &#10;Adicionar identificação de usuários em conexões WebSocket e otimizar fluxo de mídia  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não diferenciava as conexões WebSocket para múltiplos usuários, dificultando o gerenciamento de fluxos de mídia e mixagem de áudio.  &#10;- **Solução:** Adicionado parâmetro `ssrc` na URL do WebSocket, identificando os usuários como `rx-*` ou `mic-*` com base no fingerprint. Essa mudança permite melhor organização e distinção dos fluxos de mídia no backend. Também foram realizadas melhorias em handlers de chamada para lidar de forma mais eficiente com corrotinas e eventos de mídia.  &#10;- **Local:** Alterações em `js/router.js`, `plugins/Request/pages/default.html`, e múltiplos handlers SIP (`acceptCall.php`, `startCall.php`, `dtmf.php`).  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Inclusão do parâmetro `ssrc` na conexão WebSocket.  &#10;- **Alterado:** Configuração de sockets RTP em `plugins/Message/handlers/acceptCall.php`.  &#10;- **Corrigido:** Exceção no envio de mensagens DTMF em `dtmf.php`.  &#10;- **Removido:** Código redundante relacionado ao envio manual de pacotes via socket UDP.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Como houve alterações profundas no fluxo de mídia, recomenda-se testes de comportamento em cenários com múltiplos usuários simultâneos.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -727,7 +717,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778484354004</updated>
     </task>
-    <option name="localTasksCounter" value="161" />
+    <task id="LOCAL-00161" summary="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <option name="closed" value="true" />
+      <created>1778484833563</created>
+      <option name="number" value="00161" />
+      <option name="presentableId" value="LOCAL-00161" />
+      <option name="project" value="LOCAL" />
+      <updated>1778484833563</updated>
+    </task>
+    <option name="localTasksCounter" value="162" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">

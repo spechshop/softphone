@@ -570,9 +570,8 @@ window.handleIncomingCall = function (data) {
         formatSipUri(data.from) || 'Número desconhecido',
         {requireInteraction: true, tag: 'incoming-call-' + callId}
     );
-    if (window.autoAcceptEnabled) {
-        window.waitForAcceptButtonVisible(callId);
-    }
+
+
 };
 
 // ===== Auto-atender (AA) =====
