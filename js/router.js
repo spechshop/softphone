@@ -928,15 +928,24 @@ const onMessageSocket = (event, socket) => {
                 handleCallEnded();
             }
             if (data.data === 'callAccept') {
-                // Outbound call confirmed (inbound path uses callActive/ACK)
-                if (window.inboundCallState.direction !== 'inbound') {
-                    $('#btnHangup').css('display', '');
-                    $('#btnCall').css('display', 'none');
-                    if (typeof window.startCallTimer === 'function') window.startCallTimer();
-                    playAudio(window.currentCallId);
-                    const _outPartner = (new UserManager()).getValue('lastDigits') || 'Chamada';
-                    renderActiveCallBar(_outPartner);
+                // Outbound call confirmed (inbound path uses callActive/ACK).
+                // O servidor pode reenviar 'callAccept' no reconnect a partir de
+                // estado residual (coroutinesProcess) — só tratamos como outbound
+                // atendido se houver de fato uma chamada outbound em curso,
+                // identificada pela visibilidade do botão "Desligar".
+                if (window.inboundCallState.direction === 'inbound') break;
+                const _btnHangup = document.getElementById('btnHangup');
+                const _outboundInProgress = _btnHangup && _btnHangup.style.display !== 'none';
+                if (!_outboundInProgress) {
+                    console.log('[CALL] callAccept ignorado: sem chamada outbound ativa (state replay)');
+                    break;
                 }
+                $('#btnHangup').css('display', '');
+                $('#btnCall').css('display', 'none');
+                if (typeof window.startCallTimer === 'function') window.startCallTimer();
+                playAudio(window.currentCallId);
+                const _outPartner = (new UserManager()).getValue('lastDigits') || 'Chamada';
+                renderActiveCallBar(_outPartner);
             }
             if (data.data === 'callActive') {
                 handleCallActive();
