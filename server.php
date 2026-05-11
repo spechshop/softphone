@@ -260,6 +260,9 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
             for ($n = $maxWait; $n--;) {
                 \Swoole\Coroutine::sleep(1);
                 $waited += 1;
+                var_dump(cache::get('connections'));
+
+
                 if (!CallState::$incomingCalls->exist($callId)) {
                     cli::pcl("[INBOUND] Call-ID:{$callId} removido durante espera (CANCEL recebido), abortando", 'yellow');
                     return;
