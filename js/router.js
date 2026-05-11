@@ -540,16 +540,8 @@ function _updateCallWidgetUI() {
 
 window.handleIncomingCall = function (data) {
     const callId = data.callId;
-    if (window.inboundCallState.currentCallId === callId) {
-        console.log('[CALL] chamada duplicada ignorada', callId);
-        return;
-    }
-    const busy = window.inboundCallState.status !== 'idle' && window.inboundCallState.status !== 'ended';
-    if (busy) {
-        console.log('[CALL] ocupado, recusando automaticamente', callId);
-        sendRecByToken({callId}, 'callReject');
-        return;
-    }
+
+
     console.log('[CALL] incomingCall recebido', callId);
     window.inboundCallState = {
         currentCallId: callId,
