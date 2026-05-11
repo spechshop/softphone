@@ -1426,12 +1426,24 @@
                 colorHeader: 'text-white',
             });
         }
-        // Se já há uma chamada tocando agora, atende imediatamente
+        // Se já há uma chamada tocando agora, clica no botão atender (após pequeno atraso)
         if (window.autoAcceptEnabled
             && window.inboundCallState
-            && window.inboundCallState.status === 'incoming'
-            && typeof window.acceptIncomingCall === 'function') {
-            window.acceptIncomingCall();
+            && window.inboundCallState.status === 'incoming') {
+            const currentId = window.inboundCallState.currentCallId;
+            setTimeout(() => {
+                if (!window.inboundCallState
+                    || window.inboundCallState.status !== 'incoming'
+                    || window.inboundCallState.currentCallId !== currentId) {
+                    return;
+                }
+                const btn = document.getElementById('ib-btn-accept');
+                if (btn) {
+                    btn.click();
+                } else if (typeof window.acceptIncomingCall === 'function') {
+                    window.acceptIncomingCall();
+                }
+            }, 1500);
         }
     });
     renderAutoAcceptBtn();
@@ -1440,17 +1452,23 @@
     (function () {
         const original = window.handleIncomingCall;
         if (typeof original !== 'function' || original.__aaWrapped) return;
+        const AA_DELAY_MS = 1500;
         const wrapped = function (data) {
             const r = original.apply(this, arguments);
             if (window.autoAcceptEnabled) {
                 setTimeout(() => {
-                    if (window.inboundCallState
-                        && window.inboundCallState.status === 'incoming'
-                        && window.inboundCallState.currentCallId === data.callId
-                        && typeof window.acceptIncomingCall === 'function') {
+                    if (!window.inboundCallState
+                        || window.inboundCallState.status !== 'incoming'
+                        || window.inboundCallState.currentCallId !== data.callId) {
+                        return;
+                    }
+                    const btn = document.getElementById('ib-btn-accept');
+                    if (btn) {
+                        btn.click();
+                    } else if (typeof window.acceptIncomingCall === 'function') {
                         window.acceptIncomingCall();
                     }
-                }, 250);
+                }, AA_DELAY_MS);
             }
             return r;
         };

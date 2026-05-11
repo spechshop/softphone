@@ -21,27 +21,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### feat: ajustar fluxo de chamadas SIP e notificações push&#10;&#10;- **Adicionado:** Tratamento de chamadas pendentes no cache utilizando reconexão websocket.&#10;- **Adicionado:** Lógica de espera configurável de 15s para reconexão antes de encerrar chamadas pendentes.&#10;- **Adicionado:** Método `notifyIncomingCall` em `WebPushHelper` para envio de notificações push com detalhes da chamada.&#10;- **Alterado:** Mensagem 480 enviada em caso de timeout na reconexão.&#10;  &#10;Branch: inbound">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/server.php" beforeDir="false" afterPath="$PROJECT_DIR$/server.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubGen.php" beforeDir="false" afterPath="$PROJECT_DIR$/stubGen.php" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/LPCM.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/Resampler.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/bcg729/co/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/bcg729/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/bcg729/swoole/coroutine/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/bcg729/swoole/coroutine/http/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/bcg729Channel.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/opus/co/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/opus/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/opus/swoole/coroutine/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/opus/swoole/coroutine/http/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/opusChannel.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/psampler/co/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/psampler/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/psampler/swoole/coroutine/functions.php" beforeDir="false" />
-      <change beforePath="$PROJECT_DIR$/stubs/psampler/swoole/coroutine/http/functions.php" beforeDir="false" />
-    </list>
+    <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### feat: ajustar fluxo de chamadas SIP e notificações push&#10;&#10;- **Adicionado:** Tratamento de chamadas pendentes no cache utilizando reconexão websocket.&#10;- **Adicionado:** Lógica de espera configurável de 15s para reconexão antes de encerrar chamadas pendentes.&#10;- **Adicionado:** Método `notifyIncomingCall` em `WebPushHelper` para envio de notificações push com detalhes da chamada.&#10;- **Alterado:** Mensagem 480 enviada em caso de timeout na reconexão.&#10;  &#10;Branch: inbound" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -349,15 +329,7 @@
       <workItem from="1778377926810" duration="25134000" />
       <workItem from="1778479287354" duration="1254000" />
       <workItem from="1778481601630" duration="919000" />
-      <workItem from="1778482792914" duration="400000" />
-    </task>
-    <task id="LOCAL-00109" summary="Atualizar README.md e README.pt-br.md com informações mais detalhadas&#10;&#10;### Problema&#10;Os arquivos `README.md` e `README.pt-br.md` estavam desatualizados e não refletiam todas as funcionalidades, arquitetura e instruções mais recentes do SpechPhone.&#10;&#10;### Mudança necessária&#10;Foi necessário atualizar os documentos para detalhar melhor:&#10;- Arquitetura e funcionamento do sistema&#10;- Funcionalidades disponíveis (SIP, RTP, messaging, etc.)&#10;- Requisitos de instalação e execução&#10;- Fluxo de chamadas inbound&#10;- Segurança e limitações&#10;&#10;### Mudanças relevantes&#10;- Alterado: Adicionados novos tópicos de arquitetura ao README.&#10;- Alterado: Melhoradas instruções de instalação dos componentes (`libspech` e `pcg729`).&#10;- Alterado: Incluídas instruções de configuração do ambiente.&#10;- Alterado: Documentação sobre o fluxo de chamadas inbound e suporte a mensagens SIP.&#10;&#10;### Impactos, riscos ou limitações&#10;Nenhum efeito colateral conhecido até o momento, pois as mudanças afetam apenas documentação.">
-      <option name="closed" value="true" />
-      <created>1777936445029</created>
-      <option name="number" value="00109" />
-      <option name="presentableId" value="LOCAL-00109" />
-      <option name="project" value="LOCAL" />
-      <updated>1777936445029</updated>
+      <workItem from="1778482792914" duration="817000" />
     </task>
     <task id="LOCAL-00110" summary=" TÍTULO  &#10;Adicionar camada de fundo e centralizar widget de chamada inbound  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** A exibição do widget de chamada inbound não possuía uma camada de fundo nem posição central, causando problemas na usabilidade e integração visual.  &#10;- **Solução:** Adicionada a div `inboundCallBackdrop` para criar uma camada de fundo translúcida e ajustada a posição do widget para centralizá-lo na tela, melhorando a experiência do usuário.  &#10;- **Local:** Alterações realizadas em `js/router.js`, incluindo lógica de criação e remoção do fundo, além de ajustes no estilo CSS do widget.  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- Adicionado: Componente `inboundCallBackdrop` para fundo opaco no fluxo de chamadas.  &#10;- Alterado: Posição de `inboundCallCard` para centralização na tela.  &#10;- Alterado: Lógicas de exibição e remoção de elementos relacionados à chamada ativa em `window.setCallState` e `window.closeCallWidget`.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;Nenhum efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -743,7 +715,15 @@
       <option name="project" value="LOCAL" />
       <updated>1778482361908</updated>
     </task>
-    <option name="localTasksCounter" value="158" />
+    <task id="LOCAL-00158" summary="### feat: ajustar fluxo de chamadas SIP e notificações push&#10;&#10;- **Adicionado:** Tratamento de chamadas pendentes no cache utilizando reconexão websocket.&#10;- **Adicionado:** Lógica de espera configurável de 15s para reconexão antes de encerrar chamadas pendentes.&#10;- **Adicionado:** Método `notifyIncomingCall` em `WebPushHelper` para envio de notificações push com detalhes da chamada.&#10;- **Alterado:** Mensagem 480 enviada em caso de timeout na reconexão.&#10;  &#10;Branch: inbound">
+      <option name="closed" value="true" />
+      <created>1778483203099</created>
+      <option name="number" value="00158" />
+      <option name="presentableId" value="LOCAL-00158" />
+      <option name="project" value="LOCAL" />
+      <updated>1778483203100</updated>
+    </task>
+    <option name="localTasksCounter" value="159" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
