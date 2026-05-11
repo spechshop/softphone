@@ -574,59 +574,8 @@ window.handleIncomingCall = function (data) {
 
 };
 
-// ===== Auto-atender (AA) =====
-// Tempo (ms) que o botão "Atender" deve permanecer visível antes do clique automático,
-// para o usuário ter a chance de ver a chamada chegando.
-window.AA_VISIBLE_GRACE_MS = 2000;
-// Tempo máximo (ms) aguardando o botão aparecer antes de desistir.
-window.AA_MAX_WAIT_MS = 15000;
 
-// Aguarda o botão #ib-btn-accept estar realmente renderizado/visível na tela
-// (e a aba em foco). Só então clica. Cancela se a chamada mudar de estado
-// ou se o callId não bater mais.
-window.waitForAcceptButtonVisible = function (callId) {
-    const startedAt = Date.now();
 
-    const isSameCall = () => window.inboundCallState
-        && window.inboundCallState.status === 'incoming'
-        && window.inboundCallState.currentCallId === callId;
-
-    const isVisible = (el) => {
-        if (!el || !el.isConnected) return false;
-        if (el.disabled) return false;
-        if (el.offsetParent === null) return false;
-        const r = el.getBoundingClientRect();
-        if (r.width <= 0 || r.height <= 0) return false;
-        const cs = window.getComputedStyle(el);
-        if (cs.visibility === 'hidden' || cs.display === 'none' || parseFloat(cs.opacity) === 0) return false;
-        if (document.visibilityState !== 'visible') return false;
-        return true;
-    };
-
-    const tick = () => {
-        if (!isSameCall()) return;
-        if (Date.now() - startedAt > window.AA_MAX_WAIT_MS) {
-            console.warn('[AA] timeout aguardando botão Atender ficar visível');
-            return;
-        }
-        const btn = document.getElementById('ib-btn-accept');
-        if (!isVisible(btn)) {
-            requestAnimationFrame(tick);
-            return;
-        }
-        // Dois RAFs garantem pelo menos um frame de paint após ficar visível,
-        // então respeita o tempo de cortesia antes de clicar.
-        requestAnimationFrame(() => requestAnimationFrame(() => {
-            if (!isSameCall()) return;
-            setTimeout(() => {
-                if (!isSameCall()) return;
-                const b = document.getElementById('ib-btn-accept');
-                if (b && isVisible(b)) b.click();
-            }, window.AA_VISIBLE_GRACE_MS);
-        }));
-    };
-    requestAnimationFrame(tick);
-};
 
 window.handleCallActive = function () {
     if (window.inboundCallState.direction !== 'inbound') return;

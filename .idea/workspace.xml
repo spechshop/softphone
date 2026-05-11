@@ -22,6 +22,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ca7acb2b-c307-484e-b6de-1c51db6de9f2" name="Changes" comment="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/js/router.js" beforeDir="false" afterPath="$PROJECT_DIR$/js/router.js" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -331,23 +332,7 @@
       <workItem from="1778377926810" duration="25134000" />
       <workItem from="1778479287354" duration="1254000" />
       <workItem from="1778481601630" duration="919000" />
-      <workItem from="1778482792914" duration="2270000" />
-    </task>
-    <task id="LOCAL-00113" summary="### TÍTULO  &#10;Adicionar identificação de usuários em conexões WebSocket e otimizar fluxo de mídia  &#10;&#10;### CORPO DO COMMIT  &#10;- **Problema:** O sistema não diferenciava as conexões WebSocket para múltiplos usuários, dificultando o gerenciamento de fluxos de mídia e mixagem de áudio.  &#10;- **Solução:** Adicionado parâmetro `ssrc` na URL do WebSocket, identificando os usuários como `rx-*` ou `mic-*` com base no fingerprint. Essa mudança permite melhor organização e distinção dos fluxos de mídia no backend. Também foram realizadas melhorias em handlers de chamada para lidar de forma mais eficiente com corrotinas e eventos de mídia.  &#10;- **Local:** Alterações em `js/router.js`, `plugins/Request/pages/default.html`, e múltiplos handlers SIP (`acceptCall.php`, `startCall.php`, `dtmf.php`).  &#10;&#10;### MUDANÇAS RELEVANTES  &#10;- **Adicionado:** Inclusão do parâmetro `ssrc` na conexão WebSocket.  &#10;- **Alterado:** Configuração de sockets RTP em `plugins/Message/handlers/acceptCall.php`.  &#10;- **Corrigido:** Exceção no envio de mensagens DTMF em `dtmf.php`.  &#10;- **Removido:** Código redundante relacionado ao envio manual de pacotes via socket UDP.  &#10;&#10;### IMPACTOS, RISCOS OU LIMITAÇÕES  &#10;⚠️ Possível impacto: Como houve alterações profundas no fluxo de mídia, recomenda-se testes de comportamento em cenários com múltiplos usuários simultâneos.  &#10;Nenhum outro efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1777950396334</created>
-      <option name="number" value="00113" />
-      <option name="presentableId" value="LOCAL-00113" />
-      <option name="project" value="LOCAL" />
-      <updated>1777950396334</updated>
-    </task>
-    <task id="LOCAL-00114" summary="Adicionar suporte a re-registro automático e melhorias no fluxo de chamadas&#10;&#10;### Problema&#10;O sistema não realizava re-registros automáticos para prolongar a validade do registro SIP, o que causava encerramento prematuro de conexões. Além disso, o fluxo de chamadas apresentava falta de notificações apropriadas para chamadas ativas no momento do reconectar.&#10;&#10;### Solução&#10;- Implementado timer para re-registro automático a cada 25 minutos no `connect.php` para evitar expiração do registro.&#10;- Adicionada notificação de chamadas ativas pendentes ao cliente WebSocket no momento da reconexão.&#10;- Padronização nas respostas de erro e notificações em `acceptCall.php`.&#10;- Melhoria na leitura e envio de pacotes RTP para maior clareza e eficiência no manejo de mídia.&#10;&#10;### Mudanças relevantes&#10;- Adicionado temporizador para re-registro automático (connect.php).&#10;- Alterado o envio de mensagens de erro e notificações (acceptCall.php).&#10;- Melhoria na manipulação de eventos de mídia e sockets RTP.&#10;- Adicionado suporte a novas URLs no ambiente de desenvolvimento (.idea/gbrowsers.xml).&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Mudanças no timing de registro podem interferir com sistemas externos dependentes do intervalo default de 30 minutos.&#10;⚠️ Recomenda-se testes sob carga para verificar estabilidade no envio de RTP com alta concorrência.&#10;Nenhum outro efeito colateral conhecido até o momento.">
-      <option name="closed" value="true" />
-      <created>1777969182506</created>
-      <option name="number" value="00114" />
-      <option name="presentableId" value="LOCAL-00114" />
-      <option name="project" value="LOCAL" />
-      <updated>1777969182506</updated>
+      <workItem from="1778482792914" duration="3170000" />
     </task>
     <task id="LOCAL-00115" summary="Adicionar suporte a re-registro automático e melhorias no fluxo de chamadas&#10;&#10;### Problema&#10;O sistema não realizava re-registros automáticos para prolongar a validade do registro SIP, o que causava encerramento prematuro de conexões. Além disso, o fluxo de chamadas apresentava falta de notificações apropriadas para chamadas ativas no momento do reconectar.&#10;&#10;### Solução&#10;- Implementado timer para re-registro automático a cada 25 minutos no `connect.php` para evitar expiração do registro.&#10;- Adicionada notificação de chamadas ativas pendentes ao cliente WebSocket no momento da reconexão.&#10;- Padronização nas respostas de erro e notificações em `acceptCall.php`.&#10;- Melhoria na leitura e envio de pacotes RTP para maior clareza e eficiência no manejo de mídia.&#10;&#10;### Mudanças relevantes&#10;- Adicionado temporizador para re-registro automático (connect.php).&#10;- Alterado o envio de mensagens de erro e notificações (acceptCall.php).&#10;- Melhoria na manipulação de eventos de mídia e sockets RTP.&#10;- Adicionado suporte a novas URLs no ambiente de desenvolvimento (.idea/gbrowsers.xml).&#10;&#10;### Impactos, riscos ou limitações&#10;⚠️ Possível impacto: Mudanças no timing de registro podem interferir com sistemas externos dependentes do intervalo default de 30 minutos.&#10;⚠️ Recomenda-se testes sob carga para verificar estabilidade no envio de RTP com alta concorrência.&#10;Nenhum outro efeito colateral conhecido até o momento.">
       <option name="closed" value="true" />
@@ -725,7 +710,23 @@
       <option name="project" value="LOCAL" />
       <updated>1778484833563</updated>
     </task>
-    <option name="localTasksCounter" value="162" />
+    <task id="LOCAL-00162" summary="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <option name="closed" value="true" />
+      <created>1778485069408</created>
+      <option name="number" value="00162" />
+      <option name="presentableId" value="LOCAL-00162" />
+      <option name="project" value="LOCAL" />
+      <updated>1778485069409</updated>
+    </task>
+    <task id="LOCAL-00163" summary="### feat: melhorar lógica de aceitação automática de chamadas inbound&#10;&#10;- **Alterado:** Adicionado atraso de 1,5s para clicar no botão de aceitar chamadas de entrada automaticamente, garantindo sincronização com o estado atual da chamada.&#10;- **Adicionado:** Nova lógica para verificar e acionar o botão `ib-btn-accept` antes de chamar a função de aceitação padrão.&#10;- **Refatorado:** Centralização da lógica de atraso na manipulação de chamadas inbound no fluxo `handleIncomingCall`.&#10;&#10;Branch: inbound">
+      <option name="closed" value="true" />
+      <created>1778485420663</created>
+      <option name="number" value="00163" />
+      <option name="presentableId" value="LOCAL-00163" />
+      <option name="project" value="LOCAL" />
+      <updated>1778485420663</updated>
+    </task>
+    <option name="localTasksCounter" value="164" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
