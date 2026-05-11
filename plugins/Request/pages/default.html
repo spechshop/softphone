@@ -2338,6 +2338,8 @@
             console.log('🎵 Codec selecionado:', format, '• Sample rate:', sampleRate + 'Hz');
             user.updateUserData('codec', format);
             user.updateUserData('sampleRate', sampleRate);
+            stopAudio();
+            playAudio(window.currentCallId);
 
 
         });
