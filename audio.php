@@ -440,6 +440,11 @@ $server->on("start", function (Server $server) use (
                     if ($outData !== '') {
                         foreach ($clients[$stream] ?? [] as $fd) {
                             $targetSsrc = $clientInfo[$fd]['ssrc'] ?? '';
+                            $sampleRateDest = $clientInfo[$fd]['sampleRate'] ?? 8000;
+                            $outData = resampler($outData, $userFrequency, $sampleRateDest);
+
+
+
 
                             /**
                              * Não envia áudio recebido da engine para conexões de microfone.
@@ -452,6 +457,8 @@ $server->on("start", function (Server $server) use (
                             if (method_exists($server, 'isEstablished') && !$server->isEstablished($fd)) {
                                 continue;
                             }
+
+
 
                             $server->push($fd, $outData, SWOOLE_WEBSOCKET_OPCODE_BINARY);
                         }
@@ -586,6 +593,7 @@ $server->on("open", function (Server $server, Request $req) use (
     }
 
     $ssrc = $req->get["ssrc"] ?? "ws-{$req->fd}";
+    $sampleRate = $req->get["sampleRate"] ?? 8000;
 
     $clients[$stream] ??= [];
     $clients[$stream][$req->fd] = $req->fd;
@@ -598,9 +606,10 @@ $server->on("open", function (Server $server, Request $req) use (
         'stream' => $stream,
         'callId' => $stream,
         'ssrc' => $ssrc,
+        'sampleRate' => $sampleRate,
     ];
 
-    echo "🎧 Cliente áudio conectado stream={$stream}, fd={$req->fd}, ssrc={$ssrc}\n";
+    echo "🎧 Cliente áudio {$sampleRate}Hz conectado stream={$stream}, fd={$req->fd}, ssrc={$ssrc}\n";
 });
 
 /**
@@ -631,6 +640,7 @@ $server->on("message", function (Server $server, Frame $frame) use (
 
     $stream = $clientInfo[$fd]['stream'] ?? $clientInfo[$fd]['callId'] ?? null;
     $ssrc = $clientInfo[$fd]['ssrc'] ?? "ws-{$fd}";
+    $sampleRate = $clientInfo[$fd]['sampleRate'] ?? 8000;
 
     if (!$stream) {
         echo "⚠️ Frame sem stream vinculada - FD: {$fd}\n";
