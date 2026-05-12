@@ -118,7 +118,7 @@ WebRTC.
 
 ```bash
 git clone https://github.com/spechshop/softphone
-cd spechphone
+cd softphone
 git clone https://github.com/spechshop/libspech
 wget https://github.com/spechshop/pcg729/releases/download/PCG729/php
 sudo mv php /usr/local/bin/php
