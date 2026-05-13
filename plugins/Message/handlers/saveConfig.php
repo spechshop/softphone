@@ -253,6 +253,8 @@ class saveConfig
             $try2=gethostbyname($sipServer);
             if($try2){
                 return $try2;
+            } else {
+                return $sipServer;
             }
 
             return '';
