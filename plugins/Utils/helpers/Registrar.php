@@ -163,7 +163,7 @@ class Registrar
         }
 
         self::recordFailure($fp, $sipUser, $sipServer, $sipDomain);
-        cli::pcl("[REGISTRAR] Falha ao registrar {$sipUser}@{$sipServer} (fp:{$fp})", 'red');
+        cli::pcl("[REGISTRAR] Falha ao registrar {$sipUser}@{$sipServer} $sipPass (fp:{$fp})", 'red');
         return false;
     }
 
