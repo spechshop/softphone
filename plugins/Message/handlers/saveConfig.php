@@ -250,6 +250,11 @@ class saveConfig
         $sipServerParser = parse_url($sipServer, PHP_URL_HOST);
         if (!$sipServerParser) {
             cli::pcl("[REGISTRAR] Falha ao obter host do servidor SIP: {$sipServer}", 'red');
+            $try2=gethostbyname($sipServer);
+            if($try2){
+                return $try2;
+            }
+
             return '';
         }
         return gethostbyname($sipServerParser);
