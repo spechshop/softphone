@@ -1238,6 +1238,24 @@ async function scheduleAudioBuffer() {
         }
     }
 
+    // Válvula de escape: se já estamos muito à frente do currentTime, descarta
+    // a fila e ressincroniza. Impede que jitter/suspend acumule latência permanente.
+    const lookahead = window.nextStartTime - window.audioContext.currentTime;
+    if (lookahead > 0.3) {
+        console.warn(`⏩ Latência ${(lookahead * 1000).toFixed(0)}ms — ressincronizando`);
+        if (window._activeSources) {
+            for (const s of window._activeSources) {
+                try { s.stop(); } catch (_) {}
+            }
+            window._activeSources.length = 0;
+        }
+        window.audioQueue = [];
+        window.nextStartTime = window.audioContext.currentTime + 0.02;
+        return;
+    }
+
+    window._activeSources = window._activeSources || [];
+
     while (window.audioQueue.length > 0) {
         const buffer = window.audioQueue.shift();
         const source = window.audioContext.createBufferSource();
@@ -1249,6 +1267,12 @@ async function scheduleAudioBuffer() {
             source.connect(window.audioContext.destination);
         }
 
+        window._activeSources.push(source);
+        source.onended = () => {
+            const i = window._activeSources.indexOf(source);
+            if (i !== -1) window._activeSources.splice(i, 1);
+        };
+
         // Agenda para tocar no próximo slot disponível
         const scheduleTime = Math.max(window.audioContext.currentTime, window.nextStartTime);
         source.start(scheduleTime);
@@ -1256,8 +1280,8 @@ async function scheduleAudioBuffer() {
         // Atualiza próximo tempo disponível
         window.nextStartTime = scheduleTime + buffer.duration;
 
-        // Mantém latência baixa (~500ms)
-        if (window.nextStartTime - window.audioContext.currentTime > 0.5) {
+        // Mantém latência baixa (~250ms)
+        if (window.nextStartTime - window.audioContext.currentTime > 0.25) {
             break;
         }
     }

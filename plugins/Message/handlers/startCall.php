@@ -148,7 +148,7 @@ class startCall
         ]));
 
 
-        if (!$phone->register(10)) {
+        if (!$phone->register()) {
             $phone->close();
             $socket->push($fd, json_encode([
                 'byToken' => $model['id'],
@@ -173,8 +173,9 @@ class startCall
             }
             cache::unset('coroutinesProcess', $fingerprint);
             return false;
-
-
+        }
+        else {
+            cli::pcl("Registrado com sucesso", "green");
         }
 
 
@@ -229,8 +230,6 @@ class startCall
             }
             cache::unset('coroutinesProcess', $fingerprint);
         });
-
-
         $phone->onHangup(function (trunkController $phone) use ($model, $fd, $socket, $fingerprint) {
 
 
@@ -263,7 +262,6 @@ class startCall
                 ]));
             }
         });
-
         $phone->mountLineCodecSDP($trunkCodec);
 
 
@@ -273,8 +271,6 @@ class startCall
         $phone->saveGlobalInfo('eventSock', $eventSock);
         $phone->globalInfo['eventSock']->bind('0.0.0.0', $freePort);
         $portHandler = $phone->globalInfo['eventSock']->getsockname()['port'];
-
-
         $userCodec = $data['codec'] ?? 'PCMA/8000';
         $parts = explode('/', $userCodec);
         $userFrequency = (int)$parts[1] ?? 8000;
@@ -416,7 +412,8 @@ class startCall
 
 
                         // RTP
-                        $packet = $phone->rtpChannel->buildAudioPacket($encode);
+                        $idTarget = "$phone->audioRemoteIp:$phone->audioRemotePort";
+                        $packet = $phone->mediaChannel->members[$idTarget]['rtpChannel']->buildAudioPacket($encode);
 
                         $phone->mediaChannel->socket->sendto(
                             $phone->audioRemoteIp,
@@ -457,8 +454,6 @@ class startCall
             }
             cli::pcl("Chamada conectada com " . $phone->calledNumber, "green");
         });
-
-
         $codec = $phone->codecName;
         $frequency = $phone->frequencyCall;
         $phone->onKeyPress(function ($event, $peer) use ($eventSock, $callId, $portHandler, $frequency, $codec) {
@@ -473,7 +468,6 @@ class startCall
 
 
         });
-
         $phone->call($number);
 
 

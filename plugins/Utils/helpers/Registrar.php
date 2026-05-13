@@ -2,6 +2,7 @@
 
 namespace helpers\utils;
 
+use handlers\saveConfig;
 use libspech\Cli\cli;
 use libspech\Network\network;
 use libspech\Sip\sip;
@@ -80,6 +81,9 @@ class Registrar
 
     public static function registerOne(Server $server, string $fp, array $data): bool
     {
+        $sipServer = saveConfig::parseSipServer($data['sipServer']);
+
+        $data['sipServer'] = $sipServer;
         $sipServer = $data['sipServer'];
         $sipUser = $data['sipUser'];
         $sipPass = $data['sipPass'];

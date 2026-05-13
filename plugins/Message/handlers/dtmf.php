@@ -11,7 +11,7 @@ class dtmf
     public static function resolve(\Swoole\WebSocket\Server $socket, array $model, int $fd): ?bool
     {
         $data = $model['data'];
-        var_dump($model);
+
 
         $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
 
@@ -48,18 +48,8 @@ class dtmf
             $dtmf = substr($data['dtmf'], 0);
 
 
-            try {
-                $phone->send2833($dtmf);
-            } catch (\Throwable $e) {
-                try {
-                    $phone->mediaChannel->send2833($dtmf);
-                } catch (\Throwable $e) {
-                    cli::pcl("[DTMF] Error sending DTMF: {$e->getMessage()}", 'red');
-                }
-
-
-                cli::pcl("[DTMF] Error sending DTMF: {$e->getMessage()}", 'red');
-            }
+            $phone->mediaChannel->send2833($dtmf);
+            cli::pcl("DTMF: " . $dtmf, "green");
 
 
             return $socket->push($fd, json_encode([

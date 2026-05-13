@@ -3,6 +3,7 @@
 namespace handlers;
 
 
+use libspech\Cli\cli;
 use libspech\Network\network;
 use libspech\Sip\sip;
 use libspech\Sip\trunkController;
@@ -86,11 +87,13 @@ class saveConfig
 
 
         $sipServer = self::parseSipServer($data['sipServer']);
+        $data['sipServer'] = $sipServer;
         $sipUser = $data['sipUser'];
         $sipPass = $data['sipPass'];
         try {
             $phone = new trunkController($sipUser, $sipPass, $sipServer);
         } catch (\Exception $e) {
+            cli::pcl("[REGISTRAR] Falha ao instanciar trunkController para {$sipUser}@{$sipServer}: " . $e->getMessage(), 'red');
             return $socket->push($fd, json_encode([
                 'type' => 'notify',
                 'data' => [
@@ -105,6 +108,8 @@ class saveConfig
         for ($n = 3; $n--;) {
             $peer = [];
             $res = $phone->socket->recvfrom($peer, 5);
+
+
 
             $receive = sip::parse($res);
             if ($receive['method'] == '401') {
@@ -128,6 +133,7 @@ class saveConfig
                 ]));
             }
         }
+        $vault->set($fingerprint, $data);
 
 
         $modelOptions = $phone->modelOptions();
@@ -235,11 +241,16 @@ class saveConfig
         }
     }
 
-    private static function parseSipServer(string $sipServer): string
+    public static function parseSipServer(string $sipServer): string
     {
         $filterIp = filter_var($sipServer, FILTER_VALIDATE_IP);
         if ($filterIp) {
             return $sipServer;
+        }
+        $sipServer = parse_url($sipServer, PHP_URL_HOST);
+        if (!$sipServer) {
+            cli::pcl("[REGISTRAR] Falha ao obter host do servidor SIP: {$sipServer}", 'red');
+            return '';
         }
         return gethostbyname($sipServer);
     }
