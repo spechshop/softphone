@@ -1,5 +1,7 @@
 # SpechPhone
 
+> 🎧 **Demonstração ao vivo disponível em [phone.spechshop.com](https://phone.spechshop.com)**
+
 Softphone web open-source construído com PHP + Swoole, focado em sinalização SIP, mídia RTP, ponte de mídia em tempo
 real, integração com `libspech` e arquitetura sem WebRTC.
 
