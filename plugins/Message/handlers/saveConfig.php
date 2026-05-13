@@ -247,11 +247,11 @@ class saveConfig
         if ($filterIp) {
             return $sipServer;
         }
-        $sipServer = parse_url($sipServer, PHP_URL_HOST);
-        if (!$sipServer) {
+        $sipServerParser = parse_url($sipServer, PHP_URL_HOST);
+        if (!$sipServerParser) {
             cli::pcl("[REGISTRAR] Falha ao obter host do servidor SIP: {$sipServer}", 'red');
             return '';
         }
-        return gethostbyname($sipServer);
+        return gethostbyname($sipServerParser);
     }
 }
