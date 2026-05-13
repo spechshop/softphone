@@ -164,6 +164,9 @@ class Registrar
 
         self::recordFailure($fp, $sipUser, $sipServer, $sipDomain);
         cli::pcl("[REGISTRAR] Falha ao registrar {$sipUser}@{$sipServer} $sipPass (fp:{$fp})", 'red');
+        WebPushHelper::notifyUser($sipUser, [
+            'message' => "Falha ao registrar sua conta, verifique os dados fornecidos!"
+        ]);
         return false;
     }
 
