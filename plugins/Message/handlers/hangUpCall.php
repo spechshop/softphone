@@ -32,7 +32,9 @@ class hangUpCall
 
             if (method_exists($phone, 'bye')) {
                 // Outgoing call: trunkController handles the SIP BYE
+
                 $phone->bye();
+                $phone->cancel();
                 $phone->close();
                 return $socket->push($fd, json_encode(['byToken' => $model['id'], 'data' => ['success' => true]]));
             }
