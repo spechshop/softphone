@@ -1,7 +1,28 @@
 <head>
     <meta charset="UTF-8">
+    <meta content="width=device-width, initial-scale=1.0, maximum-scale=0.8" name="viewport">
     <title>spechshop - softphone</title>
     <meta content="#182038" name="theme-color">
+
+    <!-- preconnect: reduz handshake DNS/TLS p/ origens críticas -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+    <!-- preload do JS crítico p/ paralelizar download durante o parse -->
+    <link rel="preload" href="/js/jquery.js" as="script">
+    <link rel="preload" href="/css/bootstrap.css" as="style">
+
+    <!-- CSS crítico primeiro p/ desbloquear o render o mais cedo possível -->
+    <link href="/css/bootstrap.css" rel="stylesheet">
+
+    <!-- Fontes Google em uma única requisição (3 → 1 RTT) -->
+    <link href="https://fonts.googleapis.com/css?family=Open+Sans|Indie+Flower|Courgette&display=swap" rel="stylesheet">
+
+    <!-- CSS não crítico carregado de forma assíncrona (print/onload swap) -->
+    <link rel="stylesheet" href="/css/buildCurl.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/css/buildCurl.css"></noscript>
+    <link rel="stylesheet" href="/css/prism.css" media="print" onload="this.media='all'">
+    <noscript><link rel="stylesheet" href="/css/prism.css"></noscript>
 
     <!-- fav icon -->
     <link href="img/pyramid.png" rel="icon" sizes="32x32" type="image/png">
@@ -30,20 +51,16 @@
     <meta content="web softphone focused on high-performance, written entirely in PHP using Swoole."
           property="og:description">
 
-
-    <meta content="width=device-width, initial-scale=1.0, maximum-scale=0.8" name="viewport">
-    <script src="/js/jquery.js"></script>
-    <link href="https://fonts.googleapis.com/css?family=Open+Sans&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Indie+Flower&display=swap" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css?family=Courgette&display=swap" rel="stylesheet">
-    <link href="/css/bootstrap.css" rel="stylesheet">
-    <script src="/js/bootstrap.bundle.js"></script>
-
-
-    <link href="/css/buildCurl.css" rel="stylesheet">
-    <link href="/css/prism.css" rel="stylesheet"/>
-    <script src="/js/bootstrap-show-toast.js"></script>
-    <script src="/js/jquery.toast.min.js"></script>
+    <!--
+        Scripts com `defer`: download paralelo durante o parse, execução
+        após o HTML pronto, na ordem em que aparecem. Isso preserva a
+        dependência jquery → jquery.toast → router (antes o jquery.toast
+        estava `async`, podendo executar antes do jquery).
+    -->
+    <script defer src="/js/jquery.js"></script>
+    <script defer src="/js/bootstrap.bundle.js"></script>
+    <script defer src="/js/bootstrap-show-toast.js"></script>
+    <script defer src="/js/jquery.toast.min.js"></script>
 
 
     <!-- prism.js -->
@@ -187,122 +204,126 @@
         }
 
     </script>
-    <script src="/js/router.js"></script>
+    <script defer src="/js/router.js"></script>
     <script>
+        // Registro do SW adiado para depois do load: evita disputa
+        // por banda/CPU durante o caminho crítico de renderização.
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('/sw.js', {scope: '/'})
-                .then(r => console.log('[SW] registrado, escopo:', r.scope))
-                .catch(e => console.warn('[SW] registro falhou', e));
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/sw.js', {scope: '/'})
+                    .then(r => console.log('[SW] registrado, escopo:', r.scope))
+                    .catch(e => console.warn('[SW] registro falhou', e));
+            });
         }
     </script>
 
+    <style>
+        .mobile-friendly {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
 
-</head>
-<style>
-    .mobile-friendly {
-        overflow-x: auto;
-        -webkit-overflow-scrolling: touch;
-    }
+        .table-dark {
+            color: #fff;
+        }
 
-    .table-dark {
-        color: #fff;
-    }
+        .sticky-header {
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
 
-    .sticky-header {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-    }
+        .table td,
+        .table th {
+            white-space: nowrap;
+            font-size: 13px;
+            padding: 8px;
+        }
 
-    .table td,
-    .table th {
-        white-space: nowrap;
-        font-size: 13px;
-        padding: 8px;
-    }
-
-    /* Botões no mobile */
-    .btn-sm {
-        font-size: 12px;
-        padding: 6px 8px;
-    }
+        /* Botões no mobile */
+        .btn-sm {
+            font-size: 12px;
+            padding: 6px 8px;
+        }
 
 
-    .tabbtn {
-        flex: 1;
-        padding: 10px 10px;
-        text-align: center;
-        cursor: pointer;
-        transition: all 0.3s ease;
-        border-top: 3px solid transparent;
-        position: relative;
-    }
-
-    @media (max-width: 768px) {
         .tabbtn {
-            padding: 14px 6px;
-            min-height: 60px;
+            flex: 1;
+            padding: 10px 10px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-top: 3px solid transparent;
+            position: relative;
+        }
+
+        @media (max-width: 768px) {
+            .tabbtn {
+                padding: 14px 6px;
+                min-height: 60px;
+            }
+
+            .tabbtn i {
+                font-size: 18px;
+                margin-bottom: 4px;
+            }
+
+            .tabbtn .t {
+                font-size: 13px !important;
+            }
+        }
+
+        .tabbtn:hover {
+            background: rgba(255, 255, 255, 0.05);
+            border-top-color: rgba(255, 255, 255, 0.3);
+        }
+
+        .tabbtn.active {
+            border-top-color: var(--accent, #00b1ff);
         }
 
         .tabbtn i {
-            font-size: 18px;
-            margin-bottom: 4px;
+            display: block;
+            color: rgba(255, 255, 255, 0.7);
+            transition: all 0.3s ease;
+        }
+
+        .tabbtn.active i {
+            color: var(--accent, #00b1ff);
+            transform: scale(1.1);
+        }
+
+        .tabbtn:hover i {
+            color: #fff;
+            transform: translateY(-2px);
         }
 
         .tabbtn .t {
-            font-size: 13px !important;
+            font-size: 11px;
+            color: rgba(255, 255, 255, 0.6);
+            font-weight: 500;
+            transition: color 0.3s ease;
         }
-    }
 
-    .tabbtn:hover {
-        background: rgba(255, 255, 255, 0.05);
-        border-top-color: rgba(255, 255, 255, 0.3);
-    }
+        .tabbtn.active .t {
+            color: var(--accent, #00b1ff);
+            font-weight: 600;
+        }
 
-    .tabbtn.active {
-        border-top-color: var(--accent, #00b1ff);
-    }
+        .tabbtn:hover .t {
+            color: #fff;
+        }
 
-    .tabbtn i {
-        display: block;
-        color: rgba(255, 255, 255, 0.7);
-        transition: all 0.3s ease;
-    }
+        .footer {
+            display: flex;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            z-index: 1000;
+            box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
+        }
+    </style>
 
-    .tabbtn.active i {
-        color: var(--accent, #00b1ff);
-        transform: scale(1.1);
-    }
-
-    .tabbtn:hover i {
-        color: #fff;
-        transform: translateY(-2px);
-    }
-
-    .tabbtn .t {
-        font-size: 11px;
-        color: rgba(255, 255, 255, 0.6);
-        font-weight: 500;
-        transition: color 0.3s ease;
-    }
-
-    .tabbtn.active .t {
-        color: var(--accent, #00b1ff);
-        font-weight: 600;
-    }
-
-    .tabbtn:hover .t {
-        color: #fff;
-    }
-
-    .footer {
-        display: flex;
-        bottom: 0;
-        left: 0;
-        right: 0;
-        z-index: 1000;
-        box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.3);
-    }
-</style>
+</head>
 
 
