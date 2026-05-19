@@ -10,6 +10,7 @@ use libspech\Network\network;
 use libspech\Packet\renderMessages;
 use libspech\Rtp\MediaChannel;
 use libspech\Sip\sip;
+use libspech\Sip\trunkController;
 use Swoole\Coroutine;
 use Swoole\WebSocket\Server;
 
@@ -60,6 +61,7 @@ class callAccept
         }
         $inviteHeaders = json_decode($call['invite_headers_json'], true);
         $inviteSdp = json_decode($call['invite_sdp_json'], true);
+        $parser = trunkController::getSDPModelCodecs($inviteSdp['a']);
 
         $sdpParsed = SdpHelper::parseRemoteSdp($inviteSdp ?? []);
         $chosenCodec = SdpHelper::chooseCodec($sdpParsed['codecs']);
@@ -185,12 +187,13 @@ class callAccept
             'codec' => $codecName,
             'pt' => $pt,
             'timestamp' => time(),
-            'config' => [],
+            'config' => $config ?? [],
             'ssrc' => $ssrc,
             'frequency' => $frequency,
             'channels' => $channels,
         ]);
-        $mediaChannel->enableVAD();
+
+
 
 
         $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtp, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan)
@@ -222,7 +225,7 @@ class callAccept
 
             $mc->eventSock->sendto('127.0.0.1', 9966, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
         });
-        $mediaChannel->setVadTimeout(3);
+
         $mediaChannel->onDtmf(function (string $digit) use ($callState, $fp, $socket, &$mediaChannel) {
             cli::pcl("[ACCEPT-CO] DTMF: {$digit}", 'cyan');
             $mediaChannel->send2833($digit);
@@ -317,8 +320,18 @@ class callAccept
         }
         );
 
+
+        $start=microtime(true);
         $mediaChannel->start();
-        cli::pcl("[ACCEPT-CO] mediaChannel->start() chamado — aguardando RTP do caller", 'cyan');
+
+
+        $mediaChannel->block(function ()use($start) {
+            $msDiff = round(microtime(true) - $start, 3);
+            cli::pcl("[ACCEPT-CO] mediaChannel->block() Iniciado após {$msDiff}ms", 'bold_green');
+        });
+        $mediaChannel->close();
+
+
 
         return true;
     }
