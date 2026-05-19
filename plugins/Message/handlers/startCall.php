@@ -6,11 +6,13 @@ namespace handlers;
 use libspech\Cache\cache;
 use libspech\Cli\cli;
 use libspech\Network\network;
+use libspech\Sip\sip;
 use libspech\Sip\trunkController;
 use Swoole\Coroutine;
 use Swoole\Coroutine\Socket;
 use Swoole\Timer;
 use Swoole\WebSocket\Server;
+use function libspech\Sip\interruptibleSleep;
 
 class startCall
 {
@@ -179,7 +181,11 @@ class startCall
         }
 
 
-        $phone->onRinging(function ($phone) use ($socket, $fingerprint) {
+        $phone->onRinging(function (trunkController $phone) use ($socket, $fingerprint) {
+
+
+
+
             $fds = cache::get('connections')[$fingerprint] ?? [];
             foreach ($fds as $fd) {
                 $socket->push($fd, json_encode([
@@ -262,6 +268,11 @@ class startCall
                 ]));
             }
         });
+
+
+
+
+        var_dump($trunkCodec);
         $phone->mountLineCodecSDP($trunkCodec);
 
 
@@ -278,8 +289,7 @@ class startCall
 
         cli::pcl($userCodec, "cyan");
 
-        $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone, $codec, $frequency)
-        use ($fingerprint, $portHandler, $userCodec, $userFrequency, $trunkCodec) {
+        $phone->onReceivePcm(function ($pcmData, $peer, trunkController $phone, $codec, $frequency) use ($fingerprint, $portHandler, $userCodec, $userFrequency, $trunkCodec) {
 
             $id = implode(':', array_values($peer));
             if (strlen($pcmData) < 12) return;
@@ -289,9 +299,10 @@ class startCall
         });
 
 
-
+        $phone->enableAudioRecording();
         $phone->onAnswer(function (trunkController $phone) use ($socket, $vault, $fingerprint, $userFrequency) {
             $phone->receiveMedia();
+
 
 
             Coroutine::create(function () use (&$cacheAudio, $phone, $userFrequency) {
@@ -453,6 +464,7 @@ class startCall
                 ]));
             }
             cli::pcl("Chamada conectada com " . $phone->calledNumber, "green");
+
         });
         $codec = $phone->codecName;
         $frequency = $phone->frequencyCall;

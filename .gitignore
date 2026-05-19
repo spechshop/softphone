@@ -12,3 +12,6 @@ vendor
 composer.lock
 st
 /stubs/
+/.junie/
+/.ai/
+/.claude/
