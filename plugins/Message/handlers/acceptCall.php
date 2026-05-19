@@ -194,8 +194,7 @@ class callAccept
         ]);
 
 
-        $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtpc, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan)
-        use ($callId, $portHandler, $userFrequency, $frequency, $codecName) {
+        $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtpc, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan) use ($callId, $portHandler, $userFrequency, $frequency, $codecName) {
             if (strlen($rtpc->payloadRaw) < 1) {
                 return;
             }
@@ -215,11 +214,6 @@ class callAccept
                 case 'OPUS':
 
                     $pcmData = $mc->members[$targetId]['opus']->decode($rtpc->payloadRaw);
-
-                    // cli::pcl("Recebendo " . strlen($pcmData) . " bytes de {$peer['address']}:{$peer['port']} | Sequence: $rtpc->sequence | TimeStamp: {$rtpc->timestamp} | SSRC: {$rtpChannel->ssrc}", 'bold_yellow');
-
-                    //$pcmData = resampler($pcmData, 48000, 8000);
-
 
                     break;
                 case 'L16':
@@ -288,7 +282,7 @@ class callAccept
         \libspech\Cache\cache::subDefine('coroutinesProcess', $fp, $callState);
 
         $mediaChannel->onStart(function () use (&$mediaChannel, $sdpParsed, $codecName, $frequency, &$callState, $userFrequency) {
-            cli::pcl("[ACCEPT-CO] Browser→Caller coroutine iniciada", 'cyan');
+            cli::pcl("INICIANDO LISTENER DO AUDIO DO NAVEGADOR", 'bold_green');
             //$mediaChannel->eventSock->sendto('127.0.0.1', 9966, str_repeat('0', 12));
             $pcmBuffer = '';
             $SRC_RATE = $userFrequency;
@@ -330,6 +324,7 @@ class callAccept
                     }
                     $member = $mediaChannel->members["{$sdpParsed['ip']}:{$sdpParsed['port']}"] ?? null;
                     if (!$member) {
+                        cli::pcl("IMPOSSIVEL ENVIAR AUDIO DO BROWSER PARA O DESTINO membro {$sdpParsed['ip']}:{$sdpParsed['port']} não existe no canal de mídia", 'bold_red');
                         continue;
                     }
                     $mediaChannel->socket->sendto($sdpParsed['ip'], $sdpParsed['port'], $member['rtpChannel']->buildAudioPacket($encode));
