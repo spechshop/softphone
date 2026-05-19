@@ -194,25 +194,46 @@ class callAccept
         ]);
 
 
-
-
-        $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtp, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan)
+        $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtpc, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan)
         use ($callId, $portHandler, $userFrequency, $frequency, $codecName) {
-            if (strlen($rtp->payloadRaw) < 1) {
+            if (strlen($rtpc->payloadRaw) < 1) {
                 return;
             }
+            $targetId = "{$peer['address']}:{$peer['port']}";
 
 
-            if (strtoupper($codecName) === 'OPUS') {
-                return;
-            }
-            $pcmData = match (strtoupper($codecName)) {
-                'PCMU' => decodePcmuToPcm($rtp->payloadRaw),
-                'PCMA' => decodePcmaToPcm($rtp->payloadRaw),
-                'G729' => $rtpChan->bcg729Channel->decode($rtp->payloadRaw),
-                'L16' => decodeL16ToPcm($rtp->payloadRaw),
-                default => false,
+            switch (strtoupper($codecName)) {
+                case 'PCMU':
+                    $pcmData = decodePcmuToPcm($rtpc->payloadRaw);
+                    break;
+                case 'PCMA':
+                    $pcmData = decodePcmaToPcm($rtpc->payloadRaw);
+                    break;
+                case 'G729':
+                    $pcmData = $mc->members[$targetId]['rtpChannel']->bcg729Channel->decode($rtpc->payloadRaw);
+                    break;
+                case 'OPUS':
+
+                    $pcmData = $mc->members[$targetId]['opus']->decode($rtpc->payloadRaw);
+
+                    // cli::pcl("Recebendo " . strlen($pcmData) . " bytes de {$peer['address']}:{$peer['port']} | Sequence: $rtpc->sequence | TimeStamp: {$rtpc->timestamp} | SSRC: {$rtpChannel->ssrc}", 'bold_yellow');
+
+                    //$pcmData = resampler($pcmData, 48000, 8000);
+
+
+                    break;
+                case 'L16':
+                    $pcmData = decodeL16ToPcm($rtpc->payloadRaw);
+                    break;
+                case 'TELEPHONE-EVENT':
+                    return;
+                default:
+                    cli::pcl("Codec não suportado: {$codecName}");
+                    $pcmData = false;
+                    break;
             };
+
+
             if (!$pcmData) {
                 return;
             }
@@ -321,16 +342,15 @@ class callAccept
         );
 
 
-        $start=microtime(true);
+        $start = microtime(true);
         $mediaChannel->start();
 
 
-        $mediaChannel->block(function ()use($start) {
+        $mediaChannel->block(function () use ($start) {
             $msDiff = round(microtime(true) - $start, 3);
             cli::pcl("[ACCEPT-CO] mediaChannel->block() Iniciado após {$msDiff}ms", 'bold_green');
         });
         $mediaChannel->close();
-
 
 
         return true;
