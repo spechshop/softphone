@@ -201,6 +201,10 @@ class startCall
                 ]));
             }
         });
+        $phone->onSdpReceived(function (trunkController $phone) {
+            cli::pcl("SDP DISPONIVEL - CURR. METHOD: $phone->currentMethod", 'bold_green');
+            $phone->receiveMedia();
+        });
         $phone->onFailed(function ($message) use ($fd, $model, $phone, $socket, $fingerprint) {
             $socket->push($fd, json_encode([
                 'byToken' => $model['id'],
