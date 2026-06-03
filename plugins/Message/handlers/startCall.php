@@ -150,7 +150,7 @@ class startCall
         ]));
 
 
-        if (!$phone->register()) {
+        if (!$phone->register(2)) {
             $phone->close();
             $socket->push($fd, json_encode([
                 'byToken' => $model['id'],
@@ -303,7 +303,8 @@ class startCall
         });
 
 
-        $phone->enableAudioRecording();
+
+
         $phone->onAnswer(function (trunkController $phone) use ($socket, $vault, $fingerprint, $userFrequency) {
             $phone->receiveMedia();
 
@@ -493,6 +494,8 @@ class startCall
             'data' => ['success' => true,
                 'callId' => $phone->callId]]));
         $phone->bye();
+        $phone->unRegister();
+        $phone->close();
         cache::unset('coroutinesProcess', $fingerprint);
         unset($phone);
         $fds = (cache::get('connections')[$fingerprint] ?? []);
