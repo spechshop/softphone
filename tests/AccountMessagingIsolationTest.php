@@ -32,6 +32,12 @@ $sameDomainAccounts = [
 ];
 expect(AccountIdentity::resolve('lotus', 'shared.test', 'reg-a.test', $sameDomainAccounts)['accountId'] === 'fp-reg-a', 'registrar A não desambiguou domínio compartilhado');
 expect(AccountIdentity::resolve('lotus', '', 'reg-b.test', $sameDomainAccounts)['accountId'] === 'fp-reg-b', 'registrar B não resolveu domínio ausente');
+$identicalAccounts = [
+    'fp-device-1' => AccountIdentity::fromData('fp-device-1', ['sipUser' => 'spechphone', 'sipDomain' => 'spechshop.com', 'sipServer' => 'spechshop.com']),
+    'fp-device-2' => AccountIdentity::fromData('fp-device-2', ['sipUser' => 'spechphone', 'sipDomain' => 'spechshop.com', 'sipServer' => 'spechshop.com']),
+];
+$contactUser = AccountIdentity::contactUser('fp-device-2');
+expect(AccountIdentity::resolve('spechphone', 'spechshop.com', 'spechshop.com', $identicalAccounts, $contactUser)['accountId'] === 'fp-device-2', 'Contact user opaco não desambiguou dispositivos com AoR idêntico');
 expect(AccountIdentity::parseSipIdentity('sip:joao@remote.test')['uri'] === 'sip:joao@remote.test', 'URI outbound perdeu domínio');
 $sipModel = messageSend::buildSipModel('10.0.0.1', 4000, 'lotus', 'provedor-a.com', 'sip:joao@destino-remoto.com', 'teste', 'call@test');
 expect($sipModel['methodForParser'] === 'MESSAGE sip:joao@destino-remoto.com SIP/2.0', 'Request-URI outbound perdeu domínio remoto');

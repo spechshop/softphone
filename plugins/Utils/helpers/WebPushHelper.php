@@ -8,7 +8,7 @@ use Minishlink\WebPush\WebPush;
 
 class WebPushHelper
 {
-    private static string $subFile = '/data/spechphone/push_subscriptions.json';
+    private static string $subFile = '/tmp/data/spechphone/push_subscriptions.json';
 
     public static function setFile(string $file): void
     {

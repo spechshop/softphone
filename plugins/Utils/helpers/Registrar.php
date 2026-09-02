@@ -97,6 +97,11 @@ class Registrar
     {
         if (self::$states === null) self::init();
 
+        // The Contact URI must identify the local account even for vault rows
+        // created before accountId/fp became explicit fields.
+        $data['accountId'] = $fp;
+        $data['fp'] = $fp;
+
         $sipUser = trim((string)($data['sipUser'] ?? ''));
         $sipServer = trim((string)($data['sipServer'] ?? ''));
         $sipDomain = trim((string)($data['sipDomain'] ?? '')) ?: $sipServer;

@@ -119,11 +119,18 @@ function inboundCSeqMethod(array $parse): string
     return strtoupper($parts[1] ?? '');
 }
 
+function inboundRequestUser(string $packet): string
+{
+    if (!preg_match('/^[A-Z]+\s+([^\s]+)\s+SIP\/2\.0/i', $packet, $match)) return '';
+    return (string)(\libspech\Sip\sip::extractURI($match[1])['user'] ?? '');
+}
+
 $server->on('packet', function (Server $socket, string $data, array $info) {
     $parse = \libspech\Sip\sip::parse($data);
     if (empty($parse['method'])) {
         return;
     }
+    \libspech\Cli\cli::pcl($parse['methodForParser']);
 
     // REGISTER uses this listener as both its source and its only response
     // reader. Consume a response before the generic SIP dispatcher can route,
@@ -229,16 +236,17 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         $toUri = sip::extractURI($parse['headers']['To'][0] ?? '');
         $toUser = $toUri['user'] ?? '';
         $toDomain = (string)($toUri['peer']['host'] ?? '');
-        $route = AccountIdentity::resolve($toUser, $toDomain, (string)($info['address'] ?? ''));
+        $requestUser = inboundRequestUser($data);
+        $route = AccountIdentity::resolve($toUser, $toDomain, (string)($info['address'] ?? ''), null, $requestUser);
         $fp = $route['accountId'];
 
         if (!$fp) {
             $socket->sendto($info['address'], $info['port'], renderMessages::baseResponse($parse['headers'], "480", "Temporarily Unavailable"));
             $reason = $route['status'] === 'ambiguous' ? 'ambiguous' : 'not found';
-            cli::pcl("[CALL:ROUTE] {$reason} destination user={$toUser} domain={$toDomain} candidates=" . count($route['candidates']), 'red');
+            cli::pcl("[CALL:ROUTE] {$reason} destination user={$toUser} domain={$toDomain} requestUser={$requestUser} candidates=" . count($route['candidates']), 'red');
             return;
         }
-        cli::pcl("[CALL:ROUTE] to={$toUser} domain={$toDomain} accountId={$fp}", 'cyan');
+        cli::pcl("[CALL:ROUTE] to={$toUser} domain={$toDomain} requestUser={$requestUser} accountId={$fp}", 'cyan');
 
         if (empty(cache::get('connections')[$fp] ?? [])) {
             $pendingToTag = bin2hex(random_bytes(4));
@@ -435,17 +443,18 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         $body = trim($parse['body'] ?? '');
 
         if (!empty($fromUser) && !empty($toUser) && !empty($body)) {
-            $route = AccountIdentity::resolve($toUser, $toDomain, (string)($info['address'] ?? ''));
+            $requestUser = inboundRequestUser($data);
+            $route = AccountIdentity::resolve($toUser, $toDomain, (string)($info['address'] ?? ''), null, $requestUser);
             $accountId = $route['accountId'];
             if (!$accountId) {
                 if ($route['status'] === 'ambiguous') {
-                    cli::pcl("[MESSAGE:ROUTE] ambiguous destination user={$toUser} candidates=" . count($route['candidates']), 'red');
+                    cli::pcl("[MESSAGE:ROUTE] ambiguous destination user={$toUser} requestUser={$requestUser} candidates=" . count($route['candidates']), 'red');
                 } else {
                     cli::pcl("[MESSAGE:ROUTE] destination not found user={$toUser} domain={$toDomain}", 'red');
                 }
                 return;
             }
-            cli::pcl("[MESSAGE:ROUTE] to={$toUser} domain={$toDomain} accountId={$accountId}", 'cyan');
+            cli::pcl("[MESSAGE:ROUTE] to={$toUser} domain={$toDomain} requestUser={$requestUser} accountId={$accountId}", 'cyan');
             cli::pcl("[MESSAGE:SIP] fromUser={$fromUser} fromDomain={$fromDomain} fromUri={$fromUri} toUser={$toUser} toDomain={$toDomain} toUri={$toUri}", 'cyan');
             $msg = \plugins\Utils\messages\messageStore::saveMessage($accountId, $toUri, $fromUri, $body, 'inbound');
             if ($msg) {

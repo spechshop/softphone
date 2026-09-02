@@ -63,12 +63,34 @@ class AccountIdentity
      *
      * @return array{status:string,accountId:?string,account:?array,candidates:array}
      */
-    public static function resolve(string $sipUser, string $sipDomain = '', string $sourceHost = '', ?array $accounts = null): array
+    public static function resolve(
+        string $sipUser,
+        string $sipDomain = '',
+        string $sourceHost = '',
+        ?array $accounts = null,
+        string $requestUser = ''
+    ): array
     {
         $user = strtolower(trim($sipUser));
         $domain = strtolower(rtrim(trim($sipDomain), '.'));
         $source = strtolower(rtrim(trim($sourceHost), '.'));
         $accounts ??= self::all();
+
+        // A registrar routes requests to the Contact URI. New registrations
+        // use an opaque fp-derived Contact user, which disambiguates devices
+        // that intentionally share the exact same SIP Address-of-Record.
+        if ($requestUser !== '') {
+            $contactMatches = array_values(array_filter($accounts, static fn(array $a): bool =>
+                hash_equals(self::contactUser((string)($a['accountId'] ?? '')), strtolower($requestUser))
+                && strtolower((string)($a['sipUser'] ?? '')) === $user
+            ));
+            if (count($contactMatches) === 1) {
+                return [
+                    'status' => 'resolved', 'accountId' => $contactMatches[0]['accountId'],
+                    'account' => $contactMatches[0], 'candidates' => [$contactMatches[0]['accountId']],
+                ];
+            }
+        }
 
         $userCandidates = array_values(array_filter($accounts, static fn(array $a): bool =>
             strtolower((string)($a['sipUser'] ?? '')) === $user
@@ -122,6 +144,11 @@ class AccountIdentity
         }
         $user = preg_replace('/^sip:/i', '', $value);
         return 'sip:' . $user . ($fallbackDomain !== '' ? '@' . strtolower(rtrim($fallbackDomain, '.')) : '');
+    }
+
+    public static function contactUser(string $accountId): string
+    {
+        return 'sp-' . substr(hash('sha256', $accountId), 0, 24);
     }
 
     /** @return array{user:string,domain:string,uri:string} */

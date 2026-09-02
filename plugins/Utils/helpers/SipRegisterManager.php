@@ -43,6 +43,8 @@ class SipRegisterManager
         $serverInput = trim((string)($account['sipServer'] ?? ''));
         $username = trim((string)($account['sipUser'] ?? ''));
         $password = (string)($account['sipPass'] ?? '');
+        $accountId = trim((string)($account['accountId'] ?? $account['fp'] ?? ''));
+        $contactUser = $accountId !== '' ? 'sp-' . substr(hash('sha256', $accountId), 0, 24) : $username;
 
         if ($serverInput === '' || $username === '' || $password === '') {
             return self::result(false, 'invalid_configuration', null, $startedAt);
@@ -87,6 +89,7 @@ class SipRegisterManager
                 $branch = 'z9hG4bK-' . bin2hex(random_bytes(12));
                 $model = self::buildRegister(
                     $username,
+                    $contactUser,
                     $domain,
                     $endpoint['host'],
                     $endpoint['port'],
@@ -172,7 +175,7 @@ class SipRegisterManager
                 }
 
                 if ($lastCode === 200) {
-                    $binding = self::bindingFromResponse($lastResponse, $username);
+                    $binding = self::bindingFromResponse($lastResponse, $contactUser);
                     return self::result(true, 'registered', 200, $startedAt, [
                         'call_id' => $callId,
                         'cseq' => $cseq,
@@ -273,6 +276,7 @@ class SipRegisterManager
     /** @return array<string, mixed> */
     private static function buildRegister(
         string $username,
+        string $contactUser,
         string $domain,
         string $registrarHost,
         int $registrarPort,
@@ -286,7 +290,7 @@ class SipRegisterManager
         int $expires
     ): array {
         $addressOfRecord = self::sipUri($username, $domain, self::DEFAULT_REMOTE_PORT);
-        $contact = self::sipUri($username, $contactIp, self::SIP_PORT);
+        $contact = self::sipUri($contactUser, $contactIp, self::SIP_PORT);
         $viaHost = filter_var($viaIp, FILTER_VALIDATE_IP, FILTER_FLAG_IPV6)
             ? '[' . $viaIp . ']'
             : $viaIp;

@@ -144,6 +144,17 @@ Coroutine\run(function (): void {
         'renovação deve manter a identidade do Contact :4000'
     );
 
+    $deviceAccount = account('shared-aor');
+    $deviceAccount['fp'] = 'fp-device-a';
+    $deviceProvider = new FakeSipProvider('valid');
+    $deviceResult = runRegistration($deviceProvider, $deviceAccount);
+    $expectedContactUser = 'sp-' . substr(hash('sha256', 'fp-device-a'), 0, 24);
+    assertTrue($deviceResult['success'], 'conta com fp deve registrar');
+    assertTrue(
+        str_contains($deviceProvider->packets[1]['message']['headers']['Contact'][0], "sip:{$expectedContactUser}@"),
+        'Contact deve carregar identificador opaco e estável da conta'
+    );
+
     $invalid = new FakeSipProvider('invalid');
     $invalidResult = runRegistration($invalid);
     assertTrue(!$invalidResult['success'], 'credencial inválida não pode registrar');
