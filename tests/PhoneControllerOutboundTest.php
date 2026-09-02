@@ -2,11 +2,10 @@
 
 require __DIR__ . '/../libspech/plugins/autoloader.php';
 foreach ([
-    'AccountIdentity.php', 'OpusConfig.php', 'SipRegisterManager.php', 'SdpHelper.php', 'SipTransactionManager.php', 'SipDialog.php',
+    'OpusConfig.php', 'SipRegisterManager.php', 'SdpHelper.php', 'SipTransactionManager.php', 'SipDialog.php',
     'SipDigestAuth.php', 'PhoneController.php', 'OutboundMediaSession.php', 'OutboundCall.php',
 ] as $helper) require_once __DIR__ . '/../plugins/Utils/helpers/' . $helper;
 
-use helpers\utils\AccountIdentity;
 use helpers\utils\OutboundCall;
 use helpers\utils\PhoneController;
 use helpers\utils\SipRegisterManager;
@@ -312,44 +311,6 @@ Coroutine\run(function (): void {
     outboundSame(4000, $registration['source_port'], 'REGISTER concorrente deve manter :4000');
     outboundSame(0, SipRegisterManager::pendingCount(), 'REGISTER concorrente deve limpar pending');
     outboundSame(0, $concurrentController->pendingTransactionCount(), 'chamada concorrente deve limpar transaction');
-
-    // Two accounts share the same UDP :4000 transport but advertise isolated opaque Contacts.
-    $sharedContactProvider = new OutboundProvider('failure', 486);
-    $sharedContactController = PhoneController::resetForTests($sharedContactProvider);
-    $accountA = outboundAccount('alice');
-    $accountA['accountId'] = 'account-a';
-    $accountA['fp'] = 'ignored-fp-a';
-    $accountB = outboundAccount('bob');
-    $accountB['fp'] = 'account-b';
-    $sharedContactDone = 0;
-    foreach ([$accountA, $accountB] as $account) {
-        $call = $sharedContactController->createOutboundCall($account, '4000',
-            ['noResponseTimeout' => 0.1, 'provisionalTimeout' => 0.1]);
-        go(function () use ($call, &$sharedContactDone): void { $call->start(); $sharedContactDone++; });
-    }
-    while ($sharedContactDone < 2) Coroutine::sleep(0.005);
-    $sharedInvites = array_values(array_filter($sharedContactProvider->packets,
-        static fn(array $packet): bool => $packet['message']['method'] === 'INVITE'));
-    outboundSame(2, count($sharedInvites), 'duas contas devem enviar INVITE pelo transporte compartilhado');
-    $contactsByFromUser = [];
-    foreach ($sharedInvites as $invite) {
-        preg_match('/<sip:([^@>]+)@/', $invite['message']['headers']['From'][0], $fromMatch);
-        $contactsByFromUser[$fromMatch[1] ?? ''] = $invite['message']['headers']['Contact'][0] ?? '';
-        outboundSame(4000, $sharedContactProvider->sourcePort, 'cada INVITE deve usar o mesmo socket UDP :4000');
-    }
-    outboundAssert(str_contains($contactsByFromUser['alice'] ?? '', 'sip:' . AccountIdentity::contactUser('account-a') . '@'),
-        'conta A deve priorizar accountId no Contact sem alterar From');
-    outboundAssert(str_contains($contactsByFromUser['bob'] ?? '', 'sip:' . AccountIdentity::contactUser('account-b') . '@'),
-        'conta B deve usar fp no Contact sem alterar From');
-    outboundAssert(($contactsByFromUser['alice'] ?? '') !== ($contactsByFromUser['bob'] ?? ''),
-        'contas no mesmo socket devem anunciar Contacts opacos distintos');
-
-    $legacyContactProvider = new OutboundProvider('failure', 486);
-    runOutbound($legacyContactProvider, outboundAccount('legacy'));
-    $legacyInvite = array_values(array_filter($legacyContactProvider->packets,
-        static fn(array $packet): bool => $packet['message']['method'] === 'INVITE'))[0];
-    outboundAssert(str_contains($legacyInvite['message']['headers']['Contact'][0], 'sip:legacy@'),
-        'conta sem accountId/fp deve manter sipUser como fallback do Contact');
 
     $wrong = new OutboundProvider('wrong-call-first', 403);
     [, , $wrongController] = runOutbound($wrong, outboundAccount());

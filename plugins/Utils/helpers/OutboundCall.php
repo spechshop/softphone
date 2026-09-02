@@ -330,10 +330,7 @@ final class OutboundCall
     {
         $this->currentBranch = self::branch();
         $headers = $this->baseHeaders($this->dialog->localCSeq, 'INVITE', $this->currentBranch, $this->originalToHeader);
-        $accountId = trim((string)($this->account['accountId'] ?? ''));
-        if ($accountId === '') $accountId = trim((string)($this->account['fp'] ?? ''));
-        $contactUser = $accountId !== '' ? AccountIdentity::contactUser($accountId) : (string)$this->account['sipUser'];
-        $headers['Contact'] = ['<' . self::uri($contactUser, $this->contactIp, SipRegisterManager::SIP_PORT) . '>'];
+        $headers['Contact'] = ['<' . self::uri((string)$this->account['sipUser'], $this->contactIp, SipRegisterManager::SIP_PORT) . '>'];
         $headers['Allow'] = ['INVITE, ACK, CANCEL, OPTIONS, BYE, REFER, MESSAGE, INFO'];
         $headers['Supported'] = ['replaces, timer'];
         $headers['Content-Type'] = ['application/sdp'];
