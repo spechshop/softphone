@@ -7,12 +7,19 @@ use Swoole\Http\Request;
 use Swoole\Http\Response;
 use Swoole\WebSocket\Frame;
 use Swoole\WebSocket\Server;
+use helpers\utils\MicUplinkFrame;
+use helpers\utils\MicUplinkSession;
 
 \Swoole\Runtime::enableCoroutine();
 
 ini_set('memory_limit', '4024M');
 
 include 'libspech/plugins/autoloader.php';
+require_once __DIR__ . '/plugins/Utils/helpers/MicUplinkFrame.php';
+require_once __DIR__ . '/plugins/Utils/helpers/MicQualityMetrics.php';
+require_once __DIR__ . '/plugins/Utils/helpers/MicJitterBuffer.php';
+require_once __DIR__ . '/plugins/Utils/helpers/RtpPacer.php';
+require_once __DIR__ . '/plugins/Utils/helpers/MicUplinkSession.php';
 
 $clients = [];
 $clientInfo = [];
@@ -28,11 +35,14 @@ $packetTimestamps = [];
 $streamKeys = [];
 $udpPeers = [];
 $udpSendSockets = [];
+$micUplinkSessions = [];
 
 $BUFFER_TARGET = 6;
 $JITTER_BUFFER_SIZE = 5;
 $FRAME_TARGET = 320;
 $MAX_SILENCE = 30;
+$MIC_JITTER_TARGET_MS = max(40, min(100, (int)(getenv('MIC_JITTER_TARGET_MS') ?: 60)));
+$MIC_MAX_FRAME_AGE_MS = max(160, min(200, (int)(getenv('MIC_MAX_FRAME_AGE_MS') ?: 180)));
 
 $channelDecode = [];
 
@@ -169,6 +179,95 @@ function relayBrowserToBrowser(
 
         $server->push($targetFd, $pcmData, SWOOLE_WEBSOCKET_OPCODE_BINARY);
     }
+}
+
+/** Monotonic milliseconds used for capture transit, deadlines and pacing metrics. */
+function micMonotonicMs(): float
+{
+    return hrtime(true) / 1_000_000;
+}
+
+/**
+ * One lightweight coroutine per microphone stream. It releases no more than one
+ * PCM frame per monotonic 20 ms deadline, regardless of WebSocket arrival bursts.
+ */
+function startMicUplinkPacer(
+    Server             $server,
+    MicUplinkSession   $session,
+    array              &$udpPeers,
+    array              &$udpSendSockets,
+    array              &$clients,
+    array              &$clientInfo
+): void {
+    \Swoole\Coroutine::create(function () use (
+        $server,
+        $session,
+        &$udpPeers,
+        &$udpSendSockets,
+        &$clients,
+        &$clientInfo
+    ): void {
+        while ($session->active) {
+            $nowMs = micMonotonicMs();
+            if (!$session->startIfReady($nowMs)) {
+                \Swoole\Coroutine::sleep(0.005);
+                continue;
+            }
+
+            $deadline = $session->pacer->deadlineMs();
+            if ($deadline !== null && $nowMs < $deadline) {
+                \Swoole\Coroutine::sleep(max(0.001, min(0.02, ($deadline - $nowMs) / 1000)));
+                continue;
+            }
+
+            $pcmData = $session->tick($nowMs);
+            if ($pcmData !== null) {
+                $packet = $pcmData . '__::__' . $session->stream . '__::__' . $session->ssrc;
+                sendBrowserPcmToUdpPeers(
+                    $session->fd,
+                    $session->stream,
+                    $session->ssrc,
+                    $packet,
+                    $udpPeers,
+                    $udpSendSockets
+                );
+                relayBrowserToBrowser(
+                    $server,
+                    $session->fd,
+                    $session->stream,
+                    $session->ssrc,
+                    $pcmData,
+                    $clients,
+                    $clientInfo
+                );
+            }
+
+            if ($nowMs - $session->lastMetricsAtMs >= 1000) {
+                $snapshot = $session->snapshot();
+                if (isset($clientInfo[$session->fd])
+                    && (!method_exists($server, 'isEstablished') || $server->isEstablished($session->fd))) {
+                    $server->push($session->fd, json_encode([
+                        'type' => 'micQuality',
+                        'data' => $snapshot,
+                    ], JSON_UNESCAPED_SLASHES));
+                }
+                $session->lastMetricsAtMs = $nowMs;
+
+                if ($nowMs - $session->lastLogAtMs >= 10000) {
+                    $dropCount = ($snapshot['lateFramesDropped'] ?? 0) + ($snapshot['droppedFrames'] ?? 0);
+                    $wsKb = round(($snapshot['wsBufferedAmount'] ?? 0) / 1024, 1);
+                    cli::pcl(
+                        "[MIC:QUALITY] callId={$session->stream} quality={$snapshot['quality']} "
+                        . "jitter={$snapshot['uplinkJitterP95']}ms queue="
+                        . ($snapshot['browserQueueMs'] ?? 0) . "ms drops={$dropCount} "
+                        . "wsBuffered={$wsKb}KB pacerP95={$snapshot['rtpPacingGapP95']}ms",
+                        'cyan'
+                    );
+                    $session->lastLogAtMs = $nowMs;
+                }
+            }
+        }
+    });
 }
 
 /**
@@ -609,7 +708,8 @@ $server->on("open", function (Server $server, Request $req) use (
         'stream' => $stream,
         'callId' => $stream,
         'ssrc' => $ssrc,
-        'sampleRate' => $sampleRate,
+        'sampleRate' => (int)$sampleRate,
+        'micPacerStarted' => false,
     ];
 
     echo "🎧 Cliente áudio {$sampleRate}Hz conectado stream={$stream}, fd={$req->fd}, ssrc={$ssrc}\n";
@@ -622,7 +722,10 @@ $server->on("message", function (Server $server, Frame $frame) use (
     &$udpSendSockets,
     &$clientInfo,
     &$udpPeers,
-    &$clients
+    &$clients,
+    &$micUplinkSessions,
+    $MIC_JITTER_TARGET_MS,
+    $MIC_MAX_FRAME_AGE_MS
 ) {
     $fd = $frame->fd;
 
@@ -632,12 +735,16 @@ $server->on("message", function (Server $server, Frame $frame) use (
     }
 
     if ($frame->opcode !== SWOOLE_WEBSOCKET_OPCODE_BINARY) {
+        if ($frame->opcode === SWOOLE_WEBSOCKET_OPCODE_TEXT && isset($micUplinkSessions[$fd])) {
+            $control = json_decode($frame->data, true);
+            if (is_array($control) && ($control['type'] ?? '') === 'micMetrics' && is_array($control['data'] ?? null)) {
+                $micUplinkSessions[$fd]->metrics->mergeBrowser($control['data']);
+            }
+        }
         return;
     }
 
-    $pcmData = $frame->data;
-
-    if ($pcmData === '') {
+    if ($frame->data === '') {
         return;
     }
 
@@ -650,32 +757,34 @@ $server->on("message", function (Server $server, Frame $frame) use (
         return;
     }
 
-    /**
-     * Browser mic -> UDP/libspech.
-     */
-    $packet = $pcmData . '__::__' . $stream . '__::__' . $ssrc;
-
-    sendBrowserPcmToUdpPeers(
+    $arrivalMs = micMonotonicMs();
+    $micUplinkSessions[$fd] ??= new MicUplinkSession(
         $fd,
         $stream,
         $ssrc,
-        $packet,
-        $udpPeers,
-        $udpSendSockets
+        (int)$sampleRate,
+        $MIC_JITTER_TARGET_MS,
+        $MIC_MAX_FRAME_AGE_MS,
     );
+    $session = $micUplinkSessions[$fd];
+    $micFrame = MicUplinkFrame::decode($frame->data, (int)$sampleRate, (int)$arrivalMs);
+    if ($micFrame === null) {
+        $session->metrics->invalidFrames++;
+        return;
+    }
 
-    /**
-     * Browser mic -> outro browser.
-     */
-    relayBrowserToBrowser(
-        $server,
-        $fd,
-        $stream,
-        $ssrc,
-        $pcmData,
-        $clients,
-        $clientInfo
-    );
+    $session->ingest($micFrame, $arrivalMs);
+    if (!($clientInfo[$fd]['micPacerStarted'] ?? false)) {
+        $clientInfo[$fd]['micPacerStarted'] = true;
+        startMicUplinkPacer(
+            $server,
+            $session,
+            $udpPeers,
+            $udpSendSockets,
+            $clients,
+            $clientInfo
+        );
+    }
 });
 
 /**
@@ -694,8 +803,13 @@ $server->on("close", function ($serv, int $fd) use (
     &$lastLogHandshake,
     &$lastLogPeer,
     &$lastLogNoClient,
-    &$udpPeers
+    &$udpPeers,
+    &$micUplinkSessions
 ) {
+    if (isset($micUplinkSessions[$fd])) {
+        $micUplinkSessions[$fd]->close();
+        unset($micUplinkSessions[$fd]);
+    }
     closeUdpSendSocketForFd($fd, $udpSendSockets);
 
     $stream = $clientInfo[$fd]['stream'] ?? $clientInfo[$fd]['callId'] ?? null;

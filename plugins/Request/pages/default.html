@@ -243,6 +243,36 @@
                 </button>
             </div>
 
+            <style>
+                .mic-quality-panel { margin: 2px 8px 10px; border: 1px solid rgba(255,255,255,.08); border-radius: 9px; background: rgba(255,255,255,.035); }
+                .mic-quality-summary { width: 100%; display: flex; align-items: center; gap: 8px; padding: 7px 10px; color: inherit; background: transparent; border: 0; text-align: left; }
+                .mic-quality-dot { width: 9px; height: 9px; border-radius: 50%; flex: 0 0 auto; background: #6c757d; box-shadow: 0 0 7px currentColor; }
+                .mic-quality-state { font-size: 12px; font-weight: 700; }
+                .mic-quality-signal { margin-left: auto; font-size: 12px; letter-spacing: -1px; opacity: .85; }
+                .mic-quality-details { display: none; grid-template-columns: repeat(2, 1fr); gap: 5px 14px; padding: 0 10px 9px 27px; font-size: 11px; color: rgba(255,255,255,.65); }
+                .mic-quality-panel.expanded .mic-quality-details { display: grid; }
+                .mic-quality-value { float: right; color: rgba(255,255,255,.9); margin-left: 6px; }
+                .mic-quality-panel[data-quality="excellent"] .mic-quality-dot,
+                .mic-quality-panel[data-quality="good"] .mic-quality-dot { background: #20c997; color: #20c997; }
+                .mic-quality-panel[data-quality="unstable"] .mic-quality-dot { background: #ffc107; color: #ffc107; }
+                .mic-quality-panel[data-quality="poor"] .mic-quality-dot { background: #fd7e14; color: #fd7e14; }
+                .mic-quality-panel[data-quality="critical"] .mic-quality-dot { background: #dc3545; color: #dc3545; }
+            </style>
+            <div class="mic-quality-panel" data-quality="good" id="micQualityPanel" style="display:none">
+                <button class="mic-quality-summary" id="micQualityToggle" type="button" aria-expanded="false" title="Qualidade estimada da transmissão; não é MOS">
+                    <span class="mic-quality-dot" aria-hidden="true"></span>
+                    <span class="mini">Transmissão</span>
+                    <span class="mic-quality-state" id="micQualityState">Boa</span>
+                    <span class="mic-quality-signal" aria-hidden="true">▂▄▆█</span>
+                </button>
+                <div class="mic-quality-details" id="micQualityDetails">
+                    <span>Jitter <b class="mic-quality-value" id="micQualityJitter">0 ms</b></span>
+                    <span>Fila <b class="mic-quality-value" id="micQualityQueue">0 ms</b></span>
+                    <span>Drops <b class="mic-quality-value" id="micQualityDrops">0,0%</b></span>
+                    <span>WS buffer <b class="mic-quality-value" id="micQualityWs">0 KB</b></span>
+                </div>
+            </div>
+
             <div class="call-aux-row mt-2 px-2"
                  style="display: flex; flex-direction: row-reverse; justify-content: flex-start; align-items: center; gap: 8px;">
                 <button class="btn" id="btnAutoAccept" style="padding: 8px 12px; background: transparent; border: 1px solid rgba(255,255,255,0.15); border-radius: 8px; min-width: 52px;"
@@ -406,6 +436,11 @@
                     </div>
                 </div>
             </div>
+            <div class="divider"></div>
+            <label class="mini" style="display:flex;align-items:center;gap:9px;cursor:pointer">
+                <input id="micAgcEnabled" type="checkbox" checked>
+                <span>Controle automático de ganho do microfone (A/B experimental)</span>
+            </label>
         </div>
 
     </section>
@@ -1957,10 +1992,82 @@
     let isMuted = false;
     let sentPackets = 0;
     let sentBytes = 0;
-    let streamStartTime = 0;
+    let micSequence = 0;
+    let micCaptureSamples = 0;
+    let uplinkMetrics = null;
+    let uplinkQueue = null;
+    let uplinkSenderTimer = null;
+    let uplinkMetricsTimer = null;
+    let uplinkReconnectTimer = null;
 
     const btnMic = document.getElementById('btnMic');
     const btnMicPause = document.getElementById('btnMicPause');
+    const micQualityPanel = document.getElementById('micQualityPanel');
+    const micQualityToggle = document.getElementById('micQualityToggle');
+    const micAgcEnabled = document.getElementById('micAgcEnabled');
+
+    const storedAgc = user.getValue('micAutoGainControl');
+    micAgcEnabled.checked = storedAgc === null || storedAgc === undefined
+        ? true
+        : !(storedAgc === false || storedAgc === 'false');
+    micAgcEnabled.addEventListener('change', () => {
+        user.updateUserData('micAutoGainControl', micAgcEnabled.checked);
+    });
+    micQualityToggle.addEventListener('click', () => {
+        const expanded = micQualityPanel.classList.toggle('expanded');
+        micQualityToggle.setAttribute('aria-expanded', String(expanded));
+    });
+
+    function renderMicQuality(snapshot) {
+        const labels = {excellent: 'Excelente', good: 'Boa', unstable: 'Instável', poor: 'Ruim', critical: 'Crítica'};
+        const quality = snapshot.quality || 'good';
+        micQualityPanel.dataset.quality = quality;
+        document.getElementById('micQualityState').textContent = labels[quality] || 'Boa';
+        document.getElementById('micQualityJitter').textContent = `${Math.round(snapshot.uplinkJitterP95 || snapshot.uplinkJitterMs || 0)} ms`;
+        document.getElementById('micQualityQueue').textContent = `${Math.round(snapshot.browserQueueMs || 0)} ms`;
+        document.getElementById('micQualityDrops').textContent = `${Number(snapshot.dropPercent || 0).toFixed(1).replace('.', ',')}%`;
+        document.getElementById('micQualityWs').textContent = `${(Number(snapshot.wsBufferedAmount || 0) / 1024).toFixed(1)} KB`;
+    }
+
+    function resetMicUplinkState(showPanel) {
+        [uplinkSenderTimer, uplinkMetricsTimer, uplinkReconnectTimer].forEach(timer => {
+            if (timer) clearTimeout(timer);
+        });
+        uplinkSenderTimer = uplinkMetricsTimer = uplinkReconnectTimer = null;
+        if (uplinkQueue) uplinkQueue.clear();
+        if (uplinkMetrics) uplinkMetrics.reset();
+        uplinkQueue = null;
+        uplinkMetrics = null;
+        micSequence = 0;
+        micCaptureSamples = 0;
+        micQualityPanel.style.display = showPanel ? '' : 'none';
+        micQualityPanel.classList.remove('expanded');
+        micQualityToggle.setAttribute('aria-expanded', 'false');
+        renderMicQuality({quality: 'good'});
+    }
+
+    function startMicSenderLoops() {
+        const senderTick = () => {
+            if (!isRecording || !uplinkQueue) return;
+            uplinkQueue.sendOne(websocket, performance.now());
+            uplinkSenderTimer = setTimeout(senderTick, SpechMicUplink.CONFIG.senderPollMs);
+        };
+        const metricsTick = () => {
+            if (!isRecording || !uplinkMetrics) return;
+            uplinkMetrics.observeSocket(websocket);
+            const snapshot = uplinkMetrics.snapshot();
+            renderMicQuality(snapshot);
+            if (websocket && websocket.readyState === WebSocket.OPEN
+                && websocket.bufferedAmount < SpechMicUplink.CONFIG.wsWarningBytes) {
+                try {
+                    websocket.send(JSON.stringify({type: 'micMetrics', data: snapshot}));
+                } catch (_) {}
+            }
+            uplinkMetricsTimer = setTimeout(metricsTick, SpechMicUplink.CONFIG.metricsIntervalMs);
+        };
+        senderTick();
+        metricsTick();
+    }
 
     let lastCallId = null; // Armazena o último callId conectado
     let callIdMonitorInterval = null; // Intervalo de monitoramento
@@ -1978,9 +2085,11 @@
         const sampleRate = audioContext ? audioContext.sampleRate : 8000;
         const userFp = user.getValue('fp') || 'anon';
         const wsUrl = `${proto}//${infoURI().host}:8889?fp=${fp}&ssrc=mic-${userFp}&sampleRate=${sampleRate}`;
+        const isNewCall = lastCallId !== null && fp !== lastCallId;
 
         // Fecha conexão anterior se existir
-        if (websocket && websocket.readyState === WebSocket.OPEN) {
+        if (websocket && websocket.readyState < WebSocket.CLOSING) {
+            if (lastCallId === fp) return;
             console.log('🔄 Trocando de chamada, fechando WS anterior');
             websocket.close();
         }
@@ -1990,22 +2099,44 @@
             window.micAudioBuffer = new Int16Array(0);
             console.log('🧹 Buffer de áudio limpo');
         }
+        if (isNewCall && uplinkQueue && uplinkMetrics) {
+            uplinkQueue.clear();
+            uplinkMetrics.reset();
+            micSequence = 0;
+            micCaptureSamples = 0;
+            renderMicQuality(uplinkMetrics.snapshot());
+        }
 
         // Conectar WebSocket
-        websocket = new WebSocket(wsUrl);
-        websocket.binaryType = 'arraybuffer';
+        const socket = new WebSocket(wsUrl);
+        websocket = socket;
+        socket.binaryType = 'arraybuffer';
         lastCallId = window.currentCallId;
 
-        websocket.onopen = () => {
+        socket.onopen = () => {
             console.log('✅ WS conectado:', wsUrl);
         };
 
-        websocket.onerror = (error) => {
+        socket.onmessage = (event) => {
+            if (typeof event.data !== 'string' || !uplinkMetrics) return;
+            try {
+                const message = JSON.parse(event.data);
+                if (message.type === 'micQuality') uplinkMetrics.mergeServer(message.data);
+            } catch (_) {}
+        };
+
+        socket.onerror = (error) => {
             console.error('❌ Erro WS:', error);
         };
 
-        websocket.onclose = () => {
+        socket.onclose = () => {
             console.log('🛑 WS fechado');
+            if (websocket === socket) {
+                websocket = null;
+                if (isRecording && !isStopped && window.currentCallId === lastCallId) {
+                    uplinkReconnectTimer = setTimeout(() => connectWebSocket(), 500);
+                }
+            }
         };
     };
 
@@ -2056,7 +2187,7 @@
                 audio: {
                     echoCancellation: true,
                     noiseSuppression: true,
-                    autoGainControl: true,
+                    autoGainControl: micAgcEnabled.checked,
                     sampleRate: currentSampleRate,
                     sampleSize: 16
                 }
@@ -2075,7 +2206,11 @@
             // Reset contadores
             sentPackets = 0;
             sentBytes = 0;
-            streamStartTime = performance.now();
+            micSequence = 0;
+            micCaptureSamples = 0;
+            uplinkMetrics = new SpechMicUplink.MicQualityMetrics();
+            uplinkQueue = new SpechMicUplink.MicUplinkQueue({sampleRate: audioContext.sampleRate}, uplinkMetrics);
+            isRecording = true;
 
             // Função para conectar/reconectar WebSocket
 
@@ -2103,11 +2238,8 @@
             // Buffer global para poder limpar entre chamadas
             window.micAudioBuffer = new Int16Array(0);
 
-            // Processamento SIMPLES e DIRETO
+            // Captura e rede são desacopladas por uma fila bounded/pacer local.
             audioWorkletNode.port.onmessage = (e) => {
-                // Só processa se WebSocket conectado
-                if (!websocket || websocket.readyState !== WebSocket.OPEN) return;
-
                 const pcm = new Int16Array(e.data);
 
                 // Atualiza VU meter
@@ -2125,9 +2257,23 @@
                 while (window.micAudioBuffer.length >= VOIP_SAMPLES) {
                     const packet = window.micAudioBuffer.slice(0, VOIP_SAMPLES);
                     window.micAudioBuffer = window.micAudioBuffer.slice(VOIP_SAMPLES);
-
-                    // Envia direto, SEM FEC, SEM VAD, SEM complicações
-                    websocket.send(packet.buffer);
+                    uplinkMetrics.observeSamples(packet);
+                    // Audio sample time is monotonic and is not distorted when
+                    // the browser main thread delivers worklet messages in a burst.
+                    const captureTimestampMs = (micCaptureSamples * 1000) / audioContext.sampleRate;
+                    micCaptureSamples += VOIP_SAMPLES;
+                    uplinkQueue.enqueue({
+                        sequence: micSequence,
+                        captureTimestampMs,
+                        packet: SpechMicUplink.encodeFrame(
+                            micSequence,
+                            captureTimestampMs,
+                            audioContext.sampleRate,
+                            packet,
+                            0
+                        )
+                    });
+                    micSequence = (micSequence + 1) >>> 0;
                 }
             };
 
@@ -2137,7 +2283,9 @@
             window.micGainNode.connect(audioWorkletNode);
             await audioContext.resume();
 
-            isRecording = true;
+            micQualityPanel.style.display = '';
+            renderMicQuality(uplinkMetrics.snapshot());
+            startMicSenderLoops();
 
 
             console.log('🎧 Microfone ativo, enviando PCM para WS…');
@@ -2155,6 +2303,7 @@
 
         isRecording = false;
         isMuted = false;
+        resetMicUplinkState(false);
 
         // Limpa o buffer de áudio residual
         window.micAudioBuffer = new Int16Array(0);

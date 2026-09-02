@@ -56,6 +56,7 @@ class CallMediaBridge
             );
         });
 
+
         $phone->receiveMedia();
         cli::pcl("[Media] Recebendo áudio (RTP→PCM)", "green");
 
