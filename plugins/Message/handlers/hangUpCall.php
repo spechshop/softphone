@@ -23,6 +23,7 @@ class hangUpCall
         }
 
         if (!cache::get('coroutinesProcess')) cache::set('coroutinesProcess', []);
+        $inboundMediaChannel = null;
 
         // Outgoing call (trunkController) or accepted incoming call (stdClass media state)
         if (array_key_exists($fingerprint, cache::get('coroutinesProcess'))) {
@@ -45,6 +46,7 @@ class hangUpCall
             }
             // Accepted incoming call: signal the media bridge to stop and fall through
             // to send the SIP BYE via the stored invite headers below.
+            $inboundMediaChannel = $phone->mediaChannel ?? null;
         }
 
         // Incoming call (ringing or accepted before media was stored)
@@ -83,9 +85,24 @@ class hangUpCall
             }
 
             CallState::$incomingCalls->del($callId);
+            if (is_object($inboundMediaChannel) && method_exists($inboundMediaChannel, 'close')) {
+                $inboundMediaChannel->close();
+            }
+            self::broadcastCallEnded($socket, $fingerprint, $callId);
             return $socket->push($fd, json_encode(['byToken' => $model['id'], 'data' => ['success' => true]]));
         }
 
         return $socket->push($fd, json_encode(['byToken' => $model['id'], 'data' => ['success' => false]]));
+    }
+
+    private static function broadcastCallEnded(object $socket, string $fingerprint, string $callId): void
+    {
+        $payload = json_encode([
+            'type' => 'callEnded',
+            'data' => ['callId' => $callId],
+        ]);
+        foreach (cache::get('connections')[$fingerprint] ?? [] as $clientFd) {
+            $socket->push($clientFd, $payload);
+        }
     }
 }

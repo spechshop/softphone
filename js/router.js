@@ -588,19 +588,32 @@ window.handleCallActive = function () {
     renderActiveCallBar(formatSipUri(window.inboundCallState.from) || window.inboundCallState.from);
 };
 
-window.handleCallEnded = function () {
-    if (window.inboundCallState.status === 'idle') return;
+window.handleCallEnded = function (callId = null) {
+    const s = window.inboundCallState;
+    if (s.status === 'idle') return false;
+    // A delayed duplicate from an older call must never tear down a newer one.
+    if (callId && s.currentCallId && callId !== s.currentCallId) return false;
     console.log('[CALL] chamada encerrada');
     stopRingtone();
     _stopInboundTimer();
     if (typeof window.stopAudio === 'function') window.stopAudio();
+    if (typeof window.stopAudioCapture === 'function') window.stopAudioCapture();
     setCallState('ended');
     closeActiveCallBar();
-    setTimeout(() => {
-        closeCallWidget();
-        window.inboundCallState.status = 'idle';
-        window.inboundCallState.currentCallId = null;
-    }, 1200);
+    closeCallWidget();
+    Object.assign(s, {
+        status: 'idle',
+        currentCallId: null,
+        direction: null,
+        from: null,
+        to: null,
+        codec: null,
+        startedAt: null,
+        acceptSent: false,
+        rejectSent: false,
+        hangupSent: false,
+    });
+    return true;
 };
 
 window.acceptIncomingCall = function () {
@@ -622,17 +635,24 @@ window.rejectIncomingCall = function () {
     console.log('[CALL] enviando callReject');
     stopRingtone();
     setCallState('ending');
-    sendRecByToken({callId: s.currentCallId}, 'callReject').then(() => handleCallEnded());
+    return sendRecByToken({callId: s.currentCallId}, 'callReject').then(() => handleCallEnded());
 };
 
 window.hangupCurrentCall = function () {
     const s = window.inboundCallState;
     if (!['accepting', 'active'].includes(s.status)) return;
     if (s.hangupSent) return;
+    const callId = s.currentCallId;
     s.hangupSent = true;
     console.log('[CALL] enviando callHangup');
     setCallState('ending');
-    sendRecByToken({hangup: true, callId: s.currentCallId}, 'HangUpCall');
+    return sendRecByToken({hangup: true, callId}, 'HangUpCall').then((result) => {
+        if (result?.success) handleCallEnded(callId);
+        return result;
+    }).catch((error) => {
+        console.error('[CALL] erro ao encerrar chamada', error);
+        throw error;
+    });
 };
 
 // ===== Active Call Floating Bar =====
@@ -644,9 +664,9 @@ let _activeBarDragListeners = null;
 window._hangupActiveCall = function () {
     const s = window.inboundCallState;
     if (s && ['accepting', 'active'].includes(s.status)) {
-        window.hangupCurrentCall();
+        return window.hangupCurrentCall();
     } else if (typeof window.hangUpCall === 'function') {
-        window.hangUpCall();
+        return window.hangUpCall();
     }
 };
 
@@ -931,7 +951,7 @@ const onMessageSocket = (event, socket) => {
             break;
 
         case 'callEnded':
-            handleCallEnded();
+            handleCallEnded(data.data?.callId || null);
             break;
 
         case 'event':
