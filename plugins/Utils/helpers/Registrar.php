@@ -130,6 +130,12 @@ class Registrar
                 . " (fp:{$fp}) expira em " . self::EXPIRES . 's',
                 'green'
             );
+            cli::pcl(
+                '[REGISTRAR] Contact accountId=' . $fp
+                . ' user=' . AccountIdentity::contactUser($fp)
+                . ' confirmed=' . (!empty($result['binding_confirmed']) ? 'yes' : 'no'),
+                !empty($result['binding_confirmed']) ? 'green' : 'yellow'
+            );
             return $result;
         }
 

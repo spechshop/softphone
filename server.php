@@ -10,6 +10,7 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 use helpers\utils\CallState;
 use helpers\utils\AccountIdentity;
 use helpers\utils\SipRegisterManager;
+use helpers\utils\SipMessageBody;
 use helpers\utils\PhoneController;
 use libspech\Cache\cache as cacheLibSpech;
 use libspech\Network\network;
@@ -125,12 +126,28 @@ function inboundRequestUser(string $packet): string
     return (string)(\libspech\Sip\sip::extractURI($match[1])['user'] ?? '');
 }
 
+function resolveInboundAccount(string $user, string $domain, string $sourceHost, string $requestUser): array
+{
+    $route = AccountIdentity::resolve($user, $domain, $sourceHost, null, $requestUser);
+    if ($route['accountId']) return $route;
+
+    $registeredFp = CallState::findRegisteredFpForInbound($user, $domain, $sourceHost);
+    if (!$registeredFp || ($route['candidates'] && !in_array($registeredFp, $route['candidates'], true))) return $route;
+    $account = AccountIdentity::get($registeredFp);
+    if (!$account || strcasecmp((string)$account['sipUser'], $user) !== 0) return $route;
+
+    return [
+        'status' => 'resolved_binding', 'accountId' => $registeredFp,
+        'account' => $account, 'candidates' => [$registeredFp],
+    ];
+}
+
 $server->on('packet', function (Server $socket, string $data, array $info) {
     $parse = \libspech\Sip\sip::parse($data);
     if (empty($parse['method'])) {
         return;
     }
-    \libspech\Cli\cli::pcl($parse['methodForParser']);
+    cli::pcl($data);
 
     // REGISTER uses this listener as both its source and its only response
     // reader. Consume a response before the generic SIP dispatcher can route,
@@ -237,7 +254,7 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         $toUser = $toUri['user'] ?? '';
         $toDomain = (string)($toUri['peer']['host'] ?? '');
         $requestUser = inboundRequestUser($data);
-        $route = AccountIdentity::resolve($toUser, $toDomain, (string)($info['address'] ?? ''), null, $requestUser);
+        $route = resolveInboundAccount($toUser, $toDomain, (string)($info['address'] ?? ''), $requestUser);
         $fp = $route['accountId'];
 
         if (!$fp) {
@@ -246,7 +263,7 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
             cli::pcl("[CALL:ROUTE] {$reason} destination user={$toUser} domain={$toDomain} requestUser={$requestUser} candidates=" . count($route['candidates']), 'red');
             return;
         }
-        cli::pcl("[CALL:ROUTE] to={$toUser} domain={$toDomain} requestUser={$requestUser} accountId={$fp}", 'cyan');
+        cli::pcl("[CALL:ROUTE] to={$toUser} domain={$toDomain} requestUser={$requestUser} accountId={$fp} resolution={$route['status']}", 'cyan');
 
         if (empty(cache::get('connections')[$fp] ?? [])) {
             $pendingToTag = bin2hex(random_bytes(4));
@@ -440,12 +457,12 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         $toDomain = (string)($toParsed['peer']['host'] ?? '');
         $fromUri = AccountIdentity::sipUri($parse['headers']['From'][0] ?? '');
         $toUri = AccountIdentity::sipUri($parse['headers']['To'][0] ?? '');
-        $body = trim($parse['body'] ?? '');
+        $body = trim(SipMessageBody::extract($data, $parse));
         $requestUser = inboundRequestUser($data);
         cli::pcl("[MESSAGE:RX] requestUser={$requestUser} from={$fromUri} to={$toUri} bytes=" . strlen($body), 'cyan');
 
         if (!empty($fromUser) && !empty($toUser) && !empty($body)) {
-            $route = AccountIdentity::resolve($toUser, $toDomain, (string)($info['address'] ?? ''), null, $requestUser);
+            $route = resolveInboundAccount($toUser, $toDomain, (string)($info['address'] ?? ''), $requestUser);
             $accountId = $route['accountId'];
             if (!$accountId) {
                 if ($route['status'] === 'ambiguous') {
@@ -455,7 +472,7 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
                 }
                 return;
             }
-            cli::pcl("[MESSAGE:ROUTE] to={$toUser} domain={$toDomain} requestUser={$requestUser} accountId={$accountId}", 'cyan');
+            cli::pcl("[MESSAGE:ROUTE] to={$toUser} domain={$toDomain} requestUser={$requestUser} accountId={$accountId} resolution={$route['status']}", 'cyan');
             cli::pcl("[MESSAGE:SIP] fromUser={$fromUser} fromDomain={$fromDomain} fromUri={$fromUri} toUser={$toUser} toDomain={$toDomain} toUri={$toUri}", 'cyan');
             $msg = \plugins\Utils\messages\messageStore::saveMessage($accountId, $toUri, $fromUri, $body, 'inbound');
             if ($msg) {

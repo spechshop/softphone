@@ -67,14 +67,46 @@ class CallState
 
     public static function findFpForInbound(string $sipUser, string $sipDomain): ?string
     {
-        if (self::$sipBindings === null || trim($sipDomain) === '') return null;
+        return self::findRegisteredFpForInbound($sipUser, $sipDomain, '');
+    }
+
+    public static function findRegisteredFpForInbound(string $sipUser, string $sipDomain, string $sourceHost = ''): ?string
+    {
+        if (self::$sipBindings === null || (trim($sipDomain) === '' && trim($sourceHost) === '')) return null;
+        $rows = [];
         foreach (self::$sipBindings as $row) {
-            if ($row['sip_user'] !== $sipUser) continue;
-            $serverHost = parse_url('sip://' . $row['sip_server'], PHP_URL_HOST) ?: $row['sip_server'];
-            if ($sipDomain !== '' && (strcasecmp($row['sip_domain'], $sipDomain) === 0
-                || strcasecmp((string)$serverHost, $sipDomain) === 0)) return $row['fp'];
+            if (strcasecmp((string)$row['sip_user'], $sipUser) !== 0) continue;
+            $serverHost = AccountIdentity::host((string)$row['sip_server']);
+            $rows[] = ['row' => $row, 'server_host' => $serverHost];
         }
-        return null;
+        $candidates = $rows;
+        $identityMatched = false;
+        if ($sipDomain !== '') {
+            $domainMatches = array_values(array_filter($rows, static fn(array $entry): bool =>
+                strcasecmp((string)$entry['row']['sip_domain'], $sipDomain) === 0
+                || strcasecmp($entry['server_host'], $sipDomain) === 0
+            ));
+            if ($domainMatches) {
+                $candidates = $domainMatches;
+                $identityMatched = true;
+            }
+        }
+        if ($sourceHost !== '' && (count($candidates) > 1 || !$identityMatched)) {
+            $sourceMatches = array_values(array_filter($candidates, static function (array $entry) use ($sourceHost): bool {
+                $serverHost = $entry['server_host'];
+                if (strcasecmp($serverHost, $sourceHost) === 0) return true;
+                return filter_var($sourceHost, FILTER_VALIDATE_IP) && !filter_var($serverHost, FILTER_VALIDATE_IP)
+                    && in_array($sourceHost, gethostbynamel($serverHost) ?: [], true);
+            }));
+            if ($sourceMatches) {
+                $candidates = $sourceMatches;
+                $identityMatched = true;
+            }
+        }
+        if (!$identityMatched) return null;
+        $matches = [];
+        foreach ($candidates as $entry) $matches[(string)$entry['row']['fp']] = true;
+        return count($matches) === 1 ? (string)array_key_first($matches) : null;
     }
 
     public static function hasActiveCallForFp(string $fp): bool
