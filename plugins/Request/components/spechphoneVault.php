@@ -15,6 +15,10 @@ class spechphoneVault
     private bool $dirty = false;
     private ?int $timerId = null;
     private int $debounceMs;
+    private int $flushFailures = 0;
+
+    /** @var list<array{type:string,key:string,value?:mixed,delta?:int|float}> */
+    private array $pendingOperations = [];
 
     /** @var \Swoole\Lock|null */
     private $lock = null;
@@ -57,7 +61,9 @@ class spechphoneVault
     {
         if (empty($key)) return false;
         $this->withLock(function () use ($key, $value) {
-            $this->data[$key] = $this->normalize($value);
+            $value = $this->normalize($value);
+            $this->data[$key] = $value;
+            $this->pendingOperations[] = ['type' => 'set', 'key' => $key, 'value' => $value];
             $this->markDirty();
         });
         return true;
@@ -72,6 +78,7 @@ class spechphoneVault
     {
         $this->withLock(function () use ($key) {
             unset($this->data[$key]);
+            $this->pendingOperations[] = ['type' => 'del', 'key' => $key];
             $this->markDirty();
         });
         return true;
@@ -110,20 +117,19 @@ class spechphoneVault
         $dir = dirname($path);
         $filename = basename($path);
 
-        // Tenta usar o caminho original
-        if (is_dir($dir) && is_writable($dir)) {
-            return $path;
+        // Tenta usar/criar o caminho original. Revalida depois do mkdir para
+        // tolerar dois workers inicializando o mesmo diretório simultaneamente.
+        if (!is_dir($dir)) {
+            @mkdir($dir, 0700, true);
         }
-
-        // Tenta criar o diretório original
-        if (!is_dir($dir) && @mkdir($dir, 0777, true) && is_writable($dir)) {
+        if (is_dir($dir) && is_writable($dir)) {
             return $path;
         }
 
         // Fallback: usa o diretório temporário do sistema
         $fallbackDir = sys_get_temp_dir() . '/spechphone';
         if (!is_dir($fallbackDir)) {
-            if (!@mkdir($fallbackDir, 0777, true)) {
+            if (!@mkdir($fallbackDir, 0700, true) && !is_dir($fallbackDir)) {
                 throw new \RuntimeException(
                     "Não foi possível criar nem o diretório '{$dir}' nem o fallback '{$fallbackDir}'. " .
                     "Verifique as permissões do sistema de arquivos."
@@ -131,10 +137,12 @@ class spechphoneVault
             }
         }
 
-        $fallbackPath = \plugins\Request\appController::baseDir() . $filename;
+        if (!is_writable($fallbackDir)) {
+            throw new \RuntimeException("Diretório de fallback sem permissão de escrita: '{$fallbackDir}'");
+        }
 
-
-        return $fallbackPath;
+        @chmod($fallbackDir, 0700);
+        return $fallbackDir . DIRECTORY_SEPARATOR . $filename;
     }
 
     private function atomicNumberOp(string $key, int|float $delta): int|float
@@ -150,6 +158,7 @@ class spechphoneVault
 
             $result = $current + $delta;
             $this->data[$key] = $result;
+            $this->pendingOperations[] = ['type' => 'delta', 'key' => $key, 'delta' => $delta];
             $this->markDirty();
         });
 
@@ -196,28 +205,86 @@ class spechphoneVault
             return;
         }
 
-        $json = json_encode($this->data, JSON_UNESCAPED_SLASHES);
-        if ($json === false) {
-            throw new \RuntimeException(json_last_error_msg());
-        }
+        $operations = $this->pendingOperations;
+        $savedData = $this->withFileLock(function () use ($operations): array {
+            $data = $this->readDataFromDisk();
+            foreach ($operations as $operation) {
+                $key = $operation['key'];
+                switch ($operation['type']) {
+                    case 'set':
+                        $data[$key] = $operation['value'];
+                        break;
+                    case 'del':
+                        unset($data[$key]);
+                        break;
+                    case 'delta':
+                        $current = $data[$key] ?? 0;
+                        if (!is_int($current) && !is_float($current)) {
+                            throw new \RuntimeException("Valor persistido da chave '{$key}' não é numérico");
+                        }
+                        $data[$key] = $current + $operation['delta'];
+                        break;
+                }
+            }
 
-        $blob = $this->encrypt($json);
-        $this->atomicWrite($this->path, $blob);
+            $json = json_encode($data, JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+            $this->atomicWrite($this->path, $this->encrypt($json));
+            return $data;
+        });
 
+        $this->data = $savedData;
+        $this->pendingOperations = [];
         $this->dirty = false;
+        $this->flushFailures = 0;
         $this->clearTimer();
     }
 
     private function markDirty(): void
     {
         $this->dirty = true;
+        $this->flushFailures = 0;
 
         if (!extension_loaded('swoole')) return;
         if ($this->timerId !== null) return;
 
-        $this->timerId = \Swoole\Timer::after($this->debounceMs, function () {
-            $this->flush();
-        });
+        $this->scheduleFlush($this->debounceMs);
+    }
+
+    private function scheduleFlush(int $delayMs): void
+    {
+        try {
+            $timerId = \Swoole\Timer::after($delayMs, function (): void {
+                // A one-shot timer is no longer active while its callback executes.
+                $this->timerId = null;
+                try {
+                    $this->flush();
+                } catch (\Throwable $error) {
+                    $this->flushFailures++;
+                    error_log(sprintf(
+                        '[spechphoneVault] falha ao persistir %s (tentativa %d/3): %s',
+                        $this->path,
+                        $this->flushFailures,
+                        $error->getMessage()
+                    ));
+
+                    // Never let a background persistence failure terminate a Swoole
+                    // worker. Keep the mutations queued and retry transient failures.
+                    if ($this->dirty && $this->flushFailures < 3) {
+                        $retryDelay = min($this->debounceMs * (2 ** $this->flushFailures), 30000);
+                        $this->scheduleFlush($retryDelay);
+                    }
+                }
+            });
+        } catch (\Throwable $error) {
+            error_log("[spechphoneVault] não foi possível agendar a persistência de {$this->path}: {$error->getMessage()}");
+            return;
+        }
+
+        if ($timerId === false) {
+            error_log("[spechphoneVault] não foi possível agendar a persistência de {$this->path}");
+            return;
+        }
+        $this->timerId = $timerId;
     }
 
     private function clearTimer(): void
@@ -248,21 +315,67 @@ class spechphoneVault
         return $plain;
     }
 
+    private function readDataFromDisk(): array
+    {
+        if (!is_file($this->path)) return [];
+
+        $blob = @file_get_contents($this->path);
+        if ($blob === false || $blob === '') {
+            throw new \RuntimeException("Falha ao ler {$this->path}");
+        }
+
+        $data = json_decode($this->decrypt($blob), true);
+        if (!is_array($data)) {
+            throw new \RuntimeException('DB corrompido (JSON inválido)');
+        }
+        return $data;
+    }
+
+    private function withFileLock(callable $fn): mixed
+    {
+        $lockPath = $this->path . '.lock';
+        $handle = @fopen($lockPath, 'c');
+        if ($handle === false) {
+            throw new \RuntimeException("Não foi possível abrir a trava do vault '{$lockPath}'");
+        }
+
+        @chmod($lockPath, 0600);
+        try {
+            if (!@flock($handle, LOCK_EX)) {
+                throw new \RuntimeException("Não foi possível adquirir a trava do vault '{$lockPath}'");
+            }
+            try {
+                return $fn();
+            } finally {
+                @flock($handle, LOCK_UN);
+            }
+        } finally {
+            fclose($handle);
+        }
+    }
+
     private function atomicWrite(string $file, string $bytes): void
     {
         $dir = dirname($file);
-        $tmp = $file . '.tmp.' . getmypid();
+        $tmp = $file . '.tmp.' . getmypid() . '.' . bin2hex(random_bytes(8));
 
-        if (@file_put_contents($tmp, $bytes, LOCK_EX) === false) {
+        $written = @file_put_contents($tmp, $bytes, LOCK_EX);
+        if ($written === false || $written !== strlen($bytes)) {
+            @unlink($tmp);
             throw new \RuntimeException(
                 "Não foi possível escrever no arquivo temporário '{$tmp}'. " .
                 "Verifique as permissões do diretório '{$dir}'."
             );
         }
 
+        @chmod($tmp, 0600);
+        error_clear_last();
         if (!@rename($tmp, $file)) {
+            $reason = error_get_last()['message'] ?? 'erro desconhecido';
             @unlink($tmp);
-            throw new \RuntimeException("Não foi possível publicar o vault persistido em '{$file}'");
+            throw new \RuntimeException(
+                "Não foi possível publicar o vault persistido em '{$file}': {$reason}"
+            );
         }
 
         @chmod($file, 0600);
