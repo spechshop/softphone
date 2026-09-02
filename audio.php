@@ -61,6 +61,11 @@ $server->set([
     'ssl_cert_file' => $configInterface['serverSettings']['ssl_cert_file'],
     'ssl_key_file' => $configInterface['serverSettings']['ssl_key_file'],
     'enable_coroutine' => true,
+    'open_tcp_nodelay' => false,
+    'tcp_fastopen' => true,
+    'enable_reuse_port' => false,
+    'package_max_length' => 1024 * 1024 * 10,
+    'socket_buffer_size' => 1024 * 1024 * 10,
 
 ]);
 
@@ -267,7 +272,8 @@ function startMicUplinkPacer(
                         "[MIC:QUALITY] callId={$session->stream} quality={$snapshot['quality']} "
                         . "jitter={$snapshot['uplinkJitterP95']}ms queue="
                         . ($snapshot['browserQueueMs'] ?? 0) . "ms drops={$dropCount} "
-                        . "wsBuffered={$wsKb}KB pacerP95={$snapshot['rtpPacingGapP95']}ms",
+                        . "wsBuffered={$wsKb}KB pacerUnderruns={$snapshot['pacerUnderruns']} "
+                        . "pacerP95={$snapshot['rtpPacingGapP95']}ms",
                         'cyan'
                     );
                     $session->lastLogAtMs = $nowMs;

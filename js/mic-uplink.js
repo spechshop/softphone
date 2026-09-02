@@ -7,9 +7,10 @@
 
     const CONFIG = Object.freeze({
         frameMs: 20,
-        targetQueueMs: 60,
+        targetQueueMs: 40,
         softQueueMs: 120,
         hardQueueMs: 160,
+        maxCatchUpFrames: 4,
         wsHealthyBytes: 32 * 1024,
         wsWarningBytes: 96 * 1024,
         wsPoorBytes: 256 * 1024,
@@ -106,7 +107,6 @@
             this.config = Object.assign({}, CONFIG, config || {});
             this.metrics = metrics || new MicQualityMetrics();
             this.frames = [];
-            this.nextSendDeadline = null;
             const sampleRate = Number(this.config.sampleRate || 8000);
             const realtimeBytes = Math.ceil(sampleRate * 2 * (this.config.hardQueueMs / 1000))
                 + Math.ceil(this.config.hardQueueMs / this.config.frameMs) * HEADER_BYTES;
@@ -125,21 +125,14 @@
             this.updateDepth();
         }
 
-        sendOne(socket, nowMs) {
+        sendOne(socket) {
             this.metrics.observeSocket(socket);
             if (!socket || socket.readyState !== 1 || this.frames.length === 0) return false;
             if (socket.bufferedAmount >= this.wsSendBudgetBytes) {
-                // The WebSocket's TCP queue cannot be edited, so keep only recent
-                // not-yet-sent audio while its older bytes drain.
-                while (this.frames.length * this.config.frameMs > this.config.targetQueueMs) {
-                    this.frames.shift();
-                    this.metrics.droppedFrames++;
-                    this.metrics.uplinkDroppedOldFrames++;
-                }
-                this.updateDepth();
+                // Hold while TCP drains. enqueue() keeps this queue bounded and
+                // discards the oldest audio only when the hard limit is reached.
                 return false;
             }
-            if (this.nextSendDeadline !== null && nowMs < this.nextSendDeadline) return false;
 
             const frame = this.frames[0];
             try {
@@ -149,21 +142,35 @@
             }
             this.frames.shift();
             this.metrics.sentFrames++;
-            // A late JS callback never drains several frames in one turn.
-            const candidate = this.nextSendDeadline === null
-                ? nowMs + this.config.frameMs
-                : this.nextSendDeadline + this.config.frameMs;
-            this.nextSendDeadline = candidate > nowMs
-                ? candidate
-                : nowMs + this.config.frameMs;
             this.updateDepth();
             this.metrics.observeSocket(socket);
             return true;
         }
 
+        drain(socket) {
+            this.metrics.observeSocket(socket);
+            if (!socket || socket.readyState !== 1 || this.frames.length === 0) return 0;
+            if (socket.bufferedAmount >= this.wsSendBudgetBytes) return 0;
+
+            const targetFrames = Math.max(1, Math.ceil(this.config.targetQueueMs / this.config.frameMs));
+            const queuedFrames = this.frames.length;
+            let sendLimit = 1;
+            if (queuedFrames > targetFrames) {
+                // Recover from a delayed browser callback without turning the
+                // entire bounded queue into one large TCP burst.
+                sendLimit = Math.min(
+                    Math.max(1, Number(this.config.maxCatchUpFrames) || 1),
+                    Math.max(2, queuedFrames - targetFrames)
+                );
+            }
+
+            let sent = 0;
+            while (sent < sendLimit && this.sendOne(socket)) sent++;
+            return sent;
+        }
+
         clear() {
             this.frames.length = 0;
-            this.nextSendDeadline = null;
             this.updateDepth();
         }
 

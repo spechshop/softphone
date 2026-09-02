@@ -34,7 +34,7 @@ function bounded(kbps) {
             queue.enqueue({sequence: seq, packet});
             seq++;
         }
-        queue.sendOne(socket, now);
+        queue.drain(socket);
     }
     const snapshot = metrics.snapshot();
     return {

@@ -54,14 +54,28 @@ assert.equal(metrics.browserQueuePeakMs, 160);
 
 const sent = [];
 const socket = {readyState: 1, bufferedAmount: 32 * 1024, send(data) { sent.push(data); }};
-assert.equal(queue.sendOne(socket, 0), false, 'backpressure threshold ignored');
-assert.equal(queue.frames.length, 3, 'congested queue did not retain only 60ms of recent audio');
+assert.equal(queue.sendOne(socket), false, 'backpressure threshold ignored');
+assert.equal(queue.frames.length, 8, 'backpressure discarded frames before the hard limit');
 socket.bufferedAmount = 0;
-assert.equal(queue.sendOne(socket, 0), true);
-assert.equal(queue.sendOne(socket, 0), false, 'same-tick burst emitted');
-assert.equal(queue.sendOne(socket, 19), false);
-assert.equal(queue.sendOne(socket, 20), true);
-assert.equal(sent.length, 2);
+assert.equal(queue.drain(socket), 4, 'catch-up burst must be capped at four frames');
+assert.equal(queue.frames.length, 4);
+assert.equal(queue.drain(socket), 2, 'catch-up must return the queue to the 20-40ms target');
+assert.equal(queue.frames.length * queue.config.frameMs, 40);
+assert.equal(sent.length, 6);
+
+// A 60ms scheduler pause adds three frames to an ordinary 40ms queue. One
+// catch-up cycle must recover instead of preserving the extra delay forever.
+const pauseMetrics = new uplink.MicQualityMetrics();
+const pauseQueue = new uplink.MicUplinkQueue({sampleRate: 8000}, pauseMetrics);
+for (let i = 0; i < 5; i++) pauseQueue.enqueue({sequence: i, packet});
+const pauseSocket = {readyState: 1, bufferedAmount: 0, send() {}};
+assert.equal(pauseQueue.frames.length * pauseQueue.config.frameMs, 100);
+assert.equal(pauseQueue.drain(pauseSocket), 3, '60ms scheduler backlog was not caught up');
+assert.equal(pauseQueue.frames.length * pauseQueue.config.frameMs, 40);
+const pauseSnapshot = pauseMetrics.snapshot();
+assert.equal(pauseSnapshot.wsBufferedAmount, 0);
+assert.equal(pauseSnapshot.droppedFrames, 0);
+assert.equal(pauseSnapshot.dropPercent, 0);
 
 metrics.observeSamples(pcm);
 assert.equal(metrics.clippedSamples, 2);
@@ -80,7 +94,7 @@ assert.equal(uplink.qualityState({wsBufferedAmount: 300000}), 'critical');
 const html = fs.readFileSync(new URL('../plugins/Request/pages/default.html', import.meta.url), 'utf8');
 const router = fs.readFileSync(new URL('../js/router.js', import.meta.url), 'utf8');
 const head = fs.readFileSync(new URL('../plugins/Request/modules/includes/head.html', import.meta.url), 'utf8');
-for (const id of ['micQualityPanel', 'micQualityState', 'micQualityJitter', 'micQualityQueue', 'micQualityDrops', 'micQualityWs']) {
+for (const id of ['micQualityPanel', 'micQualityState', 'micQualityJitter', 'micQualityQueue', 'micQualityDrops', 'micQualityWs', 'micQualityPacerUnderruns']) {
     assert.ok(html.includes(`id="${id}"`), `quality UI missing ${id}`);
 }
 for (const id of ['opusSettings', 'opusProfile', 'opusMono', 'opusStereo', 'opusBitrate', 'opusPlaybackRate', 'opusCaptureRate', 'opusFec', 'opusPtime']) {
@@ -133,4 +147,4 @@ assert.ok(html.includes("autoGainControl: micAgcEnabled.checked"), 'AGC A/B sett
 assert.ok(router.includes("window.handleCallActive") && router.includes("window.startAudioCapture"), 'inbound does not use shared microphone pipeline');
 assert.ok(html.includes("window.startAudioCapture = async") && html.includes("btnCall"), 'outbound does not use shared microphone pipeline');
 
-console.log('OK: binary frame, bounded queue, backpressure, pacing, clipping, quality UI states and reset.');
+console.log('OK: binary frame, bounded queue, backpressure, scheduler catch-up, clipping, quality UI states and reset.');

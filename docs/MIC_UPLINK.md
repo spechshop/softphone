@@ -26,21 +26,25 @@ session. Invalid frames are counted and discarded.
 
 ## Queue and pacing policy
 
-- Browser target/soft/hard queue: 60/120/160 ms.
+- Browser target/soft/hard queue: 40/120/160 ms.
 - On hard overflow, oldest frames are discarded.
-- When the WebSocket is congested, the unsent queue is trimmed to the newest 60 ms.
+- When the WebSocket is congested, sending pauses; the bounded queue only discards
+  its oldest audio when it reaches the 160 ms hard limit.
 - Diagnostic `bufferedAmount` bands: healthy below 32 KiB, warning 32--96 KiB,
   poor 96--256 KiB, critical above 256 KiB.
 - Actual send backpressure starts at the smaller of 32 KiB and 160 ms of PCM plus
   headers (2,720 bytes at 8 kHz; 15,520 bytes at 48 kHz). This prevents a stable
   multi-second TCP backlog from being classified as usable merely because it is
   below 32 KiB.
-- The browser sender and server pacer release at most one frame per 20 ms deadline.
+- With a free WebSocket, the browser drains one frame normally and up to four per
+  sender cycle while catching up, returning the queue to roughly 20--40 ms.
+- Browser sending has no temporal pacing deadline; temporal pacing remains in the
+  server jitter buffer and `RtpPacer`.
 - Server jitter target: 60 ms / three frames (configurable from 40--100 ms with
   `MIC_JITTER_TARGET_MS`); maximum estimated frame age: 180 ms (configurable
   from 160--200 ms with `MIC_MAX_FRAME_AGE_MS`); hard capacity: ten frames.
-- A late scheduler wake-up emits once and resets the next deadline to at least 20 ms
-  in the future; it never sends a catch-up burst.
+- A late browser scheduler wake-up can emit a controlled two-to-four-frame catch-up
+  burst. The server still emits at most one RTP packet per pacing deadline.
 - On underrun, the server sends PCM16 silence through the existing codec encoder.
   It never fabricates a G.729, GSM, Opus, PCMA, or PCMU payload.
 - Existing `rtpChannel` instances remain the owners of RTP sequence and timestamps.
@@ -81,6 +85,10 @@ php tests/mic_uplink_stress.php
 php tests/real_mic_uplink_burst.php
 tests/netem_mic_uplink_profiles.sh
 ```
+
+The frontend test includes a deterministic 60 ms scheduler pause and verifies
+that a 100 ms browser queue returns to 40 ms in one bounded catch-up cycle with
+zero WebSocket backlog and zero drops.
 
 The profile script applies `tc netem` inside an unprivileged network namespace and
 tests real WSS/local UDP/RTP construction. The bandwidth benchmark remains a

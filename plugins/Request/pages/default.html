@@ -270,6 +270,7 @@
                     <span>Fila <b class="mic-quality-value" id="micQualityQueue">0 ms</b></span>
                     <span>Drops <b class="mic-quality-value" id="micQualityDrops">0,0%</b></span>
                     <span>WS buffer <b class="mic-quality-value" id="micQualityWs">0 KB</b></span>
+                    <span>Pacer underruns <b class="mic-quality-value" id="micQualityPacerUnderruns">0 (0,0%)</b></span>
                     <span>Codec <b class="mic-quality-value" id="micQualityCodec">—</b></span>
                     <span>Modo <b class="mic-quality-value" id="micQualityMode">—</b></span>
                     <span>Bitrate <b class="mic-quality-value" id="micQualityBitrate">—</b></span>
@@ -2332,6 +2333,10 @@
         document.getElementById('micQualityQueue').textContent = `${Math.round(snapshot.browserQueueMs || 0)} ms`;
         document.getElementById('micQualityDrops').textContent = `${Number(snapshot.dropPercent || 0).toFixed(1).replace('.', ',')}%`;
         document.getElementById('micQualityWs').textContent = `${(Number(snapshot.wsBufferedAmount || 0) / 1024).toFixed(1)} KB`;
+        const pacerUnderruns = Number(snapshot.pacerUnderruns || 0);
+        const pacedPackets = Math.max(1, Number(snapshot.rtpPacketsSent || snapshot.sentFrames || 0));
+        const pacerUnderrunPercent = 100 * pacerUnderruns / pacedPackets;
+        document.getElementById('micQualityPacerUnderruns').textContent = `${pacerUnderruns} (${pacerUnderrunPercent.toFixed(1).replace('.', ',')}%)`;
         const opusActive = trunkCodecSelect.value.toUpperCase().startsWith('OPUS/');
         const opus = getEffectiveOpusConfig();
         document.getElementById('micQualityCodec').textContent = opusActive ? 'Opus' : trunkCodecSelect.value.split('/')[0];
@@ -2376,7 +2381,7 @@
     function startMicSenderLoops() {
         const senderTick = () => {
             if (!isRecording || !uplinkQueue) return;
-            uplinkQueue.sendOne(websocket, performance.now());
+            uplinkQueue.drain(websocket);
             uplinkSenderTimer = setTimeout(senderTick, SpechMicUplink.CONFIG.senderPollMs);
         };
         const metricsTick = () => {
