@@ -16,6 +16,7 @@
         wsPoorBytes: 256 * 1024,
         senderPollMs: 5,
         metricsIntervalMs: 1000,
+        recentWindowMs: 10 * 1000,
     });
 
     const HEADER_BYTES = 20;
@@ -42,7 +43,12 @@
     }
 
     class MicQualityMetrics {
-        constructor() { this.reset(); }
+        constructor(clock) {
+            this.clock = typeof clock === 'function'
+                ? clock
+                : () => (typeof performance !== 'undefined' ? performance.now() : Date.now());
+            this.reset();
+        }
 
         reset() {
             this.capturedFrames = 0;
@@ -57,6 +63,7 @@
             this.clippedSamples = 0;
             this.totalSamples = 0;
             this.server = {};
+            this.counterSamples = [];
         }
 
         observeSamples(pcm) {
@@ -74,7 +81,7 @@
 
         mergeServer(metrics) { this.server = Object.assign({}, this.server, metrics || {}); }
 
-        snapshot() {
+        snapshot(nowMs) {
             const combined = Object.assign({}, this.server, {
                 capturedFrames: this.capturedFrames,
                 sentFrames: this.sentFrames,
@@ -89,17 +96,81 @@
                 totalSamples: this.totalSamples,
                 clippingPercent: this.totalSamples ? (100 * this.clippedSamples / this.totalSamples) : 0,
             });
-            const serverDrops = Math.max(
-                Number(combined.lateFrames || 0),
-                Number(combined.lateFramesDropped || 0)
-            ) + Number(combined.serverDroppedFrames || 0);
-            // Browser drops later appear as sequence gaps at the server; max()
-            // avoids counting the same missing frame twice.
-            const drops = Math.max(combined.droppedFrames, serverDrops);
-            combined.dropPercent = 100 * drops / Math.max(1, combined.sentFrames + drops);
+
+            const counters = dropCounters(combined);
+            Object.assign(combined, counters);
+            combined.totalDrops = aggregateDrops(counters);
+            const totalSent = Math.max(0, Number(combined.sentFrames || combined.receivedFrames || 0));
+            combined.totalDropPercent = percent(combined.totalDrops, totalSent + combined.totalDrops);
+
+            const recent = this.recentCounters(Number.isFinite(nowMs) ? nowMs : this.clock(), counters);
+            combined.recentBrowserDrops = recent.browserDrops;
+            combined.recentServerLateDrops = recent.serverLateDrops;
+            combined.recentServerOverflowDrops = recent.serverOverflowDrops;
+            combined.recentSequenceGaps = recent.sequenceGaps;
+            combined.recentDrops = aggregateDrops(recent);
+            const recentSent = recent.sentFrames > 0 ? recent.sentFrames : recent.receivedFrames;
+            combined.recentDropPercent = percent(combined.recentDrops, recentSent + combined.recentDrops);
+            combined.recentUnderruns = recent.pacerUnderruns;
+            combined.recentUnderrunPercent = percent(recent.pacerUnderruns, recent.rtpPacketsSent);
+            // Compatibility for existing diagnostics: dropPercent now means the
+            // current rolling window, never the whole call.
+            combined.dropPercent = combined.recentDropPercent;
             combined.quality = qualityState(combined);
             return combined;
         }
+
+        recentCounters(nowMs, counters) {
+            const point = Object.assign({at: nowMs}, counters);
+            const last = this.counterSamples[this.counterSamples.length - 1];
+            if (last && last.at === nowMs) this.counterSamples[this.counterSamples.length - 1] = point;
+            else this.counterSamples.push(point);
+
+            const cutoff = nowMs - CONFIG.recentWindowMs;
+            let baselineIndex = -1;
+            for (let i = 0; i < this.counterSamples.length; i++) {
+                if (this.counterSamples[i].at <= cutoff) baselineIndex = i;
+                else break;
+            }
+            const baseline = baselineIndex >= 0 ? this.counterSamples[baselineIndex] : {};
+            if (baselineIndex > 0) this.counterSamples.splice(0, baselineIndex);
+
+            const delta = {};
+            for (const key of COUNTER_KEYS) {
+                delta[key] = Math.max(0, Number(counters[key] || 0) - Number(baseline[key] || 0));
+            }
+            return delta;
+        }
+    }
+
+    const COUNTER_KEYS = Object.freeze([
+        'browserDrops', 'serverLateDrops', 'serverOverflowDrops', 'sequenceGaps',
+        'sentFrames', 'receivedFrames', 'pacerUnderruns', 'rtpPacketsSent',
+    ]);
+
+    function dropCounters(m) {
+        const serverLateDrops = Math.max(0, Number(m.lateFramesDropped || 0));
+        return {
+            browserDrops: Math.max(0, Number(m.droppedFrames || 0), Number(m.uplinkDroppedOldFrames || 0)),
+            serverLateDrops,
+            serverOverflowDrops: Math.max(0, Number(m.serverDroppedFrames || 0)),
+            sequenceGaps: Math.max(0, Number(m.lateFrames || 0) - serverLateDrops),
+            sentFrames: Math.max(0, Number(m.sentFrames || 0)),
+            receivedFrames: Math.max(0, Number(m.receivedFrames || 0)),
+            pacerUnderruns: Math.max(0, Number(m.pacerUnderruns || 0)),
+            rtpPacketsSent: Math.max(0, Number(m.rtpPacketsSent || 0)),
+        };
+    }
+
+    function aggregateDrops(counters) {
+        const serverDrops = counters.serverLateDrops + counters.serverOverflowDrops + counters.sequenceGaps;
+        // Browser drops normally reappear as server sequence gaps. max() keeps
+        // the aggregate useful without hiding the individual diagnostic causes.
+        return Math.max(counters.browserDrops, serverDrops);
+    }
+
+    function percent(numerator, denominator) {
+        return 100 * Math.max(0, Number(numerator || 0)) / Math.max(1, Number(denominator || 0));
     }
 
     class MicUplinkQueue {
@@ -186,12 +257,12 @@
 
     function qualityState(m) {
         if (Object.prototype.hasOwnProperty.call(m, 'capturedFrames') && Number(m.capturedFrames) < 5) return 'good';
-        const jitter = Number(m.uplinkJitterP95 || m.uplinkJitterMs || 0);
+        const jitter = Number(m.recentJitterP95 ?? m.uplinkJitterP95 ?? m.uplinkJitterMs ?? 0);
         const queue = Number(m.browserQueueMs || 0);
         const ws = Number(m.wsBufferedAmount || 0);
-        const drops = Number(m.dropPercent || 0);
-        const underruns = Number(m.pacerUnderruns || 0);
-        const underrunPercent = 100 * underruns / Math.max(1, Number(m.rtpPacketsSent || m.sentFrames || 1));
+        const drops = Number(m.recentDropPercent ?? m.dropPercent ?? 0);
+        const underrunPercent = Number(m.recentUnderrunPercent
+            ?? percent(m.pacerUnderruns, m.rtpPacketsSent || m.sentFrames));
         if (ws >= CONFIG.wsPoorBytes || queue >= 160 || drops >= 8 || underrunPercent >= 8) return 'critical';
         if (ws >= CONFIG.wsWarningBytes || queue >= 140 || jitter >= 60 || drops >= 4 || underrunPercent >= 4) return 'poor';
         if (ws >= CONFIG.wsHealthyBytes || queue >= 100 || jitter >= 30 || drops >= 1 || underrunPercent >= 1) return 'unstable';

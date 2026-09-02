@@ -57,17 +57,19 @@ so a blocked main thread cannot collapse several capture times into one instant.
 ## Metrics and quality state
 
 Browser metrics are aggregated once per second. Server logs are aggregated once per
-ten seconds. Collected fields include capture/send/drop counts, browser and server
-queue depth/peak, WebSocket buffer/peak, invalid/duplicate/out-of-order/late frames,
-jitter and age percentiles, underruns, paced packet counts/gaps, and clipping.
+ten seconds. Current quality uses a rolling 10-second window for
+`recentDropPercent`, `recentJitterP95`, and `recentUnderrunPercent`. Whole-call
+`totalDropPercent` remains diagnostic only and does not hold the realtime quality
+state down after recovery. Drop causes remain separately visible as `browserDrops`,
+`serverLateDrops`, `serverOverflowDrops`, and `sequenceGaps`.
 
 Quality thresholds:
 
-- Excellent: p95 jitter below 15 ms, queue below 60 ms, drops below 0.1%, no underrun.
+- Excellent: recent p95 jitter below 15 ms, queue below 60 ms, recent drops below 0.1%, no recent underrun.
 - Good: conditions do not enter another state.
-- Unstable: p95 jitter >= 30 ms, queue >= 100 ms, WS >= 32 KiB, drops >= 1%, or underruns >= 1%.
-- Poor: p95 jitter >= 60 ms, queue >= 140 ms, WS >= 96 KiB, drops >= 4%, or underruns >= 4%.
-- Critical: queue >= 160 ms, WS >= 256 KiB, drops >= 8%, or underruns >= 8%.
+- Unstable: recent p95 jitter >= 30 ms, queue >= 100 ms, WS >= 32 KiB, recent drops >= 1%, or recent underruns >= 1%.
+- Poor: recent p95 jitter >= 60 ms, queue >= 140 ms, WS >= 96 KiB, recent drops >= 4%, or recent underruns >= 4%.
+- Critical: queue >= 160 ms, WS >= 256 KiB, recent drops >= 8%, or recent underruns >= 8%.
 
 Underruns are scored as a percentage of paced packets, rather than by an absolute
 session count. All state is reset at call change, hangup, microphone stop, and

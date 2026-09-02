@@ -57,9 +57,9 @@ final class MicUplinkSession
         return $pcm;
     }
 
-    public function snapshot(): array
+    public function snapshot(?float $nowMs = null): array
     {
-        return $this->metrics->snapshot($this->jitterBuffer->count());
+        return $this->metrics->snapshot($this->jitterBuffer->count(), $this->frameMs, $nowMs);
     }
 
     public function close(): void

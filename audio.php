@@ -255,7 +255,7 @@ function startMicUplinkPacer(
             }
 
             if ($nowMs - $session->lastMetricsAtMs >= 1000) {
-                $snapshot = $session->snapshot();
+                $snapshot = $session->snapshot($nowMs);
                 if (isset($clientInfo[$session->fd])
                     && (!method_exists($server, 'isEstablished') || $server->isEstablished($session->fd))) {
                     $server->push($session->fd, json_encode([
@@ -266,13 +266,16 @@ function startMicUplinkPacer(
                 $session->lastMetricsAtMs = $nowMs;
 
                 if ($nowMs - $session->lastLogAtMs >= 10000) {
-                    $dropCount = ($snapshot['lateFramesDropped'] ?? 0) + ($snapshot['droppedFrames'] ?? 0);
                     $wsKb = round(($snapshot['wsBufferedAmount'] ?? 0) / 1024, 1);
                     cli::pcl(
                         "[MIC:QUALITY] callId={$session->stream} quality={$snapshot['quality']} "
-                        . "jitter={$snapshot['uplinkJitterP95']}ms queue="
-                        . ($snapshot['browserQueueMs'] ?? 0) . "ms drops={$dropCount} "
-                        . "wsBuffered={$wsKb}KB pacerUnderruns={$snapshot['pacerUnderruns']} "
+                        . "jitter={$snapshot['recentJitterP95']}ms queue="
+                        . ($snapshot['browserQueueMs'] ?? 0) . "ms recentDrops="
+                        . round($snapshot['recentDropPercent'], 1) . "% totalDrops="
+                        . round($snapshot['totalDropPercent'], 1) . "% "
+                        . "wsBuffered={$wsKb}KB recentUnderruns={$snapshot['recentUnderruns']}("
+                        . round($snapshot['recentUnderrunPercent'], 1) . "%) "
+                        . "pacerUnderruns={$snapshot['pacerUnderruns']} "
                         . "pacerP95={$snapshot['rtpPacingGapP95']}ms",
                         'cyan'
                     );

@@ -84,7 +84,70 @@ metrics.reset();
 assert.equal(metrics.capturedFrames, 0);
 assert.equal(metrics.wsBufferedPeak, 0);
 
+// A bad start must age out of the 10-second realtime quality window while
+// remaining visible in whole-call diagnostics.
+let qualityNow = 0;
+const recoveredMetrics = new uplink.MicQualityMetrics(() => qualityNow);
+recoveredMetrics.capturedFrames = 10_000;
+recoveredMetrics.sentFrames = 9_460;
+recoveredMetrics.droppedFrames = 540;
+recoveredMetrics.mergeServer({
+    recentJitterP95: 10,
+    browserQueueMs: 0,
+    wsBufferedAmount: 1024,
+    lateFrames: 6,
+    lateFramesDropped: 2,
+    serverDroppedFrames: 3,
+    rtpPacketsSent: 9_460,
+    pacerUnderruns: 0,
+});
+const badStart = recoveredMetrics.snapshot();
+assert.ok(badStart.recentDropPercent > 5 && badStart.recentDropPercent < 6);
+assert.equal(badStart.quality, 'poor');
+assert.equal(badStart.browserDrops, 540);
+assert.equal(badStart.serverLateDrops, 2);
+assert.equal(badStart.serverOverflowDrops, 3);
+assert.equal(badStart.sequenceGaps, 4);
+
+let recovered;
+for (let second = 1; second <= 10; second++) {
+    qualityNow = second * 1000;
+    recoveredMetrics.capturedFrames += 100;
+    recoveredMetrics.sentFrames += 100;
+    recoveredMetrics.server.rtpPacketsSent += 100;
+    recovered = recoveredMetrics.snapshot();
+}
+assert.equal(recovered.recentDropPercent, 0);
+assert.ok(recovered.totalDropPercent > 4, 'whole-call drop diagnostic was lost');
+assert.equal(recovered.quality, 'excellent');
+
+// Persistent loss must remain in the rolling window and keep the state poor.
+qualityNow = 0;
+const persistentMetrics = new uplink.MicQualityMetrics(() => qualityNow);
+persistentMetrics.capturedFrames = 10;
+persistentMetrics.snapshot();
+let persistent;
+for (let second = 1; second <= 10; second++) {
+    qualityNow = second * 1000;
+    persistentMetrics.capturedFrames += 100;
+    persistentMetrics.sentFrames += 95;
+    persistentMetrics.droppedFrames += 5;
+    persistent = persistentMetrics.snapshot();
+}
+assert.equal(persistent.recentDropPercent, 5);
+assert.equal(persistent.quality, 'poor');
+
+recoveredMetrics.reset();
+const resetSnapshot = recoveredMetrics.snapshot();
+assert.equal(resetSnapshot.totalDropPercent, 0);
+assert.equal(resetSnapshot.recentDropPercent, 0);
+assert.equal(resetSnapshot.browserDrops, 0);
+assert.equal(resetSnapshot.serverLateDrops, 0);
+assert.equal(resetSnapshot.quality, 'good');
+
 assert.equal(uplink.qualityState({uplinkJitterP95: 8, browserQueueMs: 40}), 'excellent');
+assert.equal(uplink.qualityState({recentJitterP95: 10, recentDropPercent: 0, totalDropPercent: 5.4, browserQueueMs: 0, wsBufferedAmount: 1024, recentUnderrunPercent: 0, pacerUnderruns: 50}), 'excellent');
+assert.equal(uplink.qualityState({recentDropPercent: 5, totalDropPercent: 5}), 'poor');
 assert.equal(uplink.qualityState({capturedFrames: 0, uplinkJitterP95: 0}), 'good');
 assert.equal(uplink.qualityState({uplinkJitterP95: 20, browserQueueMs: 70}), 'good');
 assert.equal(uplink.qualityState({uplinkJitterP95: 40}), 'unstable');
@@ -94,7 +157,7 @@ assert.equal(uplink.qualityState({wsBufferedAmount: 300000}), 'critical');
 const html = fs.readFileSync(new URL('../plugins/Request/pages/default.html', import.meta.url), 'utf8');
 const router = fs.readFileSync(new URL('../js/router.js', import.meta.url), 'utf8');
 const head = fs.readFileSync(new URL('../plugins/Request/modules/includes/head.html', import.meta.url), 'utf8');
-for (const id of ['micQualityPanel', 'micQualityState', 'micQualityJitter', 'micQualityQueue', 'micQualityDrops', 'micQualityWs', 'micQualityPacerUnderruns']) {
+for (const id of ['micQualityPanel', 'micQualityState', 'micQualityJitter', 'micQualityQueue', 'micQualityRecentDrops', 'micQualityTotalDrops', 'micQualityWs', 'micQualityPacerUnderruns', 'micQualityBrowserDrops', 'micQualityServerLateDrops', 'micQualityServerOverflowDrops', 'micQualitySequenceGaps']) {
     assert.ok(html.includes(`id="${id}"`), `quality UI missing ${id}`);
 }
 for (const id of ['opusSettings', 'opusProfile', 'opusMono', 'opusStereo', 'opusBitrate', 'opusPlaybackRate', 'opusCaptureRate', 'opusFec', 'opusPtime']) {
@@ -147,4 +210,4 @@ assert.ok(html.includes("autoGainControl: micAgcEnabled.checked"), 'AGC A/B sett
 assert.ok(router.includes("window.handleCallActive") && router.includes("window.startAudioCapture"), 'inbound does not use shared microphone pipeline');
 assert.ok(html.includes("window.startAudioCapture = async") && html.includes("btnCall"), 'outbound does not use shared microphone pipeline');
 
-console.log('OK: binary frame, bounded queue, backpressure, scheduler catch-up, clipping, quality UI states and reset.');
+console.log('OK: binary frame, bounded queue, rolling quality recovery, drop causes, scheduler catch-up and reset.');

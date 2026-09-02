@@ -141,8 +141,75 @@ micAssert(MicQualityMetrics::qualityState(['uplinkJitterP95' => 20, 'browserQueu
 micAssert(MicQualityMetrics::qualityState(['uplinkJitterP95' => 35]) === 'unstable', 'unstable state incorrect');
 micAssert(MicQualityMetrics::qualityState(['uplinkJitterP95' => 65]) === 'poor', 'poor state incorrect');
 micAssert(MicQualityMetrics::qualityState(['wsBufferedAmount' => 300000]) === 'critical', 'critical state incorrect');
+micAssert(MicQualityMetrics::qualityState([
+    'recentJitterP95' => 10,
+    'recentDropPercent' => 0,
+    'totalDropPercent' => 5.4,
+    'browserQueueMs' => 0,
+    'wsBufferedAmount' => 1024,
+    'recentUnderrunPercent' => 0,
+    'pacerUnderruns' => 50,
+]) === 'excellent', 'accumulated drops incorrectly affect current quality');
 
-$snapshot = $session->snapshot();
+$recentJitterMetrics = new MicQualityMetrics();
+$recentJitterMetrics->recordArrival(micFrame(1, 0), 1000);
+$recentJitterMetrics->recordArrival(micFrame(2, 20), 1030);
+micAssert($recentJitterMetrics->snapshot(0, 20, 1030)['recentJitterP95'] === 10.0, 'recent jitter was not recorded');
+micAssert($recentJitterMetrics->snapshot(0, 20, 11031)['recentJitterP95'] === 0.0, 'old jitter did not leave the recent window');
+
+// High initial loss ages out of the recent window, but remains in total/cause diagnostics.
+$recoveryMetrics = new MicQualityMetrics();
+$browserCounters = [
+    'capturedFrames' => 10000,
+    'sentFrames' => 9460,
+    'droppedFrames' => 540,
+    'uplinkDroppedOldFrames' => 540,
+];
+$recoveryMetrics->mergeBrowser($browserCounters);
+$recoveryMetrics->lateFrames = 6;
+$recoveryMetrics->lateFramesDropped = 2;
+$recoveryMetrics->serverDroppedFrames = 3;
+$badStart = $recoveryMetrics->snapshot(0, 20, 0);
+micAssert($badStart['quality'] === 'poor', 'high initial loss was not classified as poor');
+micAssert($badStart['browserDrops'] === 540.0, 'browser drop cause incorrect');
+micAssert($badStart['serverLateDrops'] === 2.0, 'server late drop cause incorrect');
+micAssert($badStart['serverOverflowDrops'] === 3.0, 'server overflow cause incorrect');
+micAssert($badStart['sequenceGaps'] === 4.0, 'sequence gap cause incorrect');
+
+$recovered = [];
+for ($second = 1; $second <= 10; $second++) {
+    $browserCounters['capturedFrames'] += 100;
+    $browserCounters['sentFrames'] += 100;
+    $recoveryMetrics->mergeBrowser($browserCounters);
+    $recovered = $recoveryMetrics->snapshot(0, 20, $second * 1000);
+}
+micAssert($recovered['recentDropPercent'] === 0.0, 'recent drops did not recover to zero');
+micAssert($recovered['totalDropPercent'] > 4.0, 'total drops did not preserve call history');
+micAssert($recovered['quality'] === 'excellent', 'quality did not recover after the rolling window');
+
+// Continuous 5% loss remains poor in the recent window.
+$persistentMetrics = new MicQualityMetrics();
+$persistentCounters = ['capturedFrames' => 10, 'sentFrames' => 0, 'droppedFrames' => 0];
+$persistentMetrics->mergeBrowser($persistentCounters);
+$persistentMetrics->snapshot(0, 20, 0);
+$persistent = [];
+for ($second = 1; $second <= 10; $second++) {
+    $persistentCounters['capturedFrames'] += 100;
+    $persistentCounters['sentFrames'] += 95;
+    $persistentCounters['droppedFrames'] += 5;
+    $persistentMetrics->mergeBrowser($persistentCounters);
+    $persistent = $persistentMetrics->snapshot(0, 20, $second * 1000);
+}
+micAssert(abs($persistent['recentDropPercent'] - 5.0) < 0.001, 'continuous recent loss percentage incorrect');
+micAssert($persistent['quality'] === 'poor', 'continuous real loss did not remain poor');
+
+// A new call owns a fresh metrics object and cannot inherit the prior window.
+$newCallMetrics = new MicQualityMetrics();
+$newCall = $newCallMetrics->snapshot(0, 20, 11_000);
+micAssert($newCall['recentDropPercent'] === 0.0 && $newCall['totalDropPercent'] === 0.0, 'metrics leaked between calls');
+micAssert($newCall['quality'] === 'excellent', 'new server-side call did not reset quality');
+
+$snapshot = $session->snapshot(1180);
 micAssert($snapshot['rtpPacingGapAvg'] === 20.0 && $snapshot['rtpPacingGapP95'] === 20.0, 'pacing metrics incorrect');
 $session->close();
 micAssert(!$session->active && $session->jitterBuffer->count() === 0 && $session->pacer->deadlineMs() === null, 'session cleanup failed');

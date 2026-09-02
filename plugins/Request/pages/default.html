@@ -266,11 +266,16 @@
                     <span class="mic-quality-signal" aria-hidden="true">▂▄▆█</span>
                 </button>
                 <div class="mic-quality-details" id="micQualityDetails">
-                    <span>Jitter <b class="mic-quality-value" id="micQualityJitter">0 ms</b></span>
+                    <span>Jitter recente <b class="mic-quality-value" id="micQualityJitter">0 ms</b></span>
                     <span>Fila <b class="mic-quality-value" id="micQualityQueue">0 ms</b></span>
-                    <span>Drops <b class="mic-quality-value" id="micQualityDrops">0,0%</b></span>
+                    <span>Drops recentes <b class="mic-quality-value" id="micQualityRecentDrops">0,0%</b></span>
+                    <span>Drops totais <b class="mic-quality-value" id="micQualityTotalDrops">0,0%</b></span>
                     <span>WS buffer <b class="mic-quality-value" id="micQualityWs">0 KB</b></span>
-                    <span>Pacer underruns <b class="mic-quality-value" id="micQualityPacerUnderruns">0 (0,0%)</b></span>
+                    <span>Underruns recentes <b class="mic-quality-value" id="micQualityPacerUnderruns">0 (0,0%)</b></span>
+                    <span>Browser drops <b class="mic-quality-value" id="micQualityBrowserDrops">0</b></span>
+                    <span>Server late drops <b class="mic-quality-value" id="micQualityServerLateDrops">0</b></span>
+                    <span>Server overflow drops <b class="mic-quality-value" id="micQualityServerOverflowDrops">0</b></span>
+                    <span>Sequence gaps <b class="mic-quality-value" id="micQualitySequenceGaps">0</b></span>
                     <span>Codec <b class="mic-quality-value" id="micQualityCodec">—</b></span>
                     <span>Modo <b class="mic-quality-value" id="micQualityMode">—</b></span>
                     <span>Bitrate <b class="mic-quality-value" id="micQualityBitrate">—</b></span>
@@ -2329,14 +2334,18 @@
         const quality = snapshot.quality || 'good';
         micQualityPanel.dataset.quality = quality;
         document.getElementById('micQualityState').textContent = labels[quality] || 'Boa';
-        document.getElementById('micQualityJitter').textContent = `${Math.round(snapshot.uplinkJitterP95 || snapshot.uplinkJitterMs || 0)} ms`;
+        document.getElementById('micQualityJitter').textContent = `${Math.round(snapshot.recentJitterP95 ?? snapshot.uplinkJitterP95 ?? snapshot.uplinkJitterMs ?? 0)} ms`;
         document.getElementById('micQualityQueue').textContent = `${Math.round(snapshot.browserQueueMs || 0)} ms`;
-        document.getElementById('micQualityDrops').textContent = `${Number(snapshot.dropPercent || 0).toFixed(1).replace('.', ',')}%`;
+        document.getElementById('micQualityRecentDrops').textContent = `${Number(snapshot.recentDropPercent || 0).toFixed(1).replace('.', ',')}%`;
+        document.getElementById('micQualityTotalDrops').textContent = `${Number(snapshot.totalDropPercent || 0).toFixed(1).replace('.', ',')}%`;
         document.getElementById('micQualityWs').textContent = `${(Number(snapshot.wsBufferedAmount || 0) / 1024).toFixed(1)} KB`;
-        const pacerUnderruns = Number(snapshot.pacerUnderruns || 0);
-        const pacedPackets = Math.max(1, Number(snapshot.rtpPacketsSent || snapshot.sentFrames || 0));
-        const pacerUnderrunPercent = 100 * pacerUnderruns / pacedPackets;
+        const pacerUnderruns = Number(snapshot.recentUnderruns || 0);
+        const pacerUnderrunPercent = Number(snapshot.recentUnderrunPercent || 0);
         document.getElementById('micQualityPacerUnderruns').textContent = `${pacerUnderruns} (${pacerUnderrunPercent.toFixed(1).replace('.', ',')}%)`;
+        document.getElementById('micQualityBrowserDrops').textContent = String(Math.round(snapshot.browserDrops || 0));
+        document.getElementById('micQualityServerLateDrops').textContent = String(Math.round(snapshot.serverLateDrops || 0));
+        document.getElementById('micQualityServerOverflowDrops').textContent = String(Math.round(snapshot.serverOverflowDrops || 0));
+        document.getElementById('micQualitySequenceGaps').textContent = String(Math.round(snapshot.sequenceGaps || 0));
         const opusActive = trunkCodecSelect.value.toUpperCase().startsWith('OPUS/');
         const opus = getEffectiveOpusConfig();
         document.getElementById('micQualityCodec').textContent = opusActive ? 'Opus' : trunkCodecSelect.value.split('/')[0];
