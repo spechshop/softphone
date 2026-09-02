@@ -9,6 +9,7 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 
 use helpers\utils\CallState;
 use helpers\utils\SipRegisterManager;
+use helpers\utils\PhoneController;
 use libspech\Cache\cache as cacheLibSpech;
 use libspech\Network\network;
 use libspech\Packet\renderMessages;
@@ -138,6 +139,12 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         return;
     }
 
+    // Outbound transactions/dialogs share the same listener. Once consumed,
+    // a packet must never fall through to another handler.
+    if (PhoneController::instance($socket)->handlePacket($parse, $info)) {
+        return;
+    }
+
     // Via routing only for SIP responses (numeric method). Requests (INVITE/BYE/etc) are processed normally.
     if (is_numeric($parse['method']) && count($parse['headers']['Via']) > 1) {
         $localIp = network::getLocalIp();
@@ -159,8 +166,6 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         $respColor = $respCode >= 400 ? 'red' : ($respCode >= 200 ? 'green' : 'yellow');
         cli::pcl("144 [SIP-RESP] {$parse['method']} de {$info['address']}:{$info['port']} Call-ID:" . ($parse['headers']['Call-ID'][0] ?? 'N/A') . " CSeq:" . ($parse['headers']['CSeq'][0] ?? 'N/A'), $respColor);
     }
-    cli::pcl($data, 'cyan');
-
     if ($parse['method'] === 'INVITE') {
         $socket->sendto($info['address'], $info['port'], renderMessages::respond100Trying($parse['headers']));
 
@@ -220,8 +225,10 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         }
         cli::pcl("[INBOUND] Codec selecionado: {$chosenCodec['name']}/{$chosenCodec['rate']} pt:{$chosenCodec['pt']}", 'cyan');
 
-        $toUser = sip::extractURI($parse['headers']['To'][0] ?? '')['user'] ?? '';
-        $fp = CallState::findFpBySipUser($toUser);
+        $toUri = sip::extractURI($parse['headers']['To'][0] ?? '');
+        $toUser = $toUri['user'] ?? '';
+        $toDomain = (string)($toUri['peer']['host'] ?? '');
+        $fp = CallState::findFpForInbound($toUser, $toDomain);
 
         if (!$fp) {
             $socket->sendto($info['address'], $info['port'], renderMessages::baseResponse($parse['headers'], "480", "Temporarily Unavailable"));

@@ -156,12 +156,16 @@ class Registrar
             'failures' => 0,
         ]);
         if (CallState::$sipBindings !== null) {
-            foreach (CallState::$sipBindings as $bindingKey => $binding) {
-                if ($binding['fp'] === $fp && $binding['sip_user'] !== $sipUser) {
-                    CallState::$sipBindings->del((string)$bindingKey);
+            $newBindingKey = PhoneController::accountKey([
+                'sipUser' => $sipUser, 'sipServer' => $sipServer, 'sipDomain' => $sipDomain,
+            ]);
+            foreach (CallState::$sipBindings as $existingBindingKey => $binding) {
+                $existingKey = (string)$existingBindingKey;
+                if ($binding['fp'] === $fp && $existingKey !== $newBindingKey) {
+                    CallState::$sipBindings->del($existingKey);
                 }
             }
-            CallState::$sipBindings->set($sipUser, [
+            CallState::$sipBindings->set($newBindingKey, [
                 'fp' => $fp,
                 'sip_user' => $sipUser,
                 'sip_server' => $sipServer,
@@ -191,9 +195,10 @@ class Registrar
             'failures' => $failures,
         ]);
         if (CallState::$sipBindings !== null && $sipUser !== '') {
-            $binding = CallState::$sipBindings->get($sipUser);
-            if ($binding && $binding['fp'] === $fp) {
-                CallState::$sipBindings->del($sipUser);
+            foreach (CallState::$sipBindings as $bindingKey => $binding) {
+                if ($binding['fp'] === $fp && $binding['sip_user'] === $sipUser) {
+                    CallState::$sipBindings->del((string)$bindingKey);
+                }
             }
         }
     }

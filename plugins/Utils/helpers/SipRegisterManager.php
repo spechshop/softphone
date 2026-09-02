@@ -55,21 +55,22 @@ class SipRegisterManager
             $endpoint = self::parseEndpoint($serverInput);
             $remoteIp = network::resolveAddress($endpoint['host'], 4);
             $localIp = self::localIp();
+            $domain = trim((string)($account['sipDomain'] ?? ''));
+            $domain = $domain !== '' ? self::parseEndpoint($domain)['host'] : $endpoint['host'];
         } catch (\Throwable $exception) {
             return self::result(false, 'host_resolution_failed', null, $startedAt, [
                 'detail' => $exception->getMessage(),
             ]);
         }
 
-        $accountKey = hash('sha256', strtolower($endpoint['host']) . ':' . $endpoint['port'] . '|' . $username);
+        $accountKey = hash('sha256', strtolower($endpoint['host']) . ':' . $endpoint['port'] . '|'
+            . strtolower($domain) . '|' . strtolower($username));
         if (isset(self::$activeAccounts[$accountKey])) {
             return self::result(false, 'registration_in_progress', null, $startedAt);
         }
         self::$activeAccounts[$accountKey] = true;
 
         try {
-            $domain = trim((string)($account['sipDomain'] ?? ''));
-            $domain = $domain !== '' ? self::parseEndpoint($domain)['host'] : $endpoint['host'];
             $requestUri = self::sipUri('', $endpoint['host'], $endpoint['port']);
             $callId = bin2hex(random_bytes(16));
             $fromTag = bin2hex(random_bytes(8));

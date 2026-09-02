@@ -38,14 +38,17 @@ $channelDecode = [];
 
 cache::define('rateCall', 8000);
 
+$cfNamefile='plugins/configInterface.json';
+$configInterface = json_decode(file_get_contents($cfNamefile), true);
+
 /**
  * Configuração do servidor WebSocket de áudio.
  */
 $server = new Server("0.0.0.0", 8889, SWOOLE_BASE, SWOOLE_SOCK_TCP | SWOOLE_SSL);
 
 $server->set([
-    'ssl_cert_file' => 'fullchain.pem',
-    'ssl_key_file' => 'privkey.pem',
+    'ssl_cert_file' => $configInterface['serverSettings']['ssl_cert_file'],
+    'ssl_key_file' => $configInterface['serverSettings']['ssl_key_file'],
     'enable_coroutine' => true,
 
 ]);

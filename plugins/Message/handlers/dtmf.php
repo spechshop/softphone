@@ -5,6 +5,7 @@ namespace handlers;
 use cache;
 use libspech\Cli\cli;
 use libspech\Sip\trunkController;
+use helpers\utils\OutboundCall;
 
 class dtmf
 {
@@ -48,7 +49,8 @@ class dtmf
             $dtmf = substr($data['dtmf'], 0);
 
 
-            $phone->mediaChannel->send2833($dtmf);
+            if ($phone instanceof OutboundCall) $phone->sendDtmf($dtmf);
+            else $phone->mediaChannel->send2833($dtmf);
             cli::pcl("DTMF: " . $dtmf, "green");
 
 

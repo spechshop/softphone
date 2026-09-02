@@ -67,13 +67,21 @@ class CallState
 
     public static function findFpBySipUser(string $sipUser): ?string
     {
+        return self::findFpForInbound($sipUser, '');
+    }
+
+    public static function findFpForInbound(string $sipUser, string $sipDomain): ?string
+    {
         if (self::$sipBindings === null) return null;
+        $matches = [];
         foreach (self::$sipBindings as $row) {
-            if ($row['sip_user'] === $sipUser) {
-                return $row['fp'];
-            }
+            if ($row['sip_user'] !== $sipUser) continue;
+            $matches[] = $row;
+            $serverHost = parse_url('sip://' . $row['sip_server'], PHP_URL_HOST) ?: $row['sip_server'];
+            if ($sipDomain !== '' && (strcasecmp($row['sip_domain'], $sipDomain) === 0
+                || strcasecmp((string)$serverHost, $sipDomain) === 0)) return $row['fp'];
         }
-        return null;
+        return count($matches) === 1 ? $matches[0]['fp'] : null;
     }
 
     public static function hasActiveCallForFp(string $fp): bool

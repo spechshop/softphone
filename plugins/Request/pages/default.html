@@ -1529,6 +1529,12 @@
             digits: digitsCall,
             codec: getSelectedCodec(),
         }, 'StartCall').then((res) => {
+            if (!res || res.success !== true) {
+                btnCall.style.display = '';
+                btnHangup.style.display = 'none';
+                if (typeof window.stopCallTimer === 'function') window.stopCallTimer();
+                return;
+            }
             clearDigits();
             btnCall.style.display = 'none';
             btnHangup.style.display = '';
@@ -2252,7 +2258,7 @@
 
     }
 
-    btnHangup.addEventListener('click', () => hangUpCall);
+    btnHangup.addEventListener('click', () => hangUpCall());
 
 
     // ===== Botão de Alto-falante (Speaker) =====

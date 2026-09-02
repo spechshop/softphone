@@ -3,6 +3,7 @@
 namespace handlers;
 
 use helpers\utils\CallState;
+use helpers\utils\OutboundCall;
 use libspech\Cache\cache;
 use libspech\Cli\cli;
 use libspech\Network\network;
@@ -26,6 +27,10 @@ class hangUpCall
         // Outgoing call (trunkController) or accepted incoming call (stdClass media state)
         if (array_key_exists($fingerprint, cache::get('coroutinesProcess'))) {
             $phone = cache::get('coroutinesProcess')[$fingerprint];
+            if ($phone instanceof OutboundCall) {
+                $phone->hangup();
+                return $socket->push($fd, json_encode(['byToken' => $model['id'], 'data' => ['success' => true]]));
+            }
             $phone->receiveBye = true;
             $phone->callActive = false;
             cache::unset('coroutinesProcess', $fingerprint);

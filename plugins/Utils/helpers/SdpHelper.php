@@ -8,6 +8,7 @@ class SdpHelper
         ['name' => 'PCMA', 'pt' => 8, 'rate' => 8000, 'channels' => 1],
         ['name' => 'PCMU', 'pt' => 0, 'rate' => 8000, 'channels' => 1],
         ['name' => 'G729', 'pt' => 18, 'rate' => 8000, 'channels' => 1],
+        ['name' => 'GSM', 'pt' => 3, 'rate' => 8000, 'channels' => 1],
         ['name' => 'opus', 'pt' => null, 'rate' => 48000, 'channels' => 2],
         ['name' => 'L16', 'pt' => null, 'rate' => 8000, 'channels' => 1],
     ];
@@ -68,6 +69,7 @@ class SdpHelper
             0 => ['name' => 'PCMU', 'rate' => 8000, 'channels' => 1],
             8 => ['name' => 'PCMA', 'rate' => 8000, 'channels' => 1],
             18 => ['name' => 'G729', 'rate' => 8000, 'channels' => 1],
+            3 => ['name' => 'GSM', 'rate' => 8000, 'channels' => 1],
         ];
 
         foreach ($payloadTypes as $ptStr) {

@@ -202,6 +202,32 @@ Coroutine\run(function (): void {
     while (count($distinct) < 2) Coroutine::sleep(0.01);
     assertTrue($distinct[0]['success'] && $distinct[1]['success'], 'contas distintas devem registrar simultaneamente');
 
+    $sameUserDomainA = new FakeSipProvider('valid', 0.02);
+    $sameUserDomainB = new FakeSipProvider('valid', 0.02);
+    $sameUserDistinctDomains = [];
+    $domainA = account('shared-user'); $domainA['sipDomain'] = 'one.test';
+    $domainB = account('shared-user'); $domainB['sipDomain'] = 'two.test';
+    go(function () use ($sameUserDomainA, $domainA, &$sameUserDistinctDomains): void {
+        $sameUserDistinctDomains[] = runRegistration($sameUserDomainA, $domainA);
+    });
+    go(function () use ($sameUserDomainB, $domainB, &$sameUserDistinctDomains): void {
+        $sameUserDistinctDomains[] = runRegistration($sameUserDomainB, $domainB);
+    });
+    while (count($sameUserDistinctDomains) < 2) Coroutine::sleep(0.01);
+    assertTrue($sameUserDistinctDomains[0]['success'] && $sameUserDistinctDomains[1]['success'],
+        'mesmo usuário em domínios distintos deve manter estado de conta separado');
+
+    $tenAccounts = [];
+    for ($i = 0; $i < 10; $i++) {
+        $provider = new FakeSipProvider('valid', 0.01);
+        go(function () use ($provider, $i, &$tenAccounts): void {
+            $tenAccounts[] = runRegistration($provider, account('parallel-' . $i));
+        });
+    }
+    while (count($tenAccounts) < 10) Coroutine::sleep(0.01);
+    assertSameValue(10, count(array_filter($tenAccounts, static fn(array $result): bool => $result['success'])),
+        '10 contas devem registrar simultaneamente pela mesma porta lógica 4000');
+
     $invite = sip::parse("INVITE sip:1000@198.51.100.10 SIP/2.0\r\nVia: SIP/2.0/UDP 203.0.113.8:5060;branch=z9hG4bK-invite\r\nFrom: <sip:caller@example.test>;tag=a\r\nTo: <sip:1000@example.test>\r\nCall-ID: inbound-call\r\nCSeq: 1 INVITE\r\nContent-Length: 0\r\n\r\n");
     assertTrue(!SipRegisterManager::handleResponse($invite, []), 'INVITE inbound deve continuar para handler global');
     $options = sip::parse("SIP/2.0 200 OK\r\nVia: SIP/2.0/UDP 198.51.100.10:4000;branch=z9hG4bK-options\r\nFrom: <sip:a@example.test>;tag=a\r\nTo: <sip:b@example.test>;tag=b\r\nCall-ID: options-call\r\nCSeq: 1 OPTIONS\r\nContent-Length: 0\r\n\r\n");
