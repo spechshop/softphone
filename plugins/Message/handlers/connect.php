@@ -16,20 +16,19 @@ class connect
 
     public static function resolve(\Swoole\WebSocket\Server $socket, array $model, int $fd): ?bool
     {
-        print 'connect' . PHP_EOL;
-
-
         self::clearConnectionTimers($fd);
 
 
-        $data = $model['data'];
+        $data = $model['data'] ?? [];
+        $data['fp'] = (string)($data['fp'] ?? '');
+        $data['currentPage'] = (string)($data['currentPage'] ?? 'default');
+        $data['token'] = (string)($data['token'] ?? '');
 
 
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
 
 
         if ($vault->exists($data['fp'])) {
-            print 'vault exists' . PHP_EOL;
             $connections = cache::get('connections');
             if (!array_key_exists($data['fp'], $connections)) $connections[$data['fp']] = [];
             if (!in_array($fd, $connections[$data['fp']], true)) $connections[$data['fp']][] = $fd;
@@ -84,7 +83,7 @@ class connect
         }
 
 
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
 
         $fds = cache::get('connections')[$data['fp']] ?? [];
         foreach ($fds as $framed) {
@@ -122,7 +121,7 @@ class connect
             if (!$socket->isEstablished($fd)) {
                 return Timer::clear($idTimer);
             }
-            $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+            $vault = new \spechphoneVault(AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
             if ($vault->exists($data['fp'])) {
                 $userDatas = $vault->get($data['fp']);
                 $Rules = ['sipServer', 'sipUser', 'sipPass'];
@@ -199,7 +198,7 @@ class connect
                 ]));
             }
         });
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
         if (!$vault->exists($data['fp'])) return false;
         $Rules = ['sipServer', 'sipUser', 'sipPass'];
         $userDatas = $vault->get($data['fp']);

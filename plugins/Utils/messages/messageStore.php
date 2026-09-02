@@ -3,17 +3,31 @@
 namespace plugins\Utils\messages;
 
 use helpers\utils\AccountIdentity;
+use helpers\utils\DataPath;
 use libspech\Cache\cache;
 use libspech\Cli\cli;
 use Swoole\WebSocket\Server;
 
 class messageStore
 {
-    private static string $file = '/data/spechphone/messages.json';
+    private static ?string $file = null;
+    private static bool $storageInitialized = false;
 
     public static function setFile(string $file): void
     {
         self::$file = $file;
+    }
+
+    public static function storageFile(): string
+    {
+        if (self::$file !== null) return self::$file;
+        $file = DataPath::file('messages.json');
+        if (!self::$storageInitialized) {
+            $source = DataPath::migrateFirstExisting('messages.json');
+            if ($source !== null) cli::pcl("[MESSAGE:MIGRATE] source={$source} path={$file}", 'green');
+            self::$storageInitialized = true;
+        }
+        return $file;
     }
 
     public static function saveMessage(
@@ -59,8 +73,9 @@ class messageStore
 
     public static function loadData(): array
     {
-        if (!file_exists(self::$file)) return self::emptyData();
-        $fp = @fopen(self::$file, 'r');
+        $file = self::storageFile();
+        if (!file_exists($file)) return self::emptyData();
+        $fp = @fopen($file, 'r');
         if (!$fp) return self::emptyData();
         flock($fp, LOCK_SH);
         $content = stream_get_contents($fp);
@@ -69,7 +84,7 @@ class messageStore
         if ($content === '') return self::emptyData();
         $data = json_decode($content, true);
         if (!is_array($data)) {
-            @rename(self::$file, self::$file . '.corrupted.' . time());
+            @rename($file, $file . '.corrupted.' . time());
             return self::emptyData();
         }
         $data = array_replace(self::emptyData(), $data);
@@ -227,16 +242,21 @@ class messageStore
 
     private static function mutate(callable $callback): mixed
     {
-        $dir = dirname(self::$file);
-        if (!is_dir($dir)) mkdir($dir, 0777, true);
-        $lock = fopen(self::$file . '.lock', 'c');
+        $file = self::storageFile();
+        $dir = dirname($file);
+        if (!is_dir($dir) && !@mkdir($dir, 0700, true) && !is_dir($dir)) {
+            throw new \RuntimeException("Não foi possível criar o diretório de mensagens: {$dir}");
+        }
+        $lock = fopen($file . '.lock', 'c');
         if (!$lock) throw new \RuntimeException('Não foi possível bloquear o messageStore');
+        @chmod($file . '.lock', 0600);
         flock($lock, LOCK_EX);
         $data = self::loadData();
         $result = $callback($data);
-        $tmp = self::$file . '.tmp.' . bin2hex(random_bytes(6));
+        $tmp = $file . '.tmp.' . bin2hex(random_bytes(6));
         file_put_contents($tmp, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        rename($tmp, self::$file);
+        @chmod($tmp, 0600);
+        rename($tmp, $file);
         flock($lock, LOCK_UN);
         fclose($lock);
         return $result;

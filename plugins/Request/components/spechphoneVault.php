@@ -262,9 +262,10 @@ class spechphoneVault
 
         if (!@rename($tmp, $file)) {
             @unlink($tmp);
+            throw new \RuntimeException("Não foi possível publicar o vault persistido em '{$file}'");
         }
 
-        @chmod($file, 0666);
+        @chmod($file, 0600);
     }
 
     private function withLock(callable $fn): void

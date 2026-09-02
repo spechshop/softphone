@@ -21,11 +21,23 @@ $accounts = [
     'fp-single' => AccountIdentity::fromData('fp-single', ['sipUser' => 'single', 'sipDomain' => 'single.test', 'sipServer' => 'single.test']),
 ];
 
-expect(AccountIdentity::resolve('lotus', 'provedor-a.com', '', $accounts)['accountId'] === 'fp-a', 'MESSAGE/INVITE do domínio A cruzou conta');
-expect(AccountIdentity::resolve('lotus', 'provedor-b.com', '', $accounts)['accountId'] === 'fp-b', 'MESSAGE/INVITE do domínio B cruzou conta');
-expect(AccountIdentity::resolve('lotus', '', '', $accounts)['status'] === 'ambiguous', 'destino sem domínio duplicado não foi rejeitado');
-expect(AccountIdentity::resolve('single', '', '', $accounts)['accountId'] === null, 'identidade incompleta roteou só por sipUser');
-expect(AccountIdentity::resolve('single', 'single.test', '', $accounts)['accountId'] === 'fp-single', 'regressão de conta única');
+foreach (['INVITE', 'MESSAGE'] as $method) {
+    expect(AccountIdentity::resolve('lotus', 'provedor-a.com', '', $accounts)['accountId'] === 'fp-a', "{$method} do domínio A cruzou conta");
+    expect(AccountIdentity::resolve('lotus', 'provedor-b.com', '', $accounts)['accountId'] === 'fp-b', "{$method} do domínio B cruzou conta");
+    expect(AccountIdentity::resolve('lotus', '', '', $accounts)['status'] === 'ambiguous', "{$method} duplicado sem domínio não foi rejeitado");
+
+    $uniqueRewritten = AccountIdentity::resolve('single', '147.93.67.151', '147.93.67.151', $accounts);
+    expect($uniqueRewritten['accountId'] === 'fp-single', "{$method} com domínio B2BUA e candidato único não resolveu");
+    expect($uniqueRewritten['status'] === 'unique_user_fallback', "{$method} não registrou unique_user_fallback");
+
+    $ambiguousRewritten = AccountIdentity::resolve('lotus', '147.93.67.151', '147.93.67.151', $accounts);
+    expect($ambiguousRewritten['status'] === 'ambiguous' && $ambiguousRewritten['accountId'] === null, "{$method} B2BUA escolheu username duplicado");
+
+    $opaqueA = AccountIdentity::resolve('lotus', '147.93.67.151', '', $accounts, AccountIdentity::contactUser('fp-a'));
+    expect($opaqueA['accountId'] === 'fp-a' && $opaqueA['status'] === 'resolved_contact', "{$method} não resolveu Contact opaco A");
+    $opaqueB = AccountIdentity::resolve('qualquer-to-reescrito', '147.93.67.151', '', $accounts, AccountIdentity::contactUser('fp-b'));
+    expect($opaqueB['accountId'] === 'fp-b', "{$method} não priorizou Contact opaco B independentemente do WS/To");
+}
 $sameDomainAccounts = [
     'fp-reg-a' => AccountIdentity::fromData('fp-reg-a', ['sipUser' => 'lotus', 'sipDomain' => 'shared.test', 'sipServer' => 'reg-a.test']),
     'fp-reg-b' => AccountIdentity::fromData('fp-reg-b', ['sipUser' => 'lotus', 'sipDomain' => 'shared.test', 'sipServer' => 'reg-b.test']),

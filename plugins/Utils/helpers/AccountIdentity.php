@@ -8,7 +8,20 @@ namespace helpers\utils;
  */
 class AccountIdentity
 {
-    public const VAULT_PATH = '/data/spechphone/devices.vault';
+    private static bool $vaultInitialized = false;
+
+    public static function vaultPath(): string
+    {
+        $file = DataPath::file('devices.vault');
+        if (!self::$vaultInitialized) {
+            $source = DataPath::migrateFirstExisting('devices.vault');
+            if ($source !== null) {
+                \libspech\Cli\cli::pcl("[DATA:MIGRATE] file=devices.vault source={$source} path={$file}", 'green');
+            }
+            self::$vaultInitialized = true;
+        }
+        return $file;
+    }
 
     /** @return array{accountId:string,fp:string,sipUser:string,sipDomain:string,sipServer:string,registrarHost:string,accountKey:string} */
     public static function fromData(string $fp, array $data): array
@@ -32,7 +45,7 @@ class AccountIdentity
     public static function get(string $fp): ?array
     {
         try {
-            $vault = new \spechphoneVault(self::VAULT_PATH, (string)getenv('SPECH_VAULT_KEY_HEX'));
+            $vault = new \spechphoneVault(self::vaultPath(), (string)getenv('SPECH_VAULT_KEY_HEX'));
             $data = $vault->get($fp);
             return is_array($data) ? self::fromData($fp, $data) : null;
         } catch (\Throwable) {
@@ -44,7 +57,7 @@ class AccountIdentity
     public static function all(): array
     {
         try {
-            $vault = new \spechphoneVault(self::VAULT_PATH, (string)getenv('SPECH_VAULT_KEY_HEX'));
+            $vault = new \spechphoneVault(self::vaultPath(), (string)getenv('SPECH_VAULT_KEY_HEX'));
             $accounts = [];
             foreach ($vault->keys() as $fp) {
                 $data = $vault->get($fp);
@@ -58,8 +71,8 @@ class AccountIdentity
 
     /**
      * Resolve a local account without ever falling back to an ambiguous user.
-     * Source host is only a registrar discriminator, never a substitute for a
-     * conflicting destination domain.
+     * WebSocket state is deliberately absent: SIP identity must also resolve
+     * while every browser tab is closed.
      *
      * @return array{status:string,accountId:?string,account:?array,candidates:array}
      */
@@ -76,17 +89,15 @@ class AccountIdentity
         $source = strtolower(rtrim(trim($sourceHost), '.'));
         $accounts ??= self::all();
 
-        // A registrar routes requests to the Contact URI. New registrations
-        // use an opaque fp-derived Contact user, which disambiguates devices
-        // that intentionally share the exact same SIP Address-of-Record.
+        // The opaque Contact user is an accountId-derived routing token. It is
+        // stronger than a rewritten To header and therefore resolves directly.
         if ($requestUser !== '') {
             $contactMatches = array_values(array_filter($accounts, static fn(array $a): bool =>
-                hash_equals(self::contactUser((string)($a['accountId'] ?? '')), strtolower($requestUser))
-                && strtolower((string)($a['sipUser'] ?? '')) === $user
+                hash_equals(self::contactUser((string)($a['accountId'] ?? '')), strtolower(trim($requestUser)))
             ));
             if (count($contactMatches) === 1) {
                 return [
-                    'status' => 'resolved', 'accountId' => $contactMatches[0]['accountId'],
+                    'status' => 'resolved_contact', 'accountId' => $contactMatches[0]['accountId'],
                     'account' => $contactMatches[0], 'candidates' => [$contactMatches[0]['accountId']],
                 ];
             }
@@ -96,8 +107,6 @@ class AccountIdentity
             strtolower((string)($a['sipUser'] ?? '')) === $user
         ));
         $candidates = $userCandidates;
-        $identityMatched = false;
-
         if ($domain !== '') {
             $domainMatches = array_values(array_filter($userCandidates, static fn(array $a): bool =>
                 in_array($domain, [
@@ -106,31 +115,31 @@ class AccountIdentity
                 ], true)
             ));
             if ($domainMatches) {
+                if (count($domainMatches) === 1) {
+                    return self::resolved('resolved_domain', $domainMatches[0]);
+                }
                 $candidates = $domainMatches;
-                $identityMatched = true;
             }
         }
 
         if ($source !== '') {
-            $serverMatches = array_values(array_filter($identityMatched ? $candidates : $userCandidates, static fn(array $a): bool =>
+            $serverMatches = array_values(array_filter($candidates, static fn(array $a): bool =>
                 self::hostMatches((string)($a['registrarHost'] ?? self::host((string)($a['sipServer'] ?? ''))), $source)
             ));
-            if ($serverMatches) {
-                $candidates = $serverMatches;
-                $identityMatched = true;
-            }
+            if (count($serverMatches) === 1) return self::resolved('resolved_registrar', $serverMatches[0]);
+            if ($serverMatches) $candidates = $serverMatches;
         }
 
-        if (!$identityMatched || count($candidates) !== 1) {
-            return [
-                'status' => count($candidates) > 1 ? 'ambiguous' : 'not_found',
-                'accountId' => null,
-                'account' => null,
-                'candidates' => array_values(array_map(static fn(array $a): string => (string)$a['accountId'], $candidates)),
-            ];
-        }
+        // A rewritten Request-URI/domain is harmless only when the username
+        // exists in exactly one local account. With duplicates it is ambiguous.
+        if (count($userCandidates) === 1) return self::resolved('unique_user_fallback', $userCandidates[0]);
 
-        return ['status' => 'resolved', 'accountId' => $candidates[0]['accountId'], 'account' => $candidates[0], 'candidates' => [$candidates[0]['accountId']]];
+        return [
+            'status' => count($userCandidates) > 1 ? 'ambiguous' : 'not_found',
+            'accountId' => null,
+            'account' => null,
+            'candidates' => array_values(array_map(static fn(array $a): string => (string)$a['accountId'], $userCandidates)),
+        ];
     }
 
     public static function sipUri(string $identity, string $fallbackDomain = ''): string
@@ -176,5 +185,12 @@ class AccountIdentity
             return in_array($sourceHost, gethostbynamel($registrarHost) ?: [], true);
         }
         return false;
+    }
+
+    /** @return array{status:string,accountId:string,account:array,candidates:array} */
+    private static function resolved(string $status, array $account): array
+    {
+        $accountId = (string)$account['accountId'];
+        return ['status' => $status, 'accountId' => $accountId, 'account' => $account, 'candidates' => [$accountId]];
     }
 }

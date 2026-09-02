@@ -33,7 +33,7 @@ class messageSend
             ]));
         }
 
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
         if (!$vault->exists($accountId)) {
             return $socket->push($fd, json_encode([
                 'byToken' => $model['id'] ?? null,

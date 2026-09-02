@@ -75,6 +75,7 @@ class CallState
         if (self::$sipBindings === null || (trim($sipDomain) === '' && trim($sourceHost) === '')) return null;
         $rows = [];
         foreach (self::$sipBindings as $row) {
+            if ((int)($row['expires_at'] ?? 0) <= time()) continue;
             if (strcasecmp((string)$row['sip_user'], $sipUser) !== 0) continue;
             $serverHost = AccountIdentity::host((string)$row['sip_server']);
             $rows[] = ['row' => $row, 'server_host' => $serverHost];
@@ -109,21 +110,12 @@ class CallState
         return count($matches) === 1 ? (string)array_key_first($matches) : null;
     }
 
-    /** Select only when exactly one ambiguous candidate has live WS state. */
-    public static function findConnectedAccountId(array $candidateAccountIds, array $connections): ?string
-    {
-        $connected = [];
-        foreach ($candidateAccountIds as $accountId) {
-            if (!empty($connections[$accountId] ?? [])) $connected[(string)$accountId] = true;
-        }
-        return count($connected) === 1 ? (string)array_key_first($connected) : null;
-    }
-
-    public static function hasActiveCallForFp(string $fp): bool
+    public static function hasActiveCallForFp(string $fp, ?string $exceptCallId = null): bool
     {
         if (self::$incomingCalls === null) return false;
         foreach (self::$incomingCalls as $row) {
-            if ($row['fp'] === $fp && in_array($row['status'], ['ringing', 'accepted', 'active'], true)) {
+            if ($exceptCallId !== null && $row['call_id'] === $exceptCallId) continue;
+            if ($row['fp'] === $fp && in_array($row['status'], ['pending_user', 'ringing', 'accepted', 'active'], true)) {
                 return true;
             }
         }
@@ -140,7 +132,7 @@ class CallState
     {
         if (self::$incomingCalls === null) return null;
         foreach (self::$incomingCalls as $row) {
-            if ($row['fp'] === $fp && in_array($row['status'], ['ringing', 'accepted', 'active'], true)) {
+            if ($row['fp'] === $fp && in_array($row['status'], ['pending_user', 'ringing', 'accepted', 'active'], true)) {
                 return $row;
             }
         }

@@ -8,11 +8,26 @@ use Minishlink\WebPush\WebPush;
 
 class WebPushHelper
 {
-    private static string $subFile = '/tmp/data/spechphone/push_subscriptions.json';
+    private static ?string $subFile = null;
+    private static bool $explicitFile = false;
+    /** @var array<string,bool> */
+    private static array $initializedFiles = [];
 
     public static function setFile(string $file): void
     {
         self::$subFile = $file;
+        self::$explicitFile = true;
+        unset(self::$initializedFiles[$file]);
+    }
+
+    public static function storageFile(): string
+    {
+        return self::$subFile ?? DataPath::file('push_subscriptions.json');
+    }
+
+    public static function subscriptionCountForAccount(string $accountId): int
+    {
+        return count(self::loadSubs()[$accountId] ?? []);
     }
 
     public static function saveSubscription(string $accountId, array $sub): void
@@ -87,6 +102,7 @@ class WebPushHelper
             cli::pcl("[PUSH:NOTIFY] accountId={$accountId} sem subscription", 'yellow');
             return;
         }
+        cli::pcl("[PUSH:MESSAGE] accountId={$accountId} subscriptions=" . count($subscriptions), 'cyan');
         $remoteUri = (string)($message['remoteUri'] ?? $message['fromUri'] ?? 'Contato');
         $body = mb_substr((string)($message['body'] ?? $message['message'] ?? ''), 0, 120);
         $payload = [
@@ -105,6 +121,7 @@ class WebPushHelper
             cli::pcl("[PUSH:CALL] accountId={$accountId} sem subscription", 'yellow');
             return;
         }
+        cli::pcl("[PUSH:CALL] accountId={$accountId} subscriptions=" . count($subscriptions), 'cyan');
         $fromUri = (string)($call['fromUri'] ?? $call['from'] ?? 'Desconhecido');
         $fromUser = \libspech\Sip\sip::extractURI($fromUri)['user'] ?? 'Desconhecido';
         $callId = (string)($call['callId'] ?? '');
@@ -119,7 +136,11 @@ class WebPushHelper
     private static function sendAll(array $data, string $accountId, array $subscriptions, array $payload): void
     {
         $expired = [];
-        foreach ($subscriptions as $hash => $sub) if (self::send($sub, $payload) === false) $expired[] = $hash;
+        foreach ($subscriptions as $hash => $sub) {
+            $result = self::send($sub, $payload);
+            if ($result === true) cli::pcl("[PUSH:SEND] success accountId={$accountId}", 'green');
+            if ($result === false) $expired[] = $hash;
+        }
         if (!$expired) return;
         self::mutateSubs(function (array &$current) use ($accountId, $expired): void {
             $current = self::pruneExpiredData($current, $accountId, $expired);
@@ -193,36 +214,161 @@ class WebPushHelper
 
     private static function loadSubs(): array
     {
-        if (!file_exists(self::$subFile)) return [];
-        $data = json_decode((string)file_get_contents(self::$subFile), true);
-        if (!is_array($data)) return [];
-        $migrated = self::migrateLegacyData($data, AccountIdentity::all());
+        self::initializeStorage();
+        $file = self::storageFile();
+        $data = self::readJsonFile($file);
+        if ($data === null) return [];
+        $migrated = self::canonicalize(self::migrateLegacyData($data, AccountIdentity::all()));
         if ($migrated !== $data) self::saveSubs($migrated);
         return $migrated;
     }
 
     private static function saveSubs(array $data): void
     {
-        $dir = dirname(self::$subFile);
-        if (!is_dir($dir)) mkdir($dir, 0777, true);
-        $tmp = self::$subFile . '.tmp.' . bin2hex(random_bytes(6));
-        file_put_contents($tmp, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
-        rename($tmp, self::$subFile);
+        $file = self::storageFile();
+        $dir = dirname($file);
+        if (!is_dir($dir) && !@mkdir($dir, 0700, true) && !is_dir($dir)) {
+            throw new \RuntimeException("Não foi possível criar o diretório de subscriptions: {$dir}");
+        }
+        $json = json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR);
+        $tmp = $file . '.tmp.' . bin2hex(random_bytes(6));
+        if (file_put_contents($tmp, $json, LOCK_EX) === false) {
+            throw new \RuntimeException('Não foi possível persistir subscriptions');
+        }
+        @chmod($tmp, 0600);
+        if (!@rename($tmp, $file)) {
+            @unlink($tmp);
+            throw new \RuntimeException('Não foi possível publicar subscriptions persistidas');
+        }
+        $confirmed = self::readJsonFile($file);
+        if ($confirmed !== $data) throw new \RuntimeException('Falha ao confirmar subscriptions persistidas');
     }
 
     private static function mutateSubs(callable $callback): mixed
     {
-        $dir = dirname(self::$subFile);
-        if (!is_dir($dir)) mkdir($dir, 0777, true);
-        $lock = fopen(self::$subFile . '.lock', 'c');
+        $file = self::storageFile();
+        $dir = dirname($file);
+        if (!is_dir($dir) && !@mkdir($dir, 0700, true) && !is_dir($dir)) {
+            throw new \RuntimeException("Não foi possível criar o diretório de subscriptions: {$dir}");
+        }
+        $lock = fopen($file . '.lock', 'c');
         if (!$lock) throw new \RuntimeException('Não foi possível bloquear subscriptions');
+        @chmod($file . '.lock', 0600);
         flock($lock, LOCK_EX);
-        $data = self::loadSubs();
-        $result = $callback($data);
-        self::saveSubs($data);
-        flock($lock, LOCK_UN);
-        fclose($lock);
+        try {
+            $data = self::loadSubs();
+            $result = $callback($data);
+            self::saveSubs($data);
+            return $result;
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    /**
+     * Merge legacy stores in priority order. Source files are never removed.
+     * @param list<string>|null $legacyFiles
+     * @return array{migrated:int,sources:int,path:string}
+     */
+    public static function migrateStorage(?array $legacyFiles = null): array
+    {
+        $target = self::storageFile();
+        $accounts = AccountIdentity::all();
+        $targetRaw = self::readJsonFile($target) ?? [];
+        $merged = self::canonicalize(self::migrateLegacyData($targetRaw, $accounts));
+        $total = 0;
+        $sources = 0;
+
+        foreach ($legacyFiles ?? DataPath::legacyFiles('push_subscriptions.json') as $source) {
+            if (self::samePath($source, $target) || !is_file($source)) continue;
+            $raw = self::readJsonFile($source);
+            if ($raw === null) {
+                cli::pcl("[PUSH:MIGRATE] arquivo inválido ignorado source={$source}", 'yellow');
+                continue;
+            }
+            $sources++;
+            $before = self::subscriptionCount($merged);
+            $incoming = self::canonicalize(self::migrateLegacyData($raw, $accounts));
+            $merged = self::mergeStores($merged, $incoming);
+            $migrated = self::subscriptionCount($merged) - $before;
+            $total += $migrated;
+            cli::pcl("[PUSH:MIGRATE] migrated={$migrated} source={$source}", 'green');
+        }
+
+        if ($merged !== $targetRaw || ($sources > 0 && !is_file($target))) self::saveSubs($merged);
+        self::$initializedFiles[$target] = true;
+        return ['migrated' => $total, 'sources' => $sources, 'path' => $target];
+    }
+
+    private static function initializeStorage(): void
+    {
+        $file = self::storageFile();
+        if (isset(self::$initializedFiles[$file])) return;
+        cli::pcl("[PUSH:STORE] usando path={$file}", 'cyan');
+        if (!self::$explicitFile) self::migrateStorage();
+        self::$initializedFiles[$file] = true;
+    }
+
+    private static function readJsonFile(string $file): ?array
+    {
+        if (!is_file($file)) return null;
+        $contents = @file_get_contents($file);
+        if ($contents === false || trim($contents) === '') return null;
+        $data = json_decode($contents, true);
+        return is_array($data) ? $data : null;
+    }
+
+    private static function canonicalize(array $data): array
+    {
+        $result = [];
+        foreach ($data as $accountId => $subscriptions) {
+            if ($accountId === '_legacy_unresolved') continue;
+            if (!is_array($subscriptions)) continue;
+            foreach ($subscriptions as $sub) {
+                if (!is_array($sub) || empty($sub['endpoint'])) continue;
+                $hash = hash('sha256', (string)$sub['endpoint']);
+                $sub['fp'] = (string)$accountId;
+                $result[(string)$accountId][$hash] ??= $sub;
+            }
+        }
+        if (!empty($data['_legacy_unresolved']) && is_array($data['_legacy_unresolved'])) {
+            $result['_legacy_unresolved'] = $data['_legacy_unresolved'];
+        }
         return $result;
+    }
+
+    private static function mergeStores(array $preferred, array $fallback): array
+    {
+        foreach ($fallback as $accountId => $subscriptions) {
+            if (!is_array($subscriptions)) continue;
+            if ($accountId === '_legacy_unresolved') {
+                foreach ($subscriptions as $legacyKey => $legacySubs) {
+                    foreach (is_array($legacySubs) ? $legacySubs : [] as $hash => $sub) {
+                        $preferred[$accountId][$legacyKey][$hash] ??= $sub;
+                    }
+                }
+                continue;
+            }
+            foreach ($subscriptions as $hash => $sub) $preferred[$accountId][$hash] ??= $sub;
+        }
+        return $preferred;
+    }
+
+    private static function subscriptionCount(array $data): int
+    {
+        $count = 0;
+        foreach ($data as $accountId => $subscriptions) {
+            if ($accountId !== '_legacy_unresolved' && is_array($subscriptions)) $count += count($subscriptions);
+        }
+        return $count;
+    }
+
+    private static function samePath(string $left, string $right): bool
+    {
+        $leftReal = realpath($left);
+        $rightReal = realpath($right);
+        return $left === $right || ($leftReal !== false && $rightReal !== false && $leftReal === $rightReal);
     }
 
     private static function buildAuth(): ?array

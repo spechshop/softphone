@@ -10,7 +10,7 @@ class register
     public static function resolve(\Swoole\WebSocket\Server $socket, array $model, int $fd): ?bool
     {
         $fp = trim((string)($model['data']['fp'] ?? ''));
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
         if ($fp === '' || !$vault->exists($fp)) {
             return self::respond($socket, $fd, $model, false, 'Configuração SIP não encontrada.', [
                 'reason' => 'invalid_configuration',

@@ -40,7 +40,7 @@ class saveConfig
     public static function resolve(Server $socket, array $model, int $fd): ?bool
     {
         $data = $model['data'];
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
         if (empty($data['fp'])) {
             return self::respond($socket, $fd, $model, false, 'Identificador do dispositivo ausente.');
         }

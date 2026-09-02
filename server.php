@@ -131,17 +131,6 @@ function resolveInboundAccount(string $user, string $domain, string $sourceHost,
     $route = AccountIdentity::resolve($user, $domain, $sourceHost, null, $requestUser);
     if ($route['accountId']) return $route;
 
-    $connectedFp = CallState::findConnectedAccountId($route['candidates'], cache::get('connections') ?? []);
-    if ($connectedFp) {
-        $account = AccountIdentity::get($connectedFp);
-        if ($account && strcasecmp((string)$account['sipUser'], $user) === 0) {
-            return [
-                'status' => 'resolved_connection', 'accountId' => $connectedFp,
-                'account' => $account, 'candidates' => [$connectedFp],
-            ];
-        }
-    }
-
     $registeredFp = CallState::findRegisteredFpForInbound($user, $domain, $sourceHost);
     if (!$registeredFp || ($route['candidates'] && !in_array($registeredFp, $route['candidates'], true))) return $route;
     $account = AccountIdentity::get($registeredFp);
@@ -276,6 +265,16 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         }
         cli::pcl("[CALL:ROUTE] to={$toUser} domain={$toDomain} requestUser={$requestUser} accountId={$fp} resolution={$route['status']}", 'cyan');
 
+        if (CallState::hasActiveCallForFp($fp, $callId) || isset((cache::get('coroutinesProcess') ?? [])[$fp])) {
+            $socket->sendto($info['address'], $info['port'], renderMessages::baseResponse($parse['headers'], "486", "Busy Here"));
+            if (CallState::$incomingCalls->exist($callId)
+                && CallState::$incomingCalls->get($callId)['status'] === 'pending_user') {
+                CallState::$incomingCalls->del($callId);
+            }
+            cli::pcl("[INBOUND] Usuário {$toUser} (fp:{$fp}) ocupado, 486 enviado", 'red');
+            return;
+        }
+
         if (empty(cache::get('connections')[$fp] ?? [])) {
             $pendingToTag = bin2hex(random_bytes(4));
             $pendingFromTag = '';
@@ -307,7 +306,8 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
                 'updated_at' => time(),
             ]);
 
-            cli::pcl("[INBOUND] fp:{$fp} sem WS ativo — enviando push e aguardando reconexão (até 15s)", 'yellow');
+            $maxWait = 30;
+            cli::pcl("[INBOUND] fp:{$fp} sem WS ativo — enviando push e aguardando reconexão (até {$maxWait}s)", 'yellow');
 
             $fromHeader = $parse['headers']['From'][0] ?? '';
             go(fn() => \helpers\utils\WebPushHelper::notifyIncomingCall($fp, [
@@ -317,14 +317,10 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
 
 
             $cameOnline = false;
-            $maxWait = 30;
             $waited = 0;
             for ($n = $maxWait; $n--;) {
                 \Swoole\Coroutine::sleep(1);
                 $waited += 1;
-                var_dump(cache::get('connections'));
-
-
                 if (!CallState::$incomingCalls->exist($callId)) {
                     cli::pcl("[INBOUND] Call-ID:{$callId} removido durante espera (CANCEL recebido), abortando", 'yellow');
                     return;
@@ -347,8 +343,12 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
             cli::pcl("[INBOUND] fp:{$fp} reconectou após {$waited}s — continuando fluxo", 'green');
         }
 
-        if (CallState::hasActiveCallForFp($fp) || isset((cache::get('coroutinesProcess') ?? [])[$fp])) {
+        if (CallState::hasActiveCallForFp($fp, $callId) || isset((cache::get('coroutinesProcess') ?? [])[$fp])) {
             $socket->sendto($info['address'], $info['port'], renderMessages::baseResponse($parse['headers'], "486", "Busy Here"));
+            if (CallState::$incomingCalls->exist($callId)
+                && CallState::$incomingCalls->get($callId)['status'] === 'pending_user') {
+                CallState::$incomingCalls->del($callId);
+            }
             cli::pcl("[INBOUND] Usuário {$toUser} (fp:{$fp}) ocupado, 486 enviado", 'red');
             return;
         }

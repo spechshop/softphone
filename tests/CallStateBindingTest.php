@@ -41,10 +41,20 @@ CallState::$sipBindings->set('active-binding-b', array_replace($active, ['fp' =>
 if (CallState::findRegisteredFpForInbound('same-aor', 'same.test') !== null) {
     throw new RuntimeException('dois bindings registrados não podem selecionar conta arbitrariamente');
 }
-if (CallState::findConnectedAccountId(['device-a', 'device-b'], ['device-a' => [], 'device-b' => [21, 22]]) !== 'device-b') {
-    throw new RuntimeException('candidato conectado único não foi selecionado');
+CallState::$sipBindings->set('expired-binding', array_replace($active, [
+    'fp' => 'expired-device', 'sip_user' => 'expired-user', 'expires_at' => time() - 1,
+]));
+if (CallState::findRegisteredFpForInbound('expired-user', 'same.test') !== null) {
+    throw new RuntimeException('binding expirado foi usado como identidade');
 }
-if (CallState::findConnectedAccountId(['device-a', 'device-b'], ['device-a' => [11], 'device-b' => [21]]) !== null) {
-    throw new RuntimeException('dois candidatos conectados não podem selecionar conta arbitrariamente');
-}
-echo "OK: bindings separados por usuário, domínio e registrar na porta compartilhada 4000.\n";
+$incomingBaseline = count(CallState::$incomingCalls);
+CallState::$incomingCalls->set('pending-call', [
+    'call_id' => 'pending-call', 'fp' => 'device-a', 'status' => 'pending_user',
+    'created_at' => time(), 'updated_at' => time(),
+]);
+if (!CallState::hasActiveCallForFp('device-a')) throw new RuntimeException('pending_user não bloqueou chamada simultânea');
+if (CallState::hasActiveCallForFp('device-a', 'pending-call')) throw new RuntimeException('a própria chamada pending_user bloqueou continuação');
+if ((CallState::findIncomingCallByFp('device-a')['call_id'] ?? '') !== 'pending-call') throw new RuntimeException('reconnect não encontrou pending_user');
+CallState::$incomingCalls->del('pending-call');
+if (count(CallState::$incomingCalls) !== $incomingBaseline) throw new RuntimeException('cleanup não retornou incomingCalls ao baseline');
+echo "OK: bindings separados por usuário, domínio e registrar; WebSocket não participa da identidade.\n";

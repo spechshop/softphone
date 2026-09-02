@@ -14,7 +14,7 @@ final class startCall
     {
         $data = $model['data'] ?? [];
         $fingerprint = (string)($data['fp'] ?? '');
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
         if ($fingerprint === '' || !$vault->exists($fingerprint)) {
             return self::reply($socket, $fd, $model, false, null, 'Token inválido');
         }

@@ -21,7 +21,7 @@ class callAccept
         $data = $model['data'];
         $fp = $data['fp'] ?? '';
         $callId = $data['callId'] ?? '';
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
         if (!$vault->exists($fp)) {
             return $socket->push($fd, json_encode([
                 'type' => 'notify',
@@ -300,8 +300,6 @@ class callAccept
 
                 if (!$raw || strlen($raw) < 12) {
                     cli::pcl("[ACCEPT-CO] Raw data is invalid or too short", 'red');
-
-                    var_dump(strlen($raw));
                     Coroutine::sleep(1);
                     continue;
                 }

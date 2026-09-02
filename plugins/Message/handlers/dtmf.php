@@ -14,7 +14,7 @@ class dtmf
         $data = $model['data'];
 
 
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
 
 
         $fingerprint = $data['fp'];

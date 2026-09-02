@@ -10,13 +10,12 @@ class checkCall
     {
         $data = $model['data'];
 
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
 
 
         $fingerprint = $data['fp'] ?? '';
         if (!$vault->exists($fingerprint)) {
-            print 'fingerprint not exists' . PHP_EOL;
-            $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+            $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
             if (!$vault->exists($data['fp'])) {
 
                 $vault->set($data['fp'], $data);

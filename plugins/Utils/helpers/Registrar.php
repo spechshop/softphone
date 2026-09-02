@@ -11,8 +11,6 @@ class Registrar
     public const EXPIRES = 1800;
     public const REFRESH_THRESHOLD = 300;
     public const TICK_INTERVAL_MS = 30000;
-    public const VAULT_PATH = '/data/spechphone/devices.vault';
-
     public static ?Table $states = null;
 
     public static function init(): void
@@ -44,7 +42,7 @@ class Registrar
         if (self::$states === null) return;
 
         try {
-            $vault = new \spechphoneVault(self::VAULT_PATH, getenv('SPECH_VAULT_KEY_HEX'));
+            $vault = new \spechphoneVault(AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
         } catch (\Throwable $e) {
             cli::pcl('[REGISTRAR] Falha ao abrir vault: ' . $e->getMessage(), 'red');
             return;
@@ -153,7 +151,7 @@ class Registrar
     private static function markContactIdentityMigrated(string $fp): void
     {
         try {
-            $vault = new \spechphoneVault(self::VAULT_PATH, (string)getenv('SPECH_VAULT_KEY_HEX'));
+            $vault = new \spechphoneVault(AccountIdentity::vaultPath(), (string)getenv('SPECH_VAULT_KEY_HEX'));
             if (!$vault->exists($fp)) return;
             $current = $vault->get($fp);
             if (!is_array($current)) return;

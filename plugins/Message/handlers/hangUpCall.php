@@ -17,7 +17,7 @@ class hangUpCall
         $data = $model['data'];
         $fingerprint = $data['fp'];
 
-        $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
+        $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
         if (!$vault->exists($fingerprint)) {
             return $socket->push($fd, json_encode(['byToken' => $model['id'], 'data' => ['success' => false]]));
         }
