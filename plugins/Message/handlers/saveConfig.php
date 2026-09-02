@@ -91,7 +91,9 @@ class saveConfig
         $sipUser = $data['sipUser'];
         $sipPass = $data['sipPass'];
         try {
-            $phone = new trunkController($sipUser, $sipPass, $sipServer);
+            $phone = new trunkController($sipUser, $sipPass, $sipServer, 5060, $sipServer);
+
+
         } catch (\Exception $e) {
             cli::pcl("[REGISTRAR] Falha ao instanciar trunkController para {$sipUser}@{$sipServer}: " . $e->getMessage(), 'red');
             return $socket->push($fd, json_encode([
@@ -103,8 +105,26 @@ class saveConfig
             ]));
         }
         $modelRegister = $phone->modelRegister('1800');
-        $modelRegister['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":$phone->socketPortListen;branch=z9hG4bK$phone->callId;rport";
-        $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
+        //$modelRegister['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":$phone->socketPortListen;branch=z9hG4bK$phone->callId;rport";
+
+
+
+        $modelRegister['headers']['Contact'][0] = sip::renderURI([
+            'user' => $phone->username,
+            'peer' => [
+                'host' => network::getLocalIp(),
+                'port' => $phone->socketPortListen
+            ]
+        ]);
+
+        $rendered = sip::renderSolution($modelRegister);
+        var_dump($rendered);
+
+
+
+
+
+        $socket->sendto($phone->host, $phone->port, $rendered);
         for ($n = 3; $n--;) {
             $peer = [];
             $res = $phone->socket->recvfrom($peer, 5);
@@ -112,23 +132,27 @@ class saveConfig
 
 
             $receive = sip::parse($res);
+
             if ($receive['method'] == '401') {
                 $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
                 $nonce = value($wwwAuthenticate, 'nonce="', '"');
                 $realm = value($wwwAuthenticate, 'realm="', '"');
                 $response = sip::generateAuthorizationHeader($phone->username, $realm, $phone->password, $nonce, 'sip:' . $phone->host, 'REGISTER');
                 $modelRegister['headers']['Authorization'][0] = $response;
+                $rendered = sip::renderSolution($modelRegister);
 
-                $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
+
+                $socket->sendto($phone->host, $phone->port, $rendered);
             } elseif ($receive['method'] == '200') {
                 break;
             } else {
                 $phone->close();
+
                 return $socket->push($fd, json_encode([
                     'type' => 'notify',
                     'data' => [
                         'type' => 'bg-danger text-white',
-                        'message' => "Registro falhou [$receive[methodForParser], verifique as credenciais fornecidas"
+                        'message' => "Registro falhou, verifique as credenciais fornecidas"
                     ]
                 ]));
             }
@@ -248,16 +272,9 @@ class saveConfig
             return $sipServer;
         }
         $sipServerParser = parse_url($sipServer, PHP_URL_HOST);
+        var_dump($sipServerParser,  $sipServer);
         if (!$sipServerParser) {
-            cli::pcl("[REGISTRAR] Falha ao obter host do servidor SIP: {$sipServer}", 'red');
-            $try2=gethostbyname($sipServer);
-            if($try2){
-                return $try2;
-            } else {
-                return $sipServer;
-            }
-
-            return '';
+            return $sipServer;
         }
         return gethostbyname($sipServerParser);
     }

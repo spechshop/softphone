@@ -128,7 +128,7 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         $localPort = 4000;
         $respCode = (int)$parse['method'];
         $respColor = $respCode >= 400 ? 'red' : ($respCode >= 200 ? 'green' : 'yellow');
-        cli::pcl("[SIP-RESP] {$parse['method']} de {$info['address']}:{$info['port']} Call-ID:" . ($parse['headers']['Call-ID'][0] ?? 'N/A') . " CSeq:" . ($parse['headers']['CSeq'][0] ?? 'N/A'), $respColor);
+        cli::pcl("131 [SIP-RESP] {$parse['method']} de {$info['address']}:{$info['port']} Call-ID:" . ($parse['headers']['Call-ID'][0] ?? 'N/A') . " CSeq:" . ($parse['headers']['CSeq'][0] ?? 'N/A'), $respColor);
         foreach ($parse['headers']['Via'] as $via) {
             $parseVia = \libspech\Sip\sip::extractVia($via);
             if ($parseVia['address'] === $localIp && (int)$parseVia['port'] === $localPort) continue;
@@ -141,7 +141,7 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
     if (is_numeric($parse['method'])) {
         $respCode = (int)$parse['method'];
         $respColor = $respCode >= 400 ? 'red' : ($respCode >= 200 ? 'green' : 'yellow');
-        cli::pcl("[SIP-RESP] {$parse['method']} de {$info['address']}:{$info['port']} Call-ID:" . ($parse['headers']['Call-ID'][0] ?? 'N/A') . " CSeq:" . ($parse['headers']['CSeq'][0] ?? 'N/A'), $respColor);
+        cli::pcl("144 [SIP-RESP] {$parse['method']} de {$info['address']}:{$info['port']} Call-ID:" . ($parse['headers']['Call-ID'][0] ?? 'N/A') . " CSeq:" . ($parse['headers']['CSeq'][0] ?? 'N/A'), $respColor);
     }
     cli::pcl($data, 'cyan');
 
