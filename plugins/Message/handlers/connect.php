@@ -32,8 +32,9 @@ class connect
             print 'vault exists' . PHP_EOL;
             $connections = cache::get('connections');
             if (!array_key_exists($data['fp'], $connections)) $connections[$data['fp']] = [];
-            $connections[$data['fp']][] = $fd;
+            if (!in_array($fd, $connections[$data['fp']], true)) $connections[$data['fp']][] = $fd;
             cache::set('connections', $connections);
+            cli::pcl("[WS:CONNECT] accountId={$data['fp']} fd={$fd} tabs=" . count($connections[$data['fp']]), 'green');
 
             $userDatas = $vault->get($data['fp']);
             $identity = AccountIdentity::fromData((string)$data['fp'], $userDatas);

@@ -131,6 +131,17 @@ function resolveInboundAccount(string $user, string $domain, string $sourceHost,
     $route = AccountIdentity::resolve($user, $domain, $sourceHost, null, $requestUser);
     if ($route['accountId']) return $route;
 
+    $connectedFp = CallState::findConnectedAccountId($route['candidates'], cache::get('connections') ?? []);
+    if ($connectedFp) {
+        $account = AccountIdentity::get($connectedFp);
+        if ($account && strcasecmp((string)$account['sipUser'], $user) === 0) {
+            return [
+                'status' => 'resolved_connection', 'accountId' => $connectedFp,
+                'account' => $account, 'candidates' => [$connectedFp],
+            ];
+        }
+    }
+
     $registeredFp = CallState::findRegisteredFpForInbound($user, $domain, $sourceHost);
     if (!$registeredFp || ($route['candidates'] && !in_array($registeredFp, $route['candidates'], true))) return $route;
     $account = AccountIdentity::get($registeredFp);

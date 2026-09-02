@@ -143,7 +143,15 @@ class WebPushHelper
             return null;
         }
         try {
-            $webPush = new WebPush($auth);
+            set_error_handler(static fn(int $severity, string $message, string $file): bool =>
+                $severity === E_DEPRECATED && str_contains($file, 'minishlink/web-push')
+            );
+            $caBundle = self::caBundlePath();
+            $clientOptions = $caBundle !== null ? ['verify' => $caBundle] : [];
+            if ($caBundle === null) {
+                cli::pcl('[PUSH:TLS] bundle de CAs não encontrado; revise SPECH_PUSH_CA_BUNDLE/ca-certificates', 'red');
+            }
+            $webPush = new WebPush($auth, [], 30, $clientOptions);
             $sub = Subscription::create([
                 'endpoint' => $subscription['endpoint'], 'publicKey' => $subscription['keys']['p256dh'] ?? '',
                 'authToken' => $subscription['keys']['auth'] ?? '',
@@ -151,10 +159,34 @@ class WebPushHelper
             $report = $webPush->sendOneNotification($sub, json_encode($payload, JSON_UNESCAPED_UNICODE));
             if ($report->isSuccess()) return true;
             $status = $report->getResponse()?->getStatusCode();
-            cli::pcl('[PUSH:SEND] falha HTTP ' . ($status ?? '?'), 'red');
+            $reason = preg_replace('#https?://\S+#i', '[endpoint]', $report->getReason());
+            $reason = mb_substr((string)$reason, 0, 240);
+            cli::pcl('[PUSH:SEND] falha HTTP ' . ($status ?? '?') . ' reason=' . $reason, 'red');
             return in_array($status, [404, 410], true) ? false : null;
         } catch (\Throwable $e) {
             cli::pcl('[PUSH:SEND] falha: ' . get_class($e), 'red');
+        } finally {
+            restore_error_handler();
+        }
+        return null;
+    }
+
+    public static function caBundlePath(): ?string
+    {
+        $locations = openssl_get_cert_locations();
+        $candidates = [
+            getenv('SPECH_PUSH_CA_BUNDLE') ?: null,
+            ini_get('curl.cainfo') ?: null,
+            ini_get('openssl.cafile') ?: null,
+            $locations['ini_cafile'] ?? null,
+            $locations['default_cert_file'] ?? null,
+            '/etc/ssl/certs/ca-certificates.crt',
+            '/etc/pki/tls/certs/ca-bundle.crt',
+            '/etc/pki/ca-trust/extracted/pem/tls-ca-bundle.pem',
+            '/etc/ssl/cert.pem',
+        ];
+        foreach (array_unique(array_filter($candidates, 'is_string')) as $candidate) {
+            if ($candidate !== '' && is_file($candidate) && is_readable($candidate)) return $candidate;
         }
         return null;
     }

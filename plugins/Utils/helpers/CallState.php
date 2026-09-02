@@ -109,6 +109,16 @@ class CallState
         return count($matches) === 1 ? (string)array_key_first($matches) : null;
     }
 
+    /** Select only when exactly one ambiguous candidate has live WS state. */
+    public static function findConnectedAccountId(array $candidateAccountIds, array $connections): ?string
+    {
+        $connected = [];
+        foreach ($candidateAccountIds as $accountId) {
+            if (!empty($connections[$accountId] ?? [])) $connected[(string)$accountId] = true;
+        }
+        return count($connected) === 1 ? (string)array_key_first($connected) : null;
+    }
+
     public static function hasActiveCallForFp(string $fp): bool
     {
         if (self::$incomingCalls === null) return false;

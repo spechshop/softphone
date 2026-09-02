@@ -41,4 +41,10 @@ CallState::$sipBindings->set('active-binding-b', array_replace($active, ['fp' =>
 if (CallState::findRegisteredFpForInbound('same-aor', 'same.test') !== null) {
     throw new RuntimeException('dois bindings registrados não podem selecionar conta arbitrariamente');
 }
+if (CallState::findConnectedAccountId(['device-a', 'device-b'], ['device-a' => [], 'device-b' => [21, 22]]) !== 'device-b') {
+    throw new RuntimeException('candidato conectado único não foi selecionado');
+}
+if (CallState::findConnectedAccountId(['device-a', 'device-b'], ['device-a' => [11], 'device-b' => [21]]) !== null) {
+    throw new RuntimeException('dois candidatos conectados não podem selecionar conta arbitrariamente');
+}
 echo "OK: bindings separados por usuário, domínio e registrar na porta compartilhada 4000.\n";
