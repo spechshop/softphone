@@ -105,9 +105,25 @@ class Registrar
         $sipUser = trim((string)($data['sipUser'] ?? ''));
         $sipServer = trim((string)($data['sipServer'] ?? ''));
         $sipDomain = trim((string)($data['sipDomain'] ?? '')) ?: $sipServer;
+        $needsLegacyContactCleanup = (int)($data['contactIdentityVersion'] ?? 0) < 2;
+        $legacyContactRemoved = !$needsLegacyContactCleanup;
+        if ($needsLegacyContactCleanup) {
+            $legacyData = $data;
+            unset($legacyData['accountId'], $legacyData['fp']);
+            $cleanup = SipRegisterManager::register($server, $legacyData, 0, 5.0);
+            $legacyContactRemoved = (bool)$cleanup['success'];
+            cli::pcl(
+                $legacyContactRemoved
+                    ? "[REGISTRAR] Contact legado removido accountId={$fp}"
+                    : "[REGISTRAR] não foi possível remover Contact legado accountId={$fp} reason=" . ($cleanup['reason'] ?? 'unknown'),
+                $legacyContactRemoved ? 'green' : 'yellow'
+            );
+        }
         $result = SipRegisterManager::register($server, $data, self::EXPIRES);
+        $result['legacy_contact_removed'] = $legacyContactRemoved;
 
         if ($result['success']) {
+            if ($legacyContactRemoved) self::markContactIdentityMigrated($fp);
             self::recordSuccess($fp, $sipUser, $sipServer, $sipDomain);
             cli::pcl(
                 "[REGISTRAR] {$sipUser}@{$sipServer} registrado via UDP :" . SipRegisterManager::SIP_PORT
@@ -126,6 +142,23 @@ class Registrar
             );
         }
         return $result;
+    }
+
+    private static function markContactIdentityMigrated(string $fp): void
+    {
+        try {
+            $vault = new \spechphoneVault(self::VAULT_PATH, (string)getenv('SPECH_VAULT_KEY_HEX'));
+            if (!$vault->exists($fp)) return;
+            $current = $vault->get($fp);
+            if (!is_array($current)) return;
+            $current['accountId'] = $fp;
+            $current['fp'] = $fp;
+            $current['contactIdentityVersion'] = 2;
+            $vault->set($fp, $current);
+            $vault->flush();
+        } catch (\Throwable $e) {
+            cli::pcl("[REGISTRAR] falha ao persistir migração de Contact accountId={$fp}", 'yellow');
+        }
     }
 
     /** @param array<string,mixed> $result */

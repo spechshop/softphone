@@ -4,6 +4,7 @@ namespace plugins\Utils\messages;
 
 use helpers\utils\AccountIdentity;
 use libspech\Cache\cache;
+use libspech\Cli\cli;
 use Swoole\WebSocket\Server;
 
 class messageStore
@@ -185,11 +186,15 @@ class messageStore
         });
     }
 
-    public static function sendRealtime(Server $socket, string $accountId, array $messagePayload): void
+    public static function sendRealtime(Server $socket, string $accountId, array $messagePayload): int
     {
-        foreach (self::connectionFdsForAccount(cache::get('connections') ?? [], $accountId) as $fd) {
-            if ($socket->isEstablished((int)$fd)) $socket->push((int)$fd, json_encode($messagePayload));
+        $fds = self::connectionFdsForAccount(cache::get('connections') ?? [], $accountId);
+        $delivered = 0;
+        foreach ($fds as $fd) {
+            if ($socket->isEstablished((int)$fd) && $socket->push((int)$fd, json_encode($messagePayload))) $delivered++;
         }
+        cli::pcl("[MESSAGE:WS] accountId={$accountId} connections=" . count($fds) . " delivered={$delivered}", $delivered ? 'green' : 'yellow');
+        return $delivered;
     }
 
     public static function connectionFdsForAccount(array $connections, string $accountId): array

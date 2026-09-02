@@ -97,6 +97,8 @@ class saveConfig
             ]);
         }
 
+        if (!empty($result['legacy_contact_removed'])) $data['contactIdentityVersion'] = 2;
+
         // Persist only after the provider has confirmed this transaction with
         // a correlated 200 OK. Challenges/credentials never enter lastPacket.
         $data['lastPacket'] = $result['response'] ?? [];

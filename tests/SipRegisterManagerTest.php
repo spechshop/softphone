@@ -146,6 +146,7 @@ Coroutine\run(function (): void {
 
     $deviceAccount = account('shared-aor');
     $deviceAccount['fp'] = 'fp-device-a';
+    $deviceAccount['contactIdentityVersion'] = 2;
     $deviceProvider = new FakeSipProvider('valid');
     $deviceResult = runRegistration($deviceProvider, $deviceAccount);
     $expectedContactUser = 'sp-' . substr(hash('sha256', 'fp-device-a'), 0, 24);

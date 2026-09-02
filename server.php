@@ -441,9 +441,10 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         $fromUri = AccountIdentity::sipUri($parse['headers']['From'][0] ?? '');
         $toUri = AccountIdentity::sipUri($parse['headers']['To'][0] ?? '');
         $body = trim($parse['body'] ?? '');
+        $requestUser = inboundRequestUser($data);
+        cli::pcl("[MESSAGE:RX] requestUser={$requestUser} from={$fromUri} to={$toUri} bytes=" . strlen($body), 'cyan');
 
         if (!empty($fromUser) && !empty($toUser) && !empty($body)) {
-            $requestUser = inboundRequestUser($data);
             $route = AccountIdentity::resolve($toUser, $toDomain, (string)($info['address'] ?? ''), null, $requestUser);
             $accountId = $route['accountId'];
             if (!$accountId) {
@@ -464,6 +465,8 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
                 ]);
                 go(fn() => \helpers\utils\WebPushHelper::notifyUser($accountId, $msg));
             }
+        } else {
+            cli::pcl("[MESSAGE:DROP] invalid SIP MESSAGE fromUser={$fromUser} toUser={$toUser} bytes=" . strlen($body), 'red');
         }
     }
 });
