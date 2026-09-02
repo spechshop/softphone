@@ -1,4 +1,5 @@
 let socketGlobal;
+let logoutInProgress = false;
 let stops = {};
 
 let ctx;
@@ -41,6 +42,8 @@ const infoURI = () => {
 }
 
 const autoSocket = () => {
+    if (logoutInProgress) return;
+
     const socket = new WebSocket(infoURI().webSocketURI());
     socketGlobal = socket;
     socket.onopen = () => onOpenSocket(socket);
@@ -56,7 +59,10 @@ const autoSocket = () => {
         console.error('Socket fechado');
         document.getElementById('connection-icon').className = 'fa-solid fa-plug-circle-xmark text-danger';
         document.getElementById('connection-status').innerText = 'Connection timed out';
-        return setTimeout(autoSocket, 1000);
+        if (logoutInProgress) return;
+        return setTimeout(() => {
+            if (!logoutInProgress) autoSocket();
+        }, 1000);
     }
 }
 
@@ -1405,12 +1411,86 @@ class UserManager {
         localStorage.removeItem(this.storageKey);
     }
 
-    logout() {
-        template.setPage('login').then(() => {
-            this.clearUserData();
-        });
+    async logout() {
+        if (logoutInProgress) return;
+        logoutInProgress = true;
+
+        const fp = this.getValue('fp') || localStorage.getItem('fp');
+        let subscription = null;
+
+        try {
+            if ('serviceWorker' in navigator && 'PushManager' in window) {
+                const registration = await Promise.race([
+                    navigator.serviceWorker.ready,
+                    sleep(2000).then(() => null),
+                ]);
+                subscription = registration
+                    ? await registration.pushManager.getSubscription()
+                    : null;
+
+                // Desvincula no backend enquanto o WebSocket ainda autentica este fp.
+                if (subscription && fp && socketGlobal?.readyState === WebSocket.OPEN) {
+                    const removeRequest = sendRecByToken({
+                        fp,
+                        endpoint: subscription.endpoint,
+                    }, 'removePushSubscription').catch((error) => {
+                        console.warn('[LOGOUT] Falha ao desvincular Push no backend', error);
+                    });
+                    await Promise.race([removeRequest, sleep(3000)]);
+                }
+            }
+        } catch (error) {
+            console.warn('[LOGOUT] Não foi possível consultar a assinatura Push', error);
+        }
+
+        try {
+            if (subscription) await subscription.unsubscribe();
+        } catch (error) {
+            console.warn('[LOGOUT] Não foi possível remover a assinatura Push do navegador', error);
+        }
+
+        try {
+            if (typeof window.stopAudioCapture === 'function') window.stopAudioCapture();
+            if (typeof window.stopAudio === 'function') await window.stopAudio();
+        } catch (error) {
+            console.warn('[LOGOUT] Falha ao encerrar áudio local', error);
+        }
+
+        if (window.audioWS) {
+            try {
+                window.audioWS.close();
+            } catch (_) {
+            }
+            window.audioWS = null;
+        }
+
+        if (socketGlobal && socketGlobal.readyState < WebSocket.CLOSING) {
+            try {
+                socketGlobal.close(1000, 'logout');
+            } catch (_) {
+            }
+        }
+
+        this.clearUserData();
+        localStorage.removeItem('fp');
+        localStorage.removeItem('spech_call_history');
+        window.location.reload();
     }
 }
+
+window.logoutSpechPhone = async function () {
+    if (logoutInProgress) return;
+    if (!window.confirm('Deseja deslogar deste dispositivo? As notificações desta conta serão desativadas.')) return;
+
+    const button = document.getElementById('btnLogout');
+    if (button) {
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-2"></i>Deslogando...';
+    }
+
+    await (new UserManager()).logout();
+};
 
 class templateManager {
     async displayLoading() {
