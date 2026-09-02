@@ -15,6 +15,7 @@ final class MicJitterBuffer
         public readonly int $targetMs = 60,
         public readonly int $maxFrameAgeMs = 180,
         public readonly int $maxFrames = 10,
+        public readonly int $frameMs = MicUplinkFrame::FRAME_MS,
     ) {
     }
 
@@ -59,7 +60,7 @@ final class MicJitterBuffer
     {
         return $this->frames !== []
             && $this->firstArrivalMs !== null
-            && (count($this->frames) >= max(1, (int)ceil($this->targetMs / MicUplinkFrame::FRAME_MS))
+            && (count($this->frames) >= max(1, (int)ceil($this->targetMs / $this->frameMs))
                 || ($nowMs - $this->firstArrivalMs) >= $this->targetMs);
     }
 

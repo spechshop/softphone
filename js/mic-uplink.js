@@ -19,6 +19,8 @@
 
     const HEADER_BYTES = 20;
     const FORMAT_PCM16_LE = 1;
+    const FLAG_STEREO = 0x0001;
+    const FLAG_FRAME_10MS = 0x0002;
 
     function encodeFrame(sequence, captureTimestampMs, sampleRate, pcm, flags) {
         if (!(pcm instanceof Int16Array)) throw new TypeError('pcm must be Int16Array');
@@ -197,5 +199,7 @@
         return 'critical';
     }
 
-    return {CONFIG, HEADER_BYTES, FORMAT_PCM16_LE, encodeFrame, MicQualityMetrics, MicUplinkQueue, qualityState, bufferedState};
+    function channelsFromFlags(flags) { return (Number(flags || 0) & FLAG_STEREO) !== 0 ? 2 : 1; }
+
+    return {CONFIG, HEADER_BYTES, FORMAT_PCM16_LE, FLAG_STEREO, FLAG_FRAME_10MS, channelsFromFlags, encodeFrame, MicQualityMetrics, MicUplinkQueue, qualityState, bufferedState};
 });

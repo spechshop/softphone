@@ -36,6 +36,9 @@ final class startCall
                 [
                     'trunkCodec' => (string)($account['trunkCodec'] ?? 'PCMA/8000'),
                     'userCodec' => (string)($data['codec'] ?? $account['codec'] ?? 'PCMA/8000'),
+                    'opus' => is_array($account['opus'] ?? null) ? $account['opus'] : null,
+                    'sourceSampleRate' => (int)($data['sourceSampleRate'] ?? 8000),
+                    'sourceChannels' => (int)($data['sourceChannels'] ?? 1),
                 ]
             );
         } catch (\Throwable) {
@@ -59,6 +62,12 @@ final class startCall
             ];
             $vault->set($fingerprint, $stored);
             self::notify($socket, $fingerprint, 'bg-success text-white', 'Chamada conectada com ' . $call->calledNumber);
+            if ($call->effectiveOpusConfig() !== null) {
+                self::broadcast($socket, $fingerprint, [
+                    'type' => 'opusNegotiated',
+                    'data' => $call->effectiveOpusConfig(),
+                ]);
+            }
             self::broadcast($socket, $fingerprint, ['type' => 'event', 'data' => 'callAccept']);
         });
         $call->onFailed(function (OutboundCall $call, string $reason, int $code) use ($socket, $fingerprint): void {

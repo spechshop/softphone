@@ -20,10 +20,12 @@ final class MicUplinkSession
         public readonly int $sampleRate,
         int $targetMs = 60,
         int $maxFrameAgeMs = 180,
+        public readonly int $channels = 1,
+        public readonly int $frameMs = MicUplinkFrame::FRAME_MS,
     ) {
         $this->metrics = new MicQualityMetrics();
-        $this->jitterBuffer = new MicJitterBuffer($this->metrics, $targetMs, $maxFrameAgeMs);
-        $this->pacer = new RtpPacer(MicUplinkFrame::FRAME_MS);
+        $this->jitterBuffer = new MicJitterBuffer($this->metrics, $targetMs, $maxFrameAgeMs, frameMs: $this->frameMs);
+        $this->pacer = new RtpPacer($this->frameMs);
     }
 
     public function ingest(MicUplinkFrame $frame, float $arrivalMs): bool
@@ -47,7 +49,7 @@ final class MicUplinkSession
         $frame = $this->jitterBuffer->pop($nowMs);
         if ($frame === null) {
             $this->metrics->pacerUnderruns++;
-            $pcm = str_repeat("\x00\x00", (int)round($this->sampleRate * 0.02));
+            $pcm = str_repeat("\x00\x00", (int)round($this->sampleRate * ($this->frameMs / 1000)) * $this->channels);
         } else {
             $pcm = $frame->payload;
         }

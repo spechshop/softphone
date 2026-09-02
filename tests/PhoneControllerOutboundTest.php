@@ -2,7 +2,7 @@
 
 require __DIR__ . '/../libspech/plugins/autoloader.php';
 foreach ([
-    'SipRegisterManager.php', 'SdpHelper.php', 'SipTransactionManager.php', 'SipDialog.php',
+    'OpusConfig.php', 'SipRegisterManager.php', 'SdpHelper.php', 'SipTransactionManager.php', 'SipDialog.php',
     'SipDigestAuth.php', 'PhoneController.php', 'OutboundMediaSession.php', 'OutboundCall.php',
 ] as $helper) require_once __DIR__ . '/../plugins/Utils/helpers/' . $helper;
 

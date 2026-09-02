@@ -622,7 +622,7 @@ window.handleCallEnded = function (callId = null) {
     return true;
 };
 
-window.acceptIncomingCall = function () {
+window.acceptIncomingCall = async function () {
     const s = window.inboundCallState;
     if (s.status !== 'incoming') return;
     if (s.acceptSent) return;
@@ -630,7 +630,17 @@ window.acceptIncomingCall = function () {
     console.log('[CALL] enviando callAccept');
     stopRingtone();
     setCallState('accepting');
-    sendRecByToken({callId: s.currentCallId}, 'callAccept');
+    let media = {
+        opus: typeof UserManager !== 'undefined' ? (new UserManager()).getValue('opus') : null,
+        sourceSampleRate: 8000,
+        sourceChannels: 1
+    };
+    try {
+        if (typeof window.prepareOpusForCall === 'function') media = await window.prepareOpusForCall();
+    } catch (error) {
+        console.warn('[CALL] falha ao preparar captura; atendendo com mono seguro', error);
+    }
+    return sendRecByToken({callId: s.currentCallId, ...media}, 'callAccept');
 };
 
 window.rejectIncomingCall = function () {
@@ -978,6 +988,12 @@ const onMessageSocket = (event, socket) => {
             handleCallEnded(data.data?.callId || null);
             break;
 
+        case 'opusNegotiated':
+            if (typeof window.setEffectiveOpusConfig === 'function') {
+                window.setEffectiveOpusConfig(data.data || {});
+            }
+            break;
+
         case 'event':
             if (data.data === 'bye') {
                 // Outbound UI cleanup
@@ -1020,6 +1036,14 @@ const onMessageSocket = (event, socket) => {
 
         case 'setKey':
             user.updateUserData(data.key, data.value);
+            if (data.key === 'opus' && typeof window.refreshOpusControls === 'function') {
+                window.refreshOpusControls(data.value);
+            }
+            if (data.key === 'trunkCodec' && typeof window.refreshOpusVisibility === 'function') {
+                const select = document.getElementById('trunkCodec');
+                if (select) select.value = data.value;
+                window.refreshOpusVisibility();
+            }
             break;
 
         case 'notify':
@@ -1171,7 +1195,11 @@ window.playAudio = (callId) => {
     const protocol = window.location.protocol === "https:" ? "wss:" : "ws:";
     const userFp = (new UserManager()).getValue('fp') || 'anon';
     const sampleRate = window.sampleRate || 8000;
-    const wsUrl = `${protocol}//${infoURI().host}:8889?fp=${callId}&ssrc=rx-${userFp}&sampleRate=${sampleRate}`;
+    const playbackChannels = typeof window.getEffectiveOpusConfig === 'function'
+        && String((new UserManager()).getValue('trunkCodec') || '').toUpperCase().startsWith('OPUS/')
+        ? window.getEffectiveOpusConfig().channels : 1;
+    window.playbackChannels = playbackChannels;
+    const wsUrl = `${protocol}//${infoURI().host}:8889?fp=${callId}&ssrc=rx-${userFp}&sampleRate=${sampleRate}&channels=${playbackChannels}`;
 
     window.audioWS = new WebSocket(wsUrl);
     window.audioWS.binaryType = "arraybuffer";
@@ -1248,6 +1276,7 @@ function processAudioData(arrayBuffer) {
     }
 
     const pcmData = new Int16Array(arrayBuffer);
+    const channels = window.playbackChannels === 2 ? 2 : 1;
 
     // Atualiza medidor do speaker (chamada recebida)
     if (typeof window.updateCallMeter === 'function') {
@@ -1255,14 +1284,14 @@ function processAudioData(arrayBuffer) {
     }
 
     // Converte PCM16 para Float32
-    const float32Data = new Float32Array(pcmData.length);
-    for (let i = 0; i < pcmData.length; i++) {
-        float32Data[i] = pcmData[i] / 32768.0;
+    const frames = Math.floor(pcmData.length / channels);
+    const audioBuffer = window.audioContext.createBuffer(channels, frames, window.audioContext.sampleRate);
+    for (let channel = 0; channel < channels; channel++) {
+        const plane = audioBuffer.getChannelData(channel);
+        for (let frame = 0; frame < frames; frame++) {
+            plane[frame] = pcmData[frame * channels + channel] / 32768.0;
+        }
     }
-
-    // Cria AudioBuffer
-    const audioBuffer = window.audioContext.createBuffer(1, float32Data.length, window.audioContext.sampleRate);
-    audioBuffer.getChannelData(0).set(float32Data);
 
     window.audioQueue.push(audioBuffer);
 

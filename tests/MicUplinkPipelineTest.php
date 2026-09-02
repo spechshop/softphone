@@ -17,10 +17,18 @@ function micAssert(bool $condition, string $message): void
     if (!$condition) throw new RuntimeException($message);
 }
 
-function micFrame(int $seq, int $captureMs, int $rate = 8000): MicUplinkFrame
+function micFrame(int $seq, int $captureMs, int $rate = 8000, int $channels = 1, int $frameMs = 20): MicUplinkFrame
 {
-    $samples = (int)round($rate * 0.02);
-    return new MicUplinkFrame($seq, $captureMs, $rate, $samples, str_repeat("\x00\x01", $samples));
+    $samples = (int)round($rate * ($frameMs / 1000)) * $channels;
+    return new MicUplinkFrame(
+        $seq,
+        $captureMs,
+        $rate,
+        $samples,
+        str_repeat("\x00\x01", $samples),
+        flags: ($channels === 2 ? MicUplinkFrame::FLAG_STEREO : 0)
+            | ($frameMs === 10 ? MicUplinkFrame::FLAG_FRAME_10MS : 0),
+    );
 }
 
 // Protocol validation and round trip.
@@ -34,6 +42,14 @@ micAssert(MicUplinkFrame::decode(substr($wire, 0, -1), 8000) === null, 'truncate
 $badMagic = 'XX' . substr($wire, 2);
 micAssert(MicUplinkFrame::decode($badMagic, 8000) === null, 'invalid magic accepted');
 micAssert(MicUplinkFrame::decode($wire, 16000) === null, 'unexpected sample rate accepted');
+$stereoWire = micFrame(1, 20, 48000, 2)->encode();
+$stereoDecoded = MicUplinkFrame::decode($stereoWire, 48000);
+micAssert($stereoDecoded?->channels() === 2, 'stereo flag did not round trip');
+micAssert($stereoDecoded?->samples === 1920 && strlen($stereoDecoded->payload) === 3840, 'stereo interleaved frame size incorrect');
+$invalidStereo = substr_replace($stereoWire, pack('n', 960), 14, 2);
+micAssert(MicUplinkFrame::decode($invalidStereo, 48000) === null, 'stereo payload accepted with mono sample count');
+$tenMs = MicUplinkFrame::decode(micFrame(2, 30, 48000, 2, 10)->encode(), 48000);
+micAssert($tenMs?->frameMs() === 10 && $tenMs->samples === 960, '10ms stereo frame validation failed');
 
 // Ordering, duplicate, out-of-order and bounded overflow.
 $metrics = new MicQualityMetrics();
@@ -108,6 +124,16 @@ micAssert(strlen((string)$under->tick(1000)) === 320, 'audio frame size incorrec
 $silence = $under->tick(1020);
 micAssert($silence === str_repeat("\x00\x00", 160), 'underrun is not PCM16 silence');
 micAssert($under->metrics->pacerUnderruns === 1, 'underrun metric missing');
+$stereoUnder = new MicUplinkSession(3, 'call', 'mic-stereo', 48000, targetMs: 0, maxFrameAgeMs: 1000, channels: 2);
+$stereoUnder->ingest(micFrame(1, 0, 48000, 2), 1000);
+$stereoUnder->startIfReady(1000);
+micAssert(strlen((string)$stereoUnder->tick(1000)) === 3840, 'stereo payload was not preserved');
+micAssert(strlen((string)$stereoUnder->tick(1020)) === 3840, 'stereo underrun silence has wrong size');
+$tenMsSession = new MicUplinkSession(4, 'call', 'mic-10ms', 48000, targetMs: 0, maxFrameAgeMs: 1000, channels: 1, frameMs: 10);
+$tenMsSession->ingest(micFrame(1, 0, 48000, 1, 10), 1000);
+$tenMsSession->startIfReady(1000);
+micAssert(strlen((string)$tenMsSession->tick(1000)) === 960, '10ms PCM frame size incorrect');
+micAssert(strlen((string)$tenMsSession->tick(1010)) === 960, '10ms underrun size incorrect');
 
 // Estimated quality labels (not MOS).
 micAssert(MicQualityMetrics::qualityState(['uplinkJitterP95' => 8, 'browserQueueMs' => 40]) === 'excellent', 'excellent state incorrect');

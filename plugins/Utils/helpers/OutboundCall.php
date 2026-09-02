@@ -34,6 +34,10 @@ final class OutboundCall
     private string $contactIp;
     private Channel $events;
     private OutboundMediaSession $media;
+    /** @var array<string,mixed> */
+    private array $offerCodec;
+    /** @var array<string,mixed> */
+    private array $localOpusConfig;
     private string $fromHeader;
     private string $originalToHeader;
     private string $currentBranch = '';
@@ -88,10 +92,37 @@ final class OutboundCall
         $this->originalToHeader = '<' . $requestUri . '>';
         $this->events = new Channel(128);
         $userCodec = (string)($options['userCodec'] ?? $account['codec'] ?? 'PCMA/8000');
-        $this->media = new OutboundMediaSession($this->callId, $userCodec);
+        $this->offerCodec = self::codec((string)($options['trunkCodec'] ?? $account['trunkCodec'] ?? 'PCMA/8000'));
+        $this->localOpusConfig = OpusConfig::normalize(
+            is_array($options['opus'] ?? null) ? $options['opus'] : (is_array($account['opus'] ?? null) ? $account['opus'] : null)
+        );
+        $sourceChannels = strtoupper($this->offerCodec['name']) === 'OPUS'
+            ? max(1, min(2, (int)($options['sourceChannels'] ?? $this->localOpusConfig['channels'])))
+            : 1;
+        // Hardware fallback is authoritative: never offer stereo when capture is mono.
+        if ($sourceChannels === 1) {
+            $this->localOpusConfig['channels'] = 1;
+            $this->localOpusConfig['stereo'] = false;
+        }
+        $sourceSampleRate = max(8000, min(48000, (int)($options['sourceSampleRate']
+            ?? (explode('/', $userCodec)[1] ?? 8000))));
+        $this->media = new OutboundMediaSession(
+            $this->callId,
+            $userCodec,
+            $this->offerCodec,
+            $this->localOpusConfig,
+            $sourceSampleRate,
+            $sourceChannels,
+        );
         $this->dialog->localRtpPort = $this->media->localPort;
-        $offerCodec = self::codec((string)($options['trunkCodec'] ?? $account['trunkCodec'] ?? 'PCMA/8000'));
-        $this->dialog->localSdp = SdpHelper::buildLocalSdp($this->contactIp, $this->dialog->localRtpPort, $offerCodec, null);
+        $this->dialog->localSdp = SdpHelper::buildLocalSdp(
+            $this->contactIp,
+            $this->dialog->localRtpPort,
+            $this->offerCodec,
+            null,
+            $this->localOpusConfig,
+            strtoupper($this->offerCodec['name']) === 'OPUS' ? $this->localOpusConfig['ptime'] : null,
+        );
         $this->noResponseTimeout = (float)($options['noResponseTimeout'] ?? 15.0);
         $this->provisionalTimeout = (float)($options['provisionalTimeout'] ?? 120.0);
     }
@@ -101,6 +132,9 @@ final class OutboundCall
     public function onAnswer(callable $callback): self { $this->onAnswer = $callback; return $this; }
     public function onFailed(callable $callback): self { $this->onFailed = $callback; return $this; }
     public function onTerminated(callable $callback): self { $this->onTerminated = $callback; return $this; }
+
+    /** @return array<string,mixed>|null */
+    public function effectiveOpusConfig(): ?array { return $this->media->effectiveOpusConfig(); }
 
     public function start(): bool
     {

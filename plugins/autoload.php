@@ -34,7 +34,7 @@ foreach ($paths as $path) {
         }
     }
 }
-foreach ($nameFiles as $key => $file) is_file($file) && include $file;
+foreach ($nameFiles as $key => $file) is_file($file) && include_once $file;
 
 $listRoutes = \plugins\Request\controller::listPages();
 //foreach ($listRoutes as $listRoute) {

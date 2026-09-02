@@ -15,7 +15,9 @@ class SdpHelper
 
     /**
      * Parse remote SDP (already parsed array from sip::parse()['sdp']).
-     * Returns ['ip', 'port', 'codecs', 'telephone_event'].
+     * Returns ['ip', 'port', 'codecs', 'telephone_event', 'ptime'].
+     * Opus codecs include the typed `fmtp_parsed` structure and retain the
+     * RTP rtpmap channel count separately as `rtp_channels`.
      */
     public static function parseRemoteSdp(array $sdp): array
     {
@@ -24,6 +26,7 @@ class SdpHelper
             'port' => 0,
             'codecs' => [],
             'telephone_event' => null,
+            'ptime' => null,
         ];
 
         // c= -> "IN IP4 x.x.x.x"
@@ -47,8 +50,8 @@ class SdpHelper
         $rtpmap = [];
         $fmtp = [];
         foreach ($sdp['a'] ?? [] as $aLine) {
-            $aLine = trim($aLine);
-            if (str_starts_with($aLine, 'rtpmap:')) {
+            $aLine = preg_replace('/^a=/i', '', trim($aLine));
+            if (stripos($aLine, 'rtpmap:') === 0) {
                 $rest = substr($aLine, 7);
                 [$pt, $codecStr] = array_pad(explode(' ', $rest, 2), 2, '');
                 $pt = (int)$pt;
@@ -58,10 +61,12 @@ class SdpHelper
                     'rate' => (int)($codecParts[1] ?? 8000),
                     'channels' => (int)($codecParts[2] ?? 1),
                 ];
-            } elseif (str_starts_with($aLine, 'fmtp:')) {
+            } elseif (stripos($aLine, 'fmtp:') === 0) {
                 $rest = substr($aLine, 5);
                 [$pt, $params] = array_pad(explode(' ', $rest, 2), 2, '');
                 $fmtp[(int)$pt] = $params;
+            } elseif (preg_match('/^ptime\s*:\s*(\d+)$/i', $aLine, $match) === 1) {
+                $result['ptime'] = (int)$match[1];
             }
         }
 
@@ -79,21 +84,33 @@ class SdpHelper
 
             $upperName = strtoupper($info['name']);
             if ($upperName === 'TELEPHONE-EVENT') {
-                $result['telephone_event'] = [
-                    'pt' => $pt,
-                    'rate' => $info['rate'],
-                    'fmtp' => $fmtp[$pt] ?? '0-15',
-                ];
+                // m-line order is the remote preference order. Keep the first
+                // supported telephone-event mapping when more than one exists.
+                if ($result['telephone_event'] === null) {
+                    $result['telephone_event'] = [
+                        'pt' => $pt,
+                        'rate' => $info['rate'],
+                        'fmtp' => $fmtp[$pt] ?? '0-15',
+                    ];
+                }
                 continue;
             }
 
-            $result['codecs'][] = [
+            $codec = [
                 'pt' => $pt,
                 'name' => $info['name'],
                 'rate' => $info['rate'],
                 'channels' => $info['channels'],
+                'rtp_channels' => $info['channels'],
                 'fmtp' => $fmtp[$pt] ?? null,
             ];
+            if ($upperName === 'OPUS') {
+                $codec['fmtp_parsed'] = OpusConfig::parseFmtp($codec['fmtp']);
+                // RFC 7587 rtpmap channels is always 2. PCM semantics comes from fmtp.
+                $codec['channels'] = !empty($codec['fmtp_parsed']['stereo'])
+                    && !empty($codec['fmtp_parsed']['sprop-stereo']) ? 2 : 1;
+            }
+            $result['codecs'][] = $codec;
         }
 
         return $result;
@@ -102,17 +119,33 @@ class SdpHelper
     /**
      * Choose the best codec from a list using the priority order.
      */
-    public static function chooseCodec(array $remoteCodecs): ?array
+    public static function chooseCodec(array $remoteCodecs, ?string $preferredName = null): ?array
     {
-        foreach (self::$codecPriority as $preferred) {
+        $priority = self::$codecPriority;
+        $preferredName = strtoupper(trim((string)$preferredName));
+        if ($preferredName !== '') {
+            usort($priority, static function (array $left, array $right) use ($preferredName): int {
+                $leftPreferred = strtoupper($left['name']) === $preferredName;
+                $rightPreferred = strtoupper($right['name']) === $preferredName;
+                return $leftPreferred === $rightPreferred ? 0 : ($leftPreferred ? -1 : 1);
+            });
+        }
+        foreach ($priority as $preferred) {
             foreach ($remoteCodecs as $remote) {
                 if (strcasecmp($remote['name'], $preferred['name']) === 0) {
+                    if (strcasecmp($remote['name'], 'opus') === 0
+                        && ((int)$remote['rate'] !== OpusConfig::RTP_RATE
+                            || (int)($remote['rtp_channels'] ?? 0) !== OpusConfig::RTP_CHANNELS)) {
+                        continue;
+                    }
                     return [
                         'pt' => $preferred['pt'] ?? $remote['pt'],
                         'name' => $remote['name'],
                         'rate' => $remote['rate'],
                         'channels' => $remote['channels'],
+                        'rtp_channels' => $remote['rtp_channels'] ?? $remote['channels'],
                         'fmtp' => $remote['fmtp'] ?? null,
+                        'fmtp_parsed' => $remote['fmtp_parsed'] ?? [],
                     ];
                 }
             }
@@ -121,23 +154,30 @@ class SdpHelper
     }
 
     /**
-     * Build a minimal SDP answer string.
+     * Build an SDP offer/answer for one selected codec.
      */
     public static function buildLocalSdp(
         string $localIp,
         int    $localRtpPort,
         array  $codec,
-        ?array $telephoneEvent = null
+        ?array $telephoneEvent = null,
+        ?array $opusConfig = null,
+        ?int $ptime = null,
+        bool $isAnswer = false,
     ): string
     {
         $ts = time();
         $pt = (int)$codec['pt'];
         $name = $codec['name'];
         $rate = (int)$codec['rate'];
-        $channels = (int)($codec['channels'] ?? 1);
+        $isOpus = strcasecmp((string)$name, 'opus') === 0;
+        $channels = $isOpus ? OpusConfig::RTP_CHANNELS : (int)($codec['channels'] ?? 1);
 
         $dtmfPt = (int)($telephoneEvent['pt'] ?? 101);
-        $dtmfRate = (int)($telephoneEvent['rate'] ?? 8000);
+        $dtmfRate = (int)($telephoneEvent['rate'] ?? ($isOpus ? OpusConfig::RTP_RATE : 8000));
+        $dtmfFmtp = trim((string)($telephoneEvent['fmtp'] ?? '0-15')) ?: '0-15';
+        $includeDtmf = !$isAnswer || $telephoneEvent !== null;
+        $effectivePtime = $ptime ?? ($isOpus ? (int)OpusConfig::normalize($opusConfig)['ptime'] : 20);
 
         $codecLine = "rtpmap:{$pt} {$name}/{$rate}";
         if ($channels > 1) $codecLine .= "/{$channels}";
@@ -147,15 +187,19 @@ class SdpHelper
         $sdp .= "s=SpechPhone\r\n";
         $sdp .= "c=IN IP4 {$localIp}\r\n";
         $sdp .= "t=0 0\r\n";
-        $sdp .= "m=audio {$localRtpPort} RTP/AVP {$pt} {$dtmfPt}\r\n";
+        $sdp .= "m=audio {$localRtpPort} RTP/AVP {$pt}" . ($includeDtmf ? " {$dtmfPt}" : '') . "\r\n";
         $sdp .= "a={$codecLine}\r\n";
-        if (!empty($codec['fmtp'])) {
+        if ($isOpus) {
+            $sdp .= "a=fmtp:{$pt} " . OpusConfig::buildFmtp($opusConfig ?? []) . "\r\n";
+        } elseif (!empty($codec['fmtp'])) {
             $sdp .= "a=fmtp:{$pt} {$codec['fmtp']}\r\n";
         }
-        $sdp .= "a=rtpmap:{$dtmfPt} telephone-event/{$dtmfRate}\r\n";
-        $sdp .= "a=fmtp:{$dtmfPt} 0-15\r\n";
+        if ($includeDtmf) {
+            $sdp .= "a=rtpmap:{$dtmfPt} telephone-event/{$dtmfRate}\r\n";
+            $sdp .= "a=fmtp:{$dtmfPt} {$dtmfFmtp}\r\n";
+        }
         $sdp .= "a=sendrecv\r\n";
-        $sdp .= "a=ptime:20\r\n";
+        $sdp .= "a=ptime:{$effectivePtime}\r\n";
 
         return $sdp;
     }

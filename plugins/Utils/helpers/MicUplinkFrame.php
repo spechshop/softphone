@@ -8,6 +8,8 @@ final class MicUplinkFrame
     public const MAGIC = 'MU';
     public const VERSION = 1;
     public const FORMAT_PCM16_LE = 1;
+    public const FLAG_STEREO = 0x0001;
+    public const FLAG_FRAME_10MS = 0x0002;
     public const HEADER_BYTES = 20;
     public const FRAME_MS = 20;
 
@@ -45,7 +47,9 @@ final class MicUplinkFrame
         $sampleRate = (int)$header['sampleRate'];
         $samples = (int)$header['samples'];
         $payloadLength = (int)$header['payloadLength'];
-        $expectedSamples = (int)round($sampleRate * (self::FRAME_MS / 1000));
+        $channels = (((int)$header['flags'] & self::FLAG_STEREO) !== 0) ? 2 : 1;
+        $frameMs = (((int)$header['flags'] & self::FLAG_FRAME_10MS) !== 0) ? 10 : self::FRAME_MS;
+        $expectedSamples = (int)round($sampleRate * ($frameMs / 1000)) * $channels;
 
         if ($sampleRate < 8000 || $sampleRate > 48000
             || ($expectedSampleRate !== null && $sampleRate !== $expectedSampleRate)
@@ -66,6 +70,16 @@ final class MicUplinkFrame
             (int)$header['flags'],
             $arrivalTimestampMs,
         );
+    }
+
+    public function channels(): int
+    {
+        return ($this->flags & self::FLAG_STEREO) !== 0 ? 2 : 1;
+    }
+
+    public function frameMs(): int
+    {
+        return ($this->flags & self::FLAG_FRAME_10MS) !== 0 ? 10 : self::FRAME_MS;
     }
 
     public function encode(): string

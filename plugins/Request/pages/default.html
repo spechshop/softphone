@@ -270,6 +270,12 @@
                     <span>Fila <b class="mic-quality-value" id="micQualityQueue">0 ms</b></span>
                     <span>Drops <b class="mic-quality-value" id="micQualityDrops">0,0%</b></span>
                     <span>WS buffer <b class="mic-quality-value" id="micQualityWs">0 KB</b></span>
+                    <span>Codec <b class="mic-quality-value" id="micQualityCodec">—</b></span>
+                    <span>Modo <b class="mic-quality-value" id="micQualityMode">—</b></span>
+                    <span>Bitrate <b class="mic-quality-value" id="micQualityBitrate">—</b></span>
+                    <span>FEC <b class="mic-quality-value" id="micQualityFec">—</b></span>
+                    <span>Bandwidth <b class="mic-quality-value" id="micQualityBandwidth">—</b></span>
+                    <span>ptime <b class="mic-quality-value" id="micQualityPtime">—</b></span>
                 </div>
             </div>
 
@@ -369,7 +375,7 @@
                          id="codec-opus"
                          style="border-color:var(--border); background:rgba(255,255,255,.04); cursor: pointer; transition: all 0.2s;">
                         <div class="fw-bold">Opus 48kHz</div>
-                        <div class="mini">Estéreo</div>
+                        <div class="mini">Mono por padrão • estéreo opcional</div>
                     </div>
                 </div>
                 <div class="col-6">
@@ -479,7 +485,7 @@
                     <option value="PCMA/8000">PCMA 8kHz (A-law)</option>
                     <option value="PCMU/8000">PCMU 8kHz (μ-law)</option>
                     <option value="G729/8000">G.729 8kHz</option>
-                    <option value="OPUS/48000/2">Opus 48kHz (Estéreo)</option>
+                    <option value="OPUS/48000/2">Opus (RTP 48kHz, mono por padrão)</option>
                     <option value="G722/16000">G.722 16kHz (Wideband)</option>
                     <option value="L16/8000/1">L16 8kHz (PCM Mono)</option>
                     <option value="L16/16000/1">L16 16kHz (PCM Mono)</option>
@@ -489,6 +495,65 @@
                     <option value="SPEEX/16000">Speex 16kHz (Wideband)</option>
                     <option value="ILBC/8000">iLBC 8kHz</option>
                 </select>
+            </div>
+
+            <div class="mb-3 p-3 rounded-3 border" id="opusSettings" style="display:none;border-color:var(--border)!important;background:rgba(255,255,255,.025)">
+                <div class="fw-bold mb-2">Opus — RTP/SIP</div>
+                <div class="mini mb-2">O clock RTP permanece 48 kHz; modo e bandwidth são negociados via fmtp.</div>
+                <div class="mb-2">
+                    <label class="form-label mini mb-1">Modo de áudio</label>
+                    <div class="d-flex gap-3">
+                        <label class="mini"><input type="radio" name="opusChannels" id="opusMono" value="1"> Mono</label>
+                        <label class="mini"><input type="radio" name="opusChannels" id="opusStereo" value="2"> Estéreo</label>
+                    </div>
+                    <div class="mini text-warning mt-1" id="opusHardwareStatus" style="display:none"></div>
+                </div>
+                <div class="mb-2">
+                    <label class="form-label mini mb-1" for="opusProfile">Perfil</label>
+                    <select class="form-control soft-input" id="opusProfile">
+                        <option value="economy">Voz econômica</option>
+                        <option value="standard">Voz padrão</option>
+                        <option value="high">Alta qualidade</option>
+                        <option value="stereo">Estéreo</option>
+                        <option value="custom">Customizado</option>
+                    </select>
+                </div>
+                <div class="row g-2">
+                    <div class="col-6">
+                        <label class="form-label mini mb-1" for="opusBitrate">Bitrate máximo</label>
+                        <select class="form-control soft-input" id="opusBitrate">
+                            <option value="16000">16 kbps</option><option value="24000">24 kbps</option>
+                            <option value="32000">32 kbps</option><option value="48000">48 kbps</option>
+                            <option value="64000">64 kbps</option><option value="96000">96 kbps</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label mini mb-1" for="opusPtime">Packet time</label>
+                        <select class="form-control soft-input" id="opusPtime">
+                            <option value="10">10 ms</option><option value="20">20 ms</option>
+                            <option value="40">40 ms</option><option value="60">60 ms</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label mini mb-1" for="opusPlaybackRate">Bandwidth reprodução</label>
+                        <select class="form-control soft-input" id="opusPlaybackRate">
+                            <option value="8000">Narrowband — 8 kHz</option><option value="12000">Mediumband — 12 kHz</option>
+                            <option value="16000">Wideband — 16 kHz</option><option value="24000">Super-wideband — 24 kHz</option>
+                            <option value="48000">Fullband — 48 kHz</option>
+                        </select>
+                    </div>
+                    <div class="col-6">
+                        <label class="form-label mini mb-1" for="opusCaptureRate">Bandwidth captura</label>
+                        <select class="form-control soft-input" id="opusCaptureRate">
+                            <option value="8000">Narrowband — 8 kHz</option><option value="12000">Mediumband — 12 kHz</option>
+                            <option value="16000">Wideband — 16 kHz</option><option value="24000">Super-wideband — 24 kHz</option>
+                            <option value="48000">Fullband — 48 kHz</option>
+                        </select>
+                    </div>
+                </div>
+                <label class="mini mt-2" style="display:flex;align-items:center;gap:9px;cursor:pointer">
+                    <input id="opusFec" type="checkbox"><span>FEC para perda de pacotes</span>
+                </label>
             </div>
 
             <div class="d-flex gap-2">
@@ -1439,6 +1504,80 @@
         user.updateUserData('selectedCodecFormat', selectedCodecFormat);
     }
     window.getSelectedCodec = () => selectedCodecFormat;
+
+    const OPUS_DEFAULTS = SpechOpus.DEFAULTS;
+    const OPUS_PRESETS = SpechOpus.PRESETS;
+
+    function normalizeOpusConfig(value) {
+        return SpechOpus.normalize(value);
+    }
+
+    const opusEls = {
+        panel: document.getElementById('opusSettings'), profile: document.getElementById('opusProfile'),
+        mono: document.getElementById('opusMono'), stereo: document.getElementById('opusStereo'),
+        bitrate: document.getElementById('opusBitrate'), playback: document.getElementById('opusPlaybackRate'),
+        capture: document.getElementById('opusCaptureRate'), fec: document.getElementById('opusFec'),
+        ptime: document.getElementById('opusPtime'), hardware: document.getElementById('opusHardwareStatus')
+    };
+    const trunkCodecSelect = document.getElementById('trunkCodec');
+
+    function renderOpusControls(config) {
+        const opus = normalizeOpusConfig(config);
+        opusEls.profile.value = opus.profile;
+        opusEls.mono.checked = opus.channels === 1;
+        opusEls.stereo.checked = opus.channels === 2;
+        opusEls.bitrate.value = String(opus.maxAverageBitrate);
+        opusEls.playback.value = String(opus.maxPlaybackRate);
+        opusEls.capture.value = String(opus.maxCaptureRate);
+        opusEls.fec.checked = opus.fec;
+        opusEls.ptime.value = String(opus.ptime);
+    }
+
+    function readOpusControls() {
+        return normalizeOpusConfig({
+            profile: opusEls.profile.value,
+            channels: opusEls.stereo.checked ? 2 : 1,
+            stereo: opusEls.stereo.checked,
+            maxAverageBitrate: opusEls.bitrate.value,
+            maxPlaybackRate: opusEls.playback.value,
+            maxCaptureRate: opusEls.capture.value,
+            fec: opusEls.fec.checked,
+            ptime: opusEls.ptime.value
+        });
+    }
+
+    function updateOpusVisibility() {
+        opusEls.panel.style.display = trunkCodecSelect.value.toUpperCase().startsWith('OPUS/') ? '' : 'none';
+    }
+
+    renderOpusControls(normalizeOpusConfig(user.getValue('opus')));
+    updateOpusVisibility();
+    trunkCodecSelect.addEventListener('change', updateOpusVisibility);
+    opusEls.profile.addEventListener('change', () => {
+        if (OPUS_PRESETS[opusEls.profile.value]) renderOpusControls(OPUS_PRESETS[opusEls.profile.value]);
+        window._effectiveOpusConfig = null;
+        user.updateUserData('opus', readOpusControls());
+    });
+    [opusEls.mono, opusEls.stereo, opusEls.bitrate, opusEls.playback, opusEls.capture, opusEls.fec, opusEls.ptime]
+        .forEach(element => element.addEventListener('change', () => {
+            opusEls.profile.value = 'custom';
+            window._effectiveOpusConfig = null;
+            user.updateUserData('opus', readOpusControls());
+            opusEls.hardware.style.display = 'none';
+        }));
+
+    window.getDesiredOpusConfig = () => readOpusControls();
+    window.refreshOpusControls = config => renderOpusControls(normalizeOpusConfig(config));
+    window.refreshOpusVisibility = updateOpusVisibility;
+    window.getEffectiveOpusConfig = () => normalizeOpusConfig(window._effectiveOpusConfig || readOpusControls());
+    window.setEffectiveOpusConfig = config => {
+        window._effectiveOpusConfig = normalizeOpusConfig(config);
+        if (typeof window.applyNegotiatedOpusPtime === 'function') {
+            window.applyNegotiatedOpusPtime(window._effectiveOpusConfig.ptime);
+        }
+        if (typeof renderMicQuality === 'function' && uplinkMetrics) renderMicQuality(uplinkMetrics.snapshot());
+    };
+
     window.saveConfig = async () => {
         const button = document.getElementById('btnSaveConfig');
         const state = document.getElementById('cfgState');
@@ -1451,7 +1590,9 @@
         const codec = getSelectedCodec();
         const trunkCodec = document.getElementById('trunkCodec').value;
 
-        const data = {sipServer, sipUser, sipDomain, sipPass, codec, trunkCodec};
+        const opus = readOpusControls();
+        user.updateUserData('opus', opus);
+        const data = {sipServer, sipUser, sipDomain, sipPass, codec, trunkCodec, opus};
 
 
         const originalHtml = button.innerHTML;
@@ -1585,9 +1726,15 @@
             console.log('🎤 Microfone já ativo');
         }
 
+        const opusCall = typeof window.prepareOpusForCall === 'function'
+            ? await window.prepareOpusForCall()
+            : {opus: normalizeOpusConfig(user.getValue('opus')), sourceSampleRate: 8000, sourceChannels: 1};
         sendRecByToken({
             digits: digitsCall,
             codec: getSelectedCodec(),
+            opus: opusCall.opus,
+            sourceSampleRate: opusCall.sourceSampleRate,
+            sourceChannels: opusCall.sourceChannels,
         }, 'StartCall').then((res) => {
             if (!res || res.success !== true) {
                 btnCall.style.display = '';
@@ -1982,6 +2129,8 @@
     if (sipUser) document.getElementById('sipUser').value = sipUser;
     if (sipPass) document.getElementById('sipPass').value = sipPass;
     if (trunkCodec) document.getElementById('trunkCodec').value = trunkCodec;
+    renderOpusControls(normalizeOpusConfig(user.getValue('opus')));
+    updateOpusVisibility();
 
     // ===== Microphone Audio Capture & WebSocket Stream
     let audioContext = null;
@@ -1994,6 +2143,8 @@
     let sentBytes = 0;
     let micSequence = 0;
     let micCaptureSamples = 0;
+    let micCaptureChannels = 1;
+    let micFrameMs = 20;
     let uplinkMetrics = null;
     let uplinkQueue = null;
     let uplinkSenderTimer = null;
@@ -2027,6 +2178,14 @@
         document.getElementById('micQualityQueue').textContent = `${Math.round(snapshot.browserQueueMs || 0)} ms`;
         document.getElementById('micQualityDrops').textContent = `${Number(snapshot.dropPercent || 0).toFixed(1).replace('.', ',')}%`;
         document.getElementById('micQualityWs').textContent = `${(Number(snapshot.wsBufferedAmount || 0) / 1024).toFixed(1)} KB`;
+        const opusActive = trunkCodecSelect.value.toUpperCase().startsWith('OPUS/');
+        const opus = getEffectiveOpusConfig();
+        document.getElementById('micQualityCodec').textContent = opusActive ? 'Opus' : trunkCodecSelect.value.split('/')[0];
+        document.getElementById('micQualityMode').textContent = opusActive ? (opus.channels === 2 ? 'Estéreo' : 'Mono') : 'Mono';
+        document.getElementById('micQualityBitrate').textContent = opusActive ? `${opus.maxAverageBitrate / 1000} kbps` : '—';
+        document.getElementById('micQualityFec').textContent = opusActive ? (opus.fec ? 'ligado' : 'desligado') : '—';
+        document.getElementById('micQualityBandwidth').textContent = opusActive ? `${opus.maxCaptureRate / 1000} kHz` : '—';
+        document.getElementById('micQualityPtime').textContent = opusActive ? `${opus.ptime} ms` : '20 ms';
     }
 
     function resetMicUplinkState(showPanel) {
@@ -2045,6 +2204,20 @@
         micQualityToggle.setAttribute('aria-expanded', 'false');
         renderMicQuality({quality: 'good'});
     }
+
+    window.applyNegotiatedOpusPtime = function (ptime) {
+        const nextFrameMs = Number(ptime) === 10 ? 10 : 20;
+        if (!isRecording || micFrameMs === nextFrameMs || !audioContext || !uplinkMetrics) return;
+        micFrameMs = nextFrameMs;
+        window.micAudioBuffer = new Int16Array(0);
+        uplinkQueue = new SpechMicUplink.MicUplinkQueue(
+            {sampleRate: audioContext.sampleRate, frameMs: micFrameMs},
+            uplinkMetrics
+        );
+        // The backend validates the frame duration declared by this connection.
+        // Reconnect with frameMs=10/20 before forwarding the new framing.
+        if (websocket) websocket.close();
+    };
 
     function startMicSenderLoops() {
         const senderTick = () => {
@@ -2084,7 +2257,7 @@
 
         const sampleRate = audioContext ? audioContext.sampleRate : 8000;
         const userFp = user.getValue('fp') || 'anon';
-        const wsUrl = `${proto}//${infoURI().host}:8889?fp=${fp}&ssrc=mic-${userFp}&sampleRate=${sampleRate}`;
+        const wsUrl = `${proto}//${infoURI().host}:8889?fp=${fp}&ssrc=mic-${userFp}&sampleRate=${sampleRate}&channels=${micCaptureChannels}&frameMs=${micFrameMs}`;
         const isNewCall = lastCallId !== null && fp !== lastCallId;
 
         // Fecha conexão anterior se existir
@@ -2155,32 +2328,18 @@
             // Limpa buffer antes de começar
             window.micAudioBuffer = new Int16Array(0);
 
-            // AudioContext com sample rate do codec
-            const currentSampleRate = extractSampleRate(getSelectedCodec()) || 8000;
+            // Capture bandwidth is independent from the fixed 48 kHz Opus RTP clock.
+            const opusActive = trunkCodecSelect.value.toUpperCase().startsWith('OPUS/');
+            const desiredOpus = readOpusControls();
+            const desiredChannels = opusActive ? desiredOpus.channels : 1;
+            micFrameMs = opusActive && desiredOpus.ptime === 10 ? 10 : 20;
+            const currentSampleRate = opusActive
+                ? desiredOpus.maxCaptureRate
+                : (extractSampleRate(getSelectedCodec()) || 8000);
             audioContext = new AudioContext({sampleRate: currentSampleRate});
             console.log('🎤 Sample rate:', audioContext.sampleRate);
 
-            // AudioWorklet SIMPLIFICADO - só converte Float32→PCM16
-            await audioContext.audioWorklet.addModule(
-                URL.createObjectURL(new Blob([`
-                    class Recorder extends AudioWorkletProcessor {
-                        process(inputs) {
-                            const input = inputs[0][0];
-                            if (!input) return true;
-
-                            const pcm = new Int16Array(input.length);
-                            for (let i = 0; i < input.length; i++) {
-                                const clamped = Math.max(-1, Math.min(1, input[i]));
-                                pcm[i] = (clamped * 32767) | 0;
-                            }
-
-                            this.port.postMessage(pcm.buffer, [pcm.buffer]);
-                            return true;
-                        }
-                    }
-                    registerProcessor("recorder", Recorder);
-                `], {type: "application/javascript"}))
-            );
+            await audioContext.audioWorklet.addModule('/js/opus-recorder-worklet.js');
 
             // Microfone com config PADRÃO (navegador faz AGC/NC/EC)
             mediaStream = await navigator.mediaDevices.getUserMedia({
@@ -2189,9 +2348,22 @@
                     noiseSuppression: true,
                     autoGainControl: micAgcEnabled.checked,
                     sampleRate: currentSampleRate,
-                    sampleSize: 16
+                    sampleSize: 16,
+                    channelCount: desiredChannels
                 }
             });
+
+            const track = mediaStream.getAudioTracks()[0];
+            const trackSettings = track && typeof track.getSettings === 'function' ? track.getSettings() : {};
+            const captureResolution = SpechOpus.resolveCapture(desiredOpus, trackSettings);
+            micCaptureChannels = captureResolution.actualChannels;
+            window.setEffectiveOpusConfig(captureResolution.config);
+            if (captureResolution.fallback) {
+                opusEls.hardware.textContent = 'Estéreo indisponível neste dispositivo — usando mono';
+                opusEls.hardware.style.display = '';
+            } else {
+                opusEls.hardware.style.display = 'none';
+            }
 
             const mic = audioContext.createMediaStreamSource(mediaStream);
 
@@ -2201,7 +2373,10 @@
             const initialMicGain = (micVolCall ? micVolCall.value : savedMicVolCall) / 100;
             window.micGainNode.gain.value = initialMicGain;
 
-            audioWorkletNode = new AudioWorkletNode(audioContext, "recorder");
+            audioWorkletNode = new AudioWorkletNode(audioContext, "recorder", {
+                channelCount: micCaptureChannels,
+                channelCountMode: 'explicit'
+            });
 
             // Reset contadores
             sentPackets = 0;
@@ -2209,7 +2384,7 @@
             micSequence = 0;
             micCaptureSamples = 0;
             uplinkMetrics = new SpechMicUplink.MicQualityMetrics();
-            uplinkQueue = new SpechMicUplink.MicUplinkQueue({sampleRate: audioContext.sampleRate}, uplinkMetrics);
+            uplinkQueue = new SpechMicUplink.MicUplinkQueue({sampleRate: audioContext.sampleRate, frameMs: micFrameMs}, uplinkMetrics);
             isRecording = true;
 
             // Função para conectar/reconectar WebSocket
@@ -2230,17 +2405,26 @@
 
             // -----------------------------------------
 
-            // Configuração simples: pacotes de 20ms
-            const VOIP_MS = 20;
-            const VOIP_SAMPLES = Math.floor(audioContext.sampleRate * (VOIP_MS / 1000));
-            console.log('🎤 Pacote:', VOIP_SAMPLES, 'samples =', VOIP_SAMPLES * 2, 'bytes');
+            // Framing do browser (10/20 ms) é independente do ptime RTP.
+            console.log('🎤 Framing interno inicial:', micFrameMs, 'ms');
 
             // Buffer global para poder limpar entre chamadas
             window.micAudioBuffer = new Int16Array(0);
 
             // Captura e rede são desacopladas por uma fila bounded/pacer local.
             audioWorkletNode.port.onmessage = (e) => {
-                const pcm = new Int16Array(e.data);
+                const message = e.data && e.data.buffer ? e.data : {buffer: e.data, channels: 1};
+                const pcm = new Int16Array(message.buffer);
+                // If the graph unexpectedly collapses to mono, make the next call safe.
+                if (Number(message.channels) !== micCaptureChannels) {
+                    micCaptureChannels = Number(message.channels) === 2 ? 2 : 1;
+                    const fallback = {...getEffectiveOpusConfig(), channels: micCaptureChannels, stereo: micCaptureChannels === 2};
+                    window.setEffectiveOpusConfig(fallback);
+                    window.micAudioBuffer = new Int16Array(0);
+                    // The WebSocket session validates the channel count declared
+                    // in its URL, so reconnect before forwarding the new layout.
+                    if (websocket) websocket.close();
+                }
 
                 // Atualiza VU meter
                 if (typeof window.updateMicMeter === 'function') {
@@ -2254,14 +2438,16 @@
                 window.micAudioBuffer = newBuffer;
 
                 // Envia pacotes completos
-                while (window.micAudioBuffer.length >= VOIP_SAMPLES) {
-                    const packet = window.micAudioBuffer.slice(0, VOIP_SAMPLES);
-                    window.micAudioBuffer = window.micAudioBuffer.slice(VOIP_SAMPLES);
+                const frameSamples = Math.floor(audioContext.sampleRate * (micFrameMs / 1000));
+                const packetValues = frameSamples * micCaptureChannels;
+                while (window.micAudioBuffer.length >= packetValues) {
+                    const packet = window.micAudioBuffer.slice(0, packetValues);
+                    window.micAudioBuffer = window.micAudioBuffer.slice(packetValues);
                     uplinkMetrics.observeSamples(packet);
                     // Audio sample time is monotonic and is not distorted when
                     // the browser main thread delivers worklet messages in a burst.
                     const captureTimestampMs = (micCaptureSamples * 1000) / audioContext.sampleRate;
-                    micCaptureSamples += VOIP_SAMPLES;
+                    micCaptureSamples += frameSamples;
                     uplinkQueue.enqueue({
                         sequence: micSequence,
                         captureTimestampMs,
@@ -2270,7 +2456,8 @@
                             captureTimestampMs,
                             audioContext.sampleRate,
                             packet,
-                            0
+                            (micCaptureChannels === 2 ? SpechMicUplink.FLAG_STEREO : 0)
+                                | (micFrameMs === 10 ? SpechMicUplink.FLAG_FRAME_10MS : 0)
                         )
                     });
                     micSequence = (micSequence + 1) >>> 0;
@@ -2298,11 +2485,25 @@
         }
     };
 
+    window.prepareOpusForCall = async function () {
+        const opusActive = trunkCodecSelect.value.toUpperCase().startsWith('OPUS/');
+        if (opusActive && !isMicStop && !isRecording) await startAudioCapture();
+        const sourceChannels = opusActive && isRecording ? micCaptureChannels : 1;
+        const sourceSampleRate = isRecording && audioContext ? audioContext.sampleRate
+            : (opusActive ? readOpusControls().maxCaptureRate : (extractSampleRate(getSelectedCodec()) || 8000));
+        const opus = opusActive
+            ? {...getEffectiveOpusConfig(), channels: sourceChannels, stereo: sourceChannels === 2}
+            : readOpusControls();
+        return {opus, sourceChannels, sourceSampleRate};
+    };
+
     window.stopAudioCapture = function () {
         console.log('🛑 Parando captura de áudio...');
 
         isRecording = false;
         isMuted = false;
+        micCaptureChannels = 1;
+        micFrameMs = 20;
         resetMicUplinkState(false);
 
         // Limpa o buffer de áudio residual

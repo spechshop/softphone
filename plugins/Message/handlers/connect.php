@@ -6,6 +6,7 @@ namespace handlers;
 use helpers\utils\CallState;
 use helpers\utils\AccountIdentity;
 use helpers\utils\Registrar;
+use helpers\utils\OpusConfig;
 use libspech\Cache\cache;
 use libspech\Cli\cli;
 use Swoole\Timer;
@@ -36,6 +37,10 @@ class connect
             cli::pcl("[WS:CONNECT] accountId={$data['fp']} fd={$fd} tabs=" . count($connections[$data['fp']]), 'green');
 
             $userDatas = $vault->get($data['fp']);
+            if (str_starts_with(strtoupper((string)($userDatas['trunkCodec'] ?? '')), 'OPUS/')
+                && !is_array($userDatas['opus'] ?? null)) {
+                $userDatas['opus'] = OpusConfig::defaults();
+            }
             $identity = AccountIdentity::fromData((string)$data['fp'], $userDatas);
             $userDatas = array_merge($userDatas, $identity);
             $vault->set((string)$data['fp'], $userDatas);

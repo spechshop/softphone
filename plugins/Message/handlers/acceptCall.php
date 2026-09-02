@@ -3,6 +3,7 @@
 namespace handlers;
 
 use helpers\utils\CallState;
+use helpers\utils\OpusConfig;
 use helpers\utils\SdpHelper;
 use libspech\Cache\cache;
 use libspech\Cli\cli;
@@ -10,7 +11,6 @@ use libspech\Network\network;
 use libspech\Packet\renderMessages;
 use libspech\Rtp\MediaChannel;
 use libspech\Sip\sip;
-use libspech\Sip\trunkController;
 use Swoole\Coroutine;
 use Swoole\WebSocket\Server;
 
@@ -59,22 +59,54 @@ class callAccept
                 ],
             ]));
         }
+        $userData = $vault->get($fp);
         $inviteHeaders = json_decode($call['invite_headers_json'], true);
         $inviteSdp = json_decode($call['invite_sdp_json'], true);
-        $parser = trunkController::getSDPModelCodecs($inviteSdp['a']);
 
         $sdpParsed = SdpHelper::parseRemoteSdp($inviteSdp ?? []);
-        $chosenCodec = SdpHelper::chooseCodec($sdpParsed['codecs']);
+        $preferredCodec = explode('/', strtoupper((string)($userData['trunkCodec'] ?? '')))[0] ?? '';
+        $chosenCodec = SdpHelper::chooseCodec($sdpParsed['codecs'], $preferredCodec);
         if (!$chosenCodec) {
             $socket->sendto($call['remote_ip'], $call['remote_port'], \libspech\Packet\renderMessages::baseResponse($inviteHeaders, "606", "Not Acceptable"));
             CallState::$incomingCalls->del($callId);
             return false;
         }
 
+        $isOpus = strcasecmp((string)$chosenCodec['name'], 'opus') === 0;
+        $localOpusConfig = OpusConfig::normalize(
+            is_array($userData['opus'] ?? null) ? $userData['opus'] : null
+        );
+        $sourceSampleRate = max(8000, min(48000, (int)($data['sourceSampleRate']
+            ?? (explode('/', (string)($userData['codec'] ?? 'PCMA/8000'))[1] ?? 8000))));
+        $sourceChannels = max(1, min(2, (int)($data['sourceChannels'] ?? 1)));
+        if ($sourceChannels === 1) {
+            // An unverified/mono capture device must never produce a stereo answer.
+            $localOpusConfig['channels'] = 1;
+            $localOpusConfig['stereo'] = false;
+        }
+        $effectiveOpusConfig = $isOpus
+            ? OpusConfig::negotiate(
+                $localOpusConfig,
+                (array)($chosenCodec['fmtp_parsed'] ?? []),
+                is_int($sdpParsed['ptime']) ? $sdpParsed['ptime'] : null,
+            )
+            : null;
+        if ($isOpus) {
+            $chosenCodec['channels'] = $effectiveOpusConfig['channels'];
+        }
+
 
         $localRtpPort = network::getFreePort('udp');
         $localIp = network::getLocalIp();
-        $localSdp = SdpHelper::buildLocalSdp($localIp, $localRtpPort, $chosenCodec, $sdpParsed['telephone_event']);
+        $localSdp = SdpHelper::buildLocalSdp(
+            $localIp,
+            $localRtpPort,
+            $chosenCodec,
+            $sdpParsed['telephone_event'],
+            $effectiveOpusConfig,
+            $isOpus ? (int)$effectiveOpusConfig['ptime'] : null,
+            true,
+        );
 
 
         $responseHeaders = [
@@ -110,6 +142,7 @@ class callAccept
             'remote_rtp_port' => $sdpParsed['port'],
             'codec' => $chosenCodec['name'],
             'frequency' => $chosenCodec['rate'],
+            'opus_config' => $effectiveOpusConfig,
             'updated_at' => time(),
         ]));
         $callState = cache::get('coroutinesProcess')[$fp] ?? new \stdClass();
@@ -121,6 +154,12 @@ class callAccept
 
 
         foreach (\libspech\Cache\cache::get('connections')[$fp] ?? [] as $clientFd) {
+            if ($effectiveOpusConfig !== null) {
+                $socket->push($clientFd, json_encode([
+                    'type' => 'opusNegotiated',
+                    'data' => $effectiveOpusConfig,
+                ]));
+            }
             $socket->push($clientFd, json_encode([
                 'type' => 'event',
                 'data' => 'callAccept',
@@ -139,7 +178,6 @@ class callAccept
             ]));
         }
         // ── Media bridge ──────────────────────────────────────────────────────
-        $userData = $vault->get($fp);
         $userCodec = $userData['codec'] ?? 'PCMA/8000';
         $userFrequency = (int)(explode('/', $userCodec)[1] ?? 8000);
         // State object — flags shared with the media coroutine.
@@ -170,8 +208,20 @@ class callAccept
 
         $mediaChannel = new MediaChannel($rtpSocket, $callId);
         $mediaChannel->portList = $localRtpPort;
-        $mediaChannel->codecMapper = [$pt => strtoupper("{$codecName}/{$frequency}/{$channels}")];
-        $mediaChannel->registerPtCodecs($mediaChannel->codecMapper);
+        $mapper = [$pt => strtoupper("{$codecName}/{$frequency}/{$channels}")];
+        if (is_array($sdpParsed['telephone_event'])) {
+            $mapper[(int)$sdpParsed['telephone_event']['pt']] = 'telephone-event/'
+                . (int)$sdpParsed['telephone_event']['rate'] . '/1';
+        }
+        $packetTime = $isOpus ? (int)$effectiveOpusConfig['ptime'] : 20;
+        $mediaChannel->setPacketTime($packetTime);
+        $mediaChannel->codecMapper = $mapper;
+        $mediaChannel->txCodecMapper = $mapper;
+        $mediaChannel->rxCodecMapper = $mapper;
+        $mediaChannel->registerPtCodecs($mapper);
+        if (is_array($sdpParsed['telephone_event']) && (int)$sdpParsed['telephone_event']['pt'] !== 101) {
+            unset($mediaChannel->ptCodecs[101], $mediaChannel->ptFrequencies[101]);
+        }
 
 
         $eventPort = network::getFreePort('udp');
@@ -186,15 +236,33 @@ class callAccept
             'port' => $sdpParsed['port'],
             'codec' => $codecName,
             'pt' => $pt,
+            'txPt' => $pt,
+            'rxPt' => $pt,
             'timestamp' => time(),
-            'config' => $config ?? [],
+            'config' => $isOpus ? OpusConfig::mediaConfig($effectiveOpusConfig) : [],
             'ssrc' => $ssrc,
             'frequency' => $frequency,
             'channels' => $channels,
+            'ptime' => $packetTime,
+            'leg' => 'a',
+            'txCodecMapper' => $mapper,
+            'rxCodecMapper' => $mapper,
         ]);
+        $remoteMemberId = $sdpParsed['ip'] . ':' . $sdpParsed['port'];
+        if ($isOpus && isset($mediaChannel->members[$remoteMemberId]['opusEncoder'])) {
+            $mediaChannel->members[$remoteMemberId]['opusEffectiveConfig'] = $effectiveOpusConfig;
+            $mediaChannel->members[$remoteMemberId]['opusEncoderApplied'] = OpusConfig::applyEncoder(
+                $mediaChannel->members[$remoteMemberId]['opusEncoder'],
+                $effectiveOpusConfig,
+            );
+        }
 
 
-        $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtpc, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan) use ($callId, $portHandler, $userFrequency, $frequency, $codecName) {
+        // MediaChannel also decodes Opus for relay; the browser bridge needs an
+        // independent decoder because Opus decoder state cannot be advanced twice.
+        $browserOpusDecoder = new \opusChannel(48000, $channels);
+        $opusPlaybackRate = $isOpus ? (int)$effectiveOpusConfig['maxPlaybackRate'] : 0;
+        $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtpc, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan) use ($callId, $portHandler, $userFrequency, $frequency, $codecName, $browserOpusDecoder, $channels, $opusPlaybackRate) {
             if (strlen($rtpc->payloadRaw) < 1) {
                 return;
             }
@@ -212,9 +280,7 @@ class callAccept
                     $pcmData = $mc->members[$targetId]['rtpChannel']->bcg729Channel->decode($rtpc->payloadRaw);
                     break;
                 case 'OPUS':
-
-                    $pcmData = $mc->members[$targetId]['opus']->decode($rtpc->payloadRaw);
-
+                    $pcmData = $browserOpusDecoder->decode($rtpc->payloadRaw);
                     break;
                 case 'L16':
                     $pcmData = decodeL16ToPcm($rtpc->payloadRaw);
@@ -232,13 +298,19 @@ class callAccept
                 return;
             }
 
+            $decodedFrequency = $frequency;
+            if (strtoupper($codecName) === 'OPUS' && $opusPlaybackRate > 0 && $opusPlaybackRate < OpusConfig::RTP_RATE) {
+                $pcmData = OpusConfig::resamplePcm($pcmData, OpusConfig::RTP_RATE, $opusPlaybackRate, $channels);
+                $decodedFrequency = $opusPlaybackRate;
+            }
 
-            // NÃO resample aqui — audio.php faz a única conversão para userFrequency.
-            // Se resamplear duas vezes o áudio fica em "câmera lenta" (drift acumulado).
+
+            // Opus bandwidth is applied once above. audio.php only converts the
+            // resulting PCM to the browser playback rate and channel layout.
             $id = implode(':', array_values($peer));
             //cli::pcl("[ACCEPT-CO] RTP received from {$id} codec:{$codecName} pt:{$rtp->payloadType} freq:{$frequency} ssrc:{$rtp->ssrc}}", 'cyan');
 
-            $mc->eventSock->sendto('127.0.0.1', 9966, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}");
+            $mc->eventSock->sendto('127.0.0.1', 9966, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$decodedFrequency}__::__{$channels}");
         });
 
         $mediaChannel->onDtmf(function (string $digit) use ($callState, $fp, $socket, &$mediaChannel) {
@@ -281,12 +353,9 @@ class callAccept
         $callState->mediaChannel = $mediaChannel;
         \libspech\Cache\cache::subDefine('coroutinesProcess', $fp, $callState);
 
-        $mediaChannel->onStart(function () use (&$mediaChannel, $sdpParsed, $codecName, $frequency, &$callState, $userFrequency) {
+        $mediaChannel->onStart(function () use (&$mediaChannel, &$callState, $sourceSampleRate, $sourceChannels, $isOpus) {
             cli::pcl("INICIANDO LISTENER DO AUDIO DO NAVEGADOR", 'bold_green');
             //$mediaChannel->eventSock->sendto('127.0.0.1', 9966, str_repeat('0', 12));
-            $pcmBuffer = '';
-            $SRC_RATE = $userFrequency;
-            $PCM_FRAME_BYTES = (int)($SRC_RATE * 0.02) * 2;
             while (true) {
                 $peer = null;
                 $raw = $mediaChannel->eventSock->recvfrom($peer, 1);
@@ -303,29 +372,16 @@ class callAccept
                     Coroutine::sleep(1);
                     continue;
                 }
-                $pcmBuffer .= explode('__::__', $raw, 2)[0];
-                while (strlen($pcmBuffer) >= $PCM_FRAME_BYTES) {
-                    $pcmChunk = substr($pcmBuffer, 0, $PCM_FRAME_BYTES);
-                    $pcmBuffer = substr($pcmBuffer, $PCM_FRAME_BYTES);
-                    if ($SRC_RATE !== $frequency) {
-                        $pcmChunk = resampler($pcmChunk, $SRC_RATE, $frequency);
+                $pcmChunk = explode('__::__', $raw, 2)[0];
+                // Conversion, codec state, accumulation, RTP timestamps and
+                // packetization are owned by libspech's negotiated member.
+                if ($pcmChunk !== '') {
+                    $mediaRate = $sourceSampleRate;
+                    if ($isOpus && $sourceChannels === 2 && $sourceSampleRate !== OpusConfig::RTP_RATE) {
+                        $pcmChunk = OpusConfig::resamplePcm($pcmChunk, $sourceSampleRate, OpusConfig::RTP_RATE, 2);
+                        $mediaRate = OpusConfig::RTP_RATE;
                     }
-                    $encode = match (strtoupper($codecName)) {
-                        'PCMU' => encodePcmToPcmu($pcmChunk),
-                        'PCMA' => encodePcmToPcma($pcmChunk),
-                        'G729' => $mediaChannel->channelEncode->encode($pcmChunk),
-                        'L16' => encodePcmToL16($pcmChunk),
-                        default => false,
-                    };
-                    if (!$encode) {
-                        continue;
-                    }
-                    $member = $mediaChannel->members["{$sdpParsed['ip']}:{$sdpParsed['port']}"] ?? null;
-                    if (!$member) {
-                        cli::pcl("IMPOSSIVEL ENVIAR AUDIO DO BROWSER PARA O DESTINO membro {$sdpParsed['ip']}:{$sdpParsed['port']} não existe no canal de mídia", 'bold_red');
-                        continue;
-                    }
-                    $mediaChannel->socket->sendto($sdpParsed['ip'], $sdpParsed['port'], $member['rtpChannel']->buildAudioPacket($encode));
+                    $mediaChannel->sendPcmToLeg('a', $pcmChunk, $mediaRate, $sourceChannels);
                 }
             }
 
@@ -344,6 +400,7 @@ class callAccept
             cli::pcl("[ACCEPT-CO] mediaChannel->block() Iniciado após {$msDiff}ms", 'bold_green');
         });
         $mediaChannel->close();
+        $browserOpusDecoder->destroy();
 
 
         return true;

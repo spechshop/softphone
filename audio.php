@@ -20,6 +20,7 @@ require_once __DIR__ . '/plugins/Utils/helpers/MicQualityMetrics.php';
 require_once __DIR__ . '/plugins/Utils/helpers/MicJitterBuffer.php';
 require_once __DIR__ . '/plugins/Utils/helpers/RtpPacer.php';
 require_once __DIR__ . '/plugins/Utils/helpers/MicUplinkSession.php';
+require_once __DIR__.'/plugins/Utils/helpers/OpusConfig.php';
 
 $clients = [];
 $clientInfo = [];
@@ -97,6 +98,12 @@ function closeUdpSendSocketForFd(int $fd, array &$udpSendSockets): void
     }
 
     unset($udpSendSockets[$fd]);
+}
+
+/** Resample PCM16LE without collapsing/interleaving stereo as a mono timeline. */
+function resamplePcmChannels(string $pcm, int $sourceRate, int $targetRate, int $channels): string
+{
+    return \helpers\utils\OpusConfig::resamplePcm($pcm, $sourceRate, $targetRate, $channels);
 }
 
 /**
@@ -189,7 +196,7 @@ function micMonotonicMs(): float
 
 /**
  * One lightweight coroutine per microphone stream. It releases no more than one
- * PCM frame per monotonic 20 ms deadline, regardless of WebSocket arrival bursts.
+ * PCM frame per negotiated internal 10/20 ms deadline, regardless of bursts.
  */
 function startMicUplinkPacer(
     Server             $server,
@@ -374,7 +381,7 @@ $server->on("start", function (Server $server) use (
              * Observação: ainda é um protocolo baseado em separador textual sobre binário.
              * Funciona, mas no futuro o ideal é migrar para length-prefix.
              */
-            $realData = explode('__::__', $data, 6);
+            $realData = explode('__::__', $data, 7);
 
             if (count($realData) < 6) {
                 \libspech\Cli\cli::pcl("$peer[address]:$peer[port] invalid data");
@@ -382,7 +389,8 @@ $server->on("start", function (Server $server) use (
             }
 
 
-            [$rtpRaw, $stream, $ssrc, $portHandle, $userFrequencyRaw, $frequencyRaw] = $realData;
+            [$rtpRaw, $stream, $ssrc, $portHandle, $userFrequencyRaw, $frequencyRaw] = array_slice($realData, 0, 6);
+            $sourceChannels = max(1, min(2, (int)($realData[6] ?? 1)));
 
             $userFrequency = (int)$userFrequencyRaw;
             $frequency = (int)$frequencyRaw;
@@ -536,14 +544,18 @@ $server->on("start", function (Server $server) use (
                     $outData = $sendData;
 
                     if ($frequency !== $userFrequency) {
-                        $outData = resampler($sendData, $frequency, $userFrequency);
+                        $outData = resamplePcmChannels($sendData, $frequency, $userFrequency, $sourceChannels);
                     }
 
                     if ($outData !== '') {
                         foreach ($clients[$stream] ?? [] as $fd) {
                             $targetSsrc = $clientInfo[$fd]['ssrc'] ?? '';
                             $sampleRateDest = $clientInfo[$fd]['sampleRate'] ?? 8000;
-                            $outData = resampler($outData, $userFrequency, $sampleRateDest);
+                            $targetChannels = max(1, min(2, (int)($clientInfo[$fd]['channels'] ?? 1)));
+                            $clientOut = resamplePcmChannels($outData, $userFrequency, $sampleRateDest, $sourceChannels);
+                            if ($sourceChannels === 2 && $targetChannels === 1) {
+                                $clientOut = \libspech\Sip\stereoToMono($clientOut);
+                            }
 
 
 
@@ -562,7 +574,7 @@ $server->on("start", function (Server $server) use (
 
 
 
-                            $server->push($fd, $outData, SWOOLE_WEBSOCKET_OPCODE_BINARY);
+                            $server->push($fd, $clientOut, SWOOLE_WEBSOCKET_OPCODE_BINARY);
                         }
                     }
                 }
@@ -696,6 +708,9 @@ $server->on("open", function (Server $server, Request $req) use (
 
     $ssrc = $req->get["ssrc"] ?? "ws-{$req->fd}";
     $sampleRate = $req->get["sampleRate"] ?? 8000;
+    $channels = max(1, min(2, (int)($req->get['channels'] ?? 1)));
+    $frameMs = (int)($req->get['frameMs'] ?? MicUplinkFrame::FRAME_MS);
+    if (!in_array($frameMs, [10, MicUplinkFrame::FRAME_MS], true)) $frameMs = MicUplinkFrame::FRAME_MS;
 
     $clients[$stream] ??= [];
     $clients[$stream][$req->fd] = $req->fd;
@@ -709,10 +724,12 @@ $server->on("open", function (Server $server, Request $req) use (
         'callId' => $stream,
         'ssrc' => $ssrc,
         'sampleRate' => (int)$sampleRate,
+        'channels' => $channels,
+        'frameMs' => $frameMs,
         'micPacerStarted' => false,
     ];
 
-    echo "🎧 Cliente áudio {$sampleRate}Hz conectado stream={$stream}, fd={$req->fd}, ssrc={$ssrc}\n";
+    echo "🎧 Cliente áudio {$sampleRate}Hz/{$channels}ch/{$frameMs}ms conectado stream={$stream}, fd={$req->fd}, ssrc={$ssrc}\n";
 });
 
 /**
@@ -751,6 +768,8 @@ $server->on("message", function (Server $server, Frame $frame) use (
     $stream = $clientInfo[$fd]['stream'] ?? $clientInfo[$fd]['callId'] ?? null;
     $ssrc = $clientInfo[$fd]['ssrc'] ?? "ws-{$fd}";
     $sampleRate = $clientInfo[$fd]['sampleRate'] ?? 8000;
+    $channels = max(1, min(2, (int)($clientInfo[$fd]['channels'] ?? 1)));
+    $frameMs = (int)($clientInfo[$fd]['frameMs'] ?? MicUplinkFrame::FRAME_MS);
 
     if (!$stream) {
         echo "⚠️ Frame sem stream vinculada - FD: {$fd}\n";
@@ -765,10 +784,20 @@ $server->on("message", function (Server $server, Frame $frame) use (
         (int)$sampleRate,
         $MIC_JITTER_TARGET_MS,
         $MIC_MAX_FRAME_AGE_MS,
+        $channels,
+        $frameMs,
     );
     $session = $micUplinkSessions[$fd];
     $micFrame = MicUplinkFrame::decode($frame->data, (int)$sampleRate, (int)$arrivalMs);
     if ($micFrame === null) {
+        $session->metrics->invalidFrames++;
+        return;
+    }
+    if ($micFrame->channels() !== $session->channels) {
+        $session->metrics->invalidFrames++;
+        return;
+    }
+    if ($micFrame->frameMs() !== $session->frameMs) {
         $session->metrics->invalidFrames++;
         return;
     }
