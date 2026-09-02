@@ -48,9 +48,10 @@ $pipelineMetrics = [];
 $ipcLastReceiveNs = [];
 $lastIpcSeenNs = [];
 
-$PLAYBACK_BATCH_MS = max(10, min(60, (int)(getenv('AUDIO_PLAYBACK_BATCH_MS') ?: 20)));
+$PLAYBACK_BATCH_MS = max(10, min(120, (int)(getenv('AUDIO_PLAYBACK_BATCH_MS') ?: 120)));
 $IPC_QUEUE_MAX_MS = max(40, min(240, (int)(getenv('AUDIO_IPC_QUEUE_MAX_MS') ?: 120)));
 $SOURCE_BUFFER_MAX_MS = max(40, min(240, (int)(getenv('AUDIO_SOURCE_BUFFER_MAX_MS') ?: 120)));
+$METRICS_INTERVAL_SECONDS = max(1, min(60, (int)(getenv('AUDIO_METRICS_INTERVAL_SECONDS') ?: 10)));
 $MAX_SILENCE = 30;
 $MIC_JITTER_TARGET_MS = max(40, min(100, (int)(getenv('MIC_JITTER_TARGET_MS') ?: 60)));
 $MIC_MAX_FRAME_AGE_MS = max(160, min(200, (int)(getenv('MIC_MAX_FRAME_AGE_MS') ?: 180)));
@@ -132,6 +133,15 @@ function sendBrowserPcmToUdpPeers(
     }
 
     $udp = getUdpSendSocketForFd($fd, $udpSendSockets);
+    // The packet is identical for every media peer. Encode it once so fan-out
+    // does not repeat packing or monotonic-clock reads in the capture hot path.
+    $encodedPacket = (new AudioIpcPacket(
+        $pcm,
+        $stream,
+        $ssrc,
+        $sampleRate,
+        $channels,
+    ))->encode();
 
     foreach ($udpPeers[$stream] as $peerKey => $peerInfo) {
         if ($peerKey === $ssrc) {
@@ -143,8 +153,7 @@ function sendBrowserPcmToUdpPeers(
         }
 
         // cli::pcl("Port ".$udp->getsockname()['port']." sending packet to {$peerInfo['host']}:{$peerInfo['port']}", 'cyan');
-        $packet = new AudioIpcPacket($pcm, $stream, $ssrc, $sampleRate, $channels);
-        $udp->sendto($peerInfo['host'], (int)$peerInfo['port'], $packet->encode());
+        $udp->sendto($peerInfo['host'], (int)$peerInfo['port'], $encodedPacket);
     }
 }
 
@@ -172,6 +181,7 @@ function relayBrowserToBrowser(
     }
 
     $senderFp = substr($sourceSsrc, 4);
+    $convertedByFormat = [];
 
     foreach ($clients[$stream] ?? [] as $targetFd) {
         if ($targetFd === $sourceFd) {
@@ -196,15 +206,16 @@ function relayBrowserToBrowser(
         $targetRate = (int)($clientInfo[$targetFd]['sampleRate'] ?? $sourceRate);
         $targetChannels = max(1, min(2, (int)($clientInfo[$targetFd]['channels'] ?? 1)));
         $metrics = $pipelineMetrics[$stream] ??= new AudioPipelineMetrics();
+        $formatKey = "{$targetRate}/{$targetChannels}";
         try {
-            $clientPcm = PcmProcessor::convert(
-                $pcmData,
-                $sourceRate,
-                $sourceChannels,
-                $targetRate,
-                $targetChannels,
-                $metrics,
-            );
+            $clientPcm = $convertedByFormat[$formatKey] ??= PcmProcessor::convert(
+                    $pcmData,
+                    $sourceRate,
+                    $sourceChannels,
+                    $targetRate,
+                    $targetChannels,
+                    $metrics,
+                );
         } catch (Throwable) {
             continue;
         }
@@ -242,6 +253,7 @@ function flushPlaybackFrames(
             $buffers[$stream][$source] = substr($buffers[$stream][$source], strlen($chunk['pcm']));
         }
 
+        $outputsByFormat = [];
         foreach ($clients[$stream] ?? [] as $fd) {
             $targetSsrc = $clientInfo[$fd]['ssrc'] ?? '';
             if (str_starts_with($targetSsrc, 'mic-')) continue;
@@ -249,22 +261,26 @@ function flushPlaybackFrames(
 
             $targetRate = max(1, (int)($clientInfo[$fd]['sampleRate'] ?? 8000));
             $targetChannels = max(1, min(2, (int)($clientInfo[$fd]['channels'] ?? 1)));
-            $converted = [];
-            foreach ($chunks as $chunk) {
-                try {
-                    $converted[] = PcmProcessor::convert(
-                        $chunk['pcm'],
-                        $chunk['rate'],
-                        $chunk['channels'],
-                        $targetRate,
-                        $targetChannels,
-                        $metrics,
-                    );
-                } catch (Throwable) {
-                    continue;
+            $formatKey = "{$targetRate}/{$targetChannels}";
+            if (!array_key_exists($formatKey, $outputsByFormat)) {
+                $converted = [];
+                foreach ($chunks as $chunk) {
+                    try {
+                        $converted[] = PcmProcessor::convert(
+                            $chunk['pcm'],
+                            $chunk['rate'],
+                            $chunk['channels'],
+                            $targetRate,
+                            $targetChannels,
+                            $metrics,
+                        );
+                    } catch (Throwable) {
+                        continue;
+                    }
                 }
+                $outputsByFormat[$formatKey] = PcmProcessor::mix($converted);
             }
-            $output = PcmProcessor::mix($converted);
+            $output = $outputsByFormat[$formatKey];
             if ($output !== '') $server->push($fd, $output, SWOOLE_WEBSOCKET_OPCODE_BINARY);
         }
     }
@@ -308,7 +324,10 @@ function startPlaybackStreamWorker(
             while ($queue->isActive()) {
                 $item = $queue->dequeue();
                 if ($item === null) {
-                    Coroutine::sleep(0.001);
+                    // One persistent worker per stream wakes at most once per
+                    // normal 20 ms PCM frame; enqueue itself never transfers
+                    // heavy work back into the central recvfrom coroutine.
+                    $queue->waitForItem(0.02);
                     continue;
                 }
                 if (empty($clients[$stream])) {
@@ -342,7 +361,7 @@ function startPlaybackStreamWorker(
                     $alignment = 2 * $packet->channels;
                     $dropBytes -= $dropBytes % $alignment;
                     $buffers[$stream][$source] = substr($buffers[$stream][$source], $dropBytes);
-                    $metrics->recordQueue(0, 1);
+                    $metrics->recordSourceBufferDrop();
                 }
 
                 flushPlaybackFrames(
@@ -484,6 +503,7 @@ $server->on("start", function (Server $server) use (
     $PLAYBACK_BATCH_MS,
     $IPC_QUEUE_MAX_MS,
     $SOURCE_BUFFER_MAX_MS,
+    $METRICS_INTERVAL_SECONDS,
     $MAX_SILENCE
 ) {
     $controlFile = 'audio_control.txt';
@@ -527,10 +547,14 @@ $server->on("start", function (Server $server) use (
         &$ipcLastReceiveNs,
         &$udpPeers,
         &$clients,
+        &$lastSeen,
+        &$buffers,
+        &$sourceFormats,
+        $METRICS_INTERVAL_SECONDS,
         $MAX_SILENCE,
     ): void {
         while (true) {
-            Coroutine::sleep(10);
+            Coroutine::sleep($METRICS_INTERVAL_SECONDS);
             $nowNs = hrtime(true);
             foreach ($pipelineMetrics as $stream => $metrics) {
                 $queueDepth = isset($streamQueues[$stream]) ? $streamQueues[$stream]->depth() : 0;
@@ -548,6 +572,16 @@ $server->on("start", function (Server $server) use (
                         $udpPeers[$stream]
                     );
                 }
+
+                foreach ($lastSeen[$stream] ?? [] as $source => $seenAt) {
+                    if ((microtime(true) - (float)$seenAt) <= $MAX_SILENCE) continue;
+                    unset(
+                        $lastSeen[$stream][$source],
+                        $buffers[$stream][$source],
+                        $sourceFormats[$stream][$source],
+                    );
+                }
+                if (isset($lastSeen[$stream]) && $lastSeen[$stream] === []) unset($lastSeen[$stream]);
             }
             gc_collect_cycles();
         }
@@ -607,8 +641,6 @@ $server->on("start", function (Server $server) use (
             $metrics->recordIpcPacket(strlen($data), $gapUs, $latencyUs);
             $ipcLastReceiveNs[$stream] = $processingStartedNs;
             $lastIpcSeenNs[$stream] = $processingStartedNs;
-            $peerKey = "{$peer['address']}:{$peer['port']}";
-
             if (!empty($peer['address']) && !empty($peer['port'])) {
                 $peerKey = "{$peer['address']}:{$peer['port']}";
                 $udpPeers[$stream] ??= [];
@@ -637,12 +669,6 @@ $server->on("start", function (Server $server) use (
                 $streamQueues[$stream] = new RealtimeStreamQueue((float)$IPC_QUEUE_MAX_MS, 24);
             }
             $queue = $streamQueues[$stream];
-            $drops = $queue->enqueue([
-                'packet' => $packet,
-                'enqueuedAtNs' => hrtime(true),
-            ], $durationMs);
-            $metrics->recordQueue($queue->depth(), $drops);
-
             if (!isset($streamWorkers[$stream])) {
                 startPlaybackStreamWorker(
                     $server,
@@ -660,6 +686,11 @@ $server->on("start", function (Server $server) use (
                     $pipelineMetrics,
                 );
             }
+            $drops = $queue->enqueue([
+                'packet' => $packet,
+                'enqueuedAtNs' => hrtime(true),
+            ], $durationMs);
+            $metrics->recordQueue($queue->depth(), $drops);
             $metrics->recordIpcProcessing((hrtime(true) - $processingStartedNs) / 1000);
         }
     });

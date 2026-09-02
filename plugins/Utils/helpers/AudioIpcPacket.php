@@ -25,8 +25,11 @@ final class AudioIpcPacket
     {
         $streamLength = strlen($this->stream);
         $sourceLength = strlen($this->source);
-        if ($this->payload === '' || $streamLength > 0xffff || $sourceLength > 0xffff
-            || $this->sampleRate <= 0 || !in_array($this->channels, [1, 2], true)) {
+        if ($this->payload === '' || $streamLength < 1 || $sourceLength < 1
+            || $streamLength > 0xffff || $sourceLength > 0xffff
+            || $this->sampleRate <= 0 || !in_array($this->channels, [1, 2], true)
+            || (strlen($this->payload) % (2 * $this->channels)) !== 0
+            || $this->replyPort < 0 || $this->replyPort > 0xffff) {
             throw new \InvalidArgumentException('invalid_audio_ipc_packet');
         }
 
@@ -54,7 +57,7 @@ final class AudioIpcPacket
         }
         $header = unpack(
             'a4magic/Cversion/Cflags/Cchannels/Creserved/NsampleRate/NpayloadLength/NreplyPort/JsentAtNs/nstreamLength/nsourceLength',
-            substr($datagram, 0, self::HEADER_BYTES),
+            $datagram,
         );
         if (!is_array($header) || $header['version'] !== self::VERSION
             || !in_array((int)$header['channels'], [1, 2], true)
@@ -67,6 +70,7 @@ final class AudioIpcPacket
         if (strlen($datagram) !== $expectedLength || (int)$header['payloadLength'] <= 0) {
             return null;
         }
+        if (((int)$header['payloadLength'] % (2 * (int)$header['channels'])) !== 0) return null;
         $offset = self::HEADER_BYTES;
         $stream = substr($datagram, $offset, (int)$header['streamLength']);
         $offset += (int)$header['streamLength'];
@@ -104,13 +108,14 @@ final class AudioIpcPacket
         int $fallbackChannels,
     ): ?self {
         $parts = explode('__::__', $datagram, 3);
-        if (($parts[0] ?? '') === '') return null;
+        $channels = max(1, min(2, $fallbackChannels));
+        if (($parts[0] ?? '') === '' || (strlen($parts[0]) % (2 * $channels)) !== 0) return null;
         return new self(
             $parts[0],
             $parts[1] ?? 'legacy',
             $parts[2] ?? 'legacy',
             $fallbackRate,
-            max(1, min(2, $fallbackChannels)),
+            $channels,
         );
     }
 }

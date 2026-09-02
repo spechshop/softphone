@@ -82,6 +82,11 @@ final class PcmProcessor
         if ($buffers === []) return '';
         if (count($buffers) === 1) return $buffers[0];
 
+        if (function_exists('mixAudioChannels')) {
+            $mixed = \mixAudioChannels($buffers);
+            if (is_string($mixed)) return $mixed;
+        }
+
         $length = min(array_map('strlen', $buffers));
         $length -= $length % 2;
         $output = '';

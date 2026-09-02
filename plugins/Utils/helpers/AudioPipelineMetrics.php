@@ -5,30 +5,39 @@ namespace helpers\utils;
 /** Per-stream aggregate metrics; samples are bounded to avoid diagnostic leaks. */
 final class AudioPipelineMetrics
 {
-    private const MAX_SAMPLES = 2048;
+    private const MAX_SAMPLES = 512;
+    private const SAMPLE_EVERY = 4;
 
     private int $ipcPackets = 0;
     private int $ipcBytes = 0;
     private int $ipcDrops = 0;
     private int $ipcQueuePeak = 0;
-    private array $receiveGapsUs = [];
-    private array $processingUs = [];
-    private array $queueDelayUs = [];
-    private array $latencyUs = [];
+    private array $samples = [
+        'receiveGapsUs' => [],
+        'processingUs' => [],
+        'queueDelayUs' => [],
+        'latencyUs' => [],
+        'streamProcessingUs' => [],
+    ];
+    private array $sampleCursors = [];
+    private array $observationCounters = [];
     private array $resampleRoutes = [];
-    private array $streamProcessingUs = [];
+    private int $sourceBufferDrops = 0;
 
     public function recordIpcPacket(int $bytes, ?float $receiveGapUs = null, ?float $latencyUs = null): void
     {
         $this->ipcPackets++;
         $this->ipcBytes += max(0, $bytes);
-        if ($receiveGapUs !== null) $this->sample($this->receiveGapsUs, $receiveGapUs);
-        if ($latencyUs !== null && $latencyUs >= 0) $this->sample($this->latencyUs, $latencyUs);
+        if (($this->ipcPackets % self::SAMPLE_EVERY) === 0) {
+            if ($receiveGapUs !== null) $this->sample('receiveGapsUs', $receiveGapUs);
+            if ($latencyUs !== null && $latencyUs >= 0) $this->sample('latencyUs', $latencyUs);
+        }
     }
 
-    public function recordIpcProcessing(float $microseconds): void { $this->sample($this->processingUs, $microseconds); }
-    public function recordQueueDelay(float $microseconds): void { $this->sample($this->queueDelayUs, $microseconds); }
-    public function recordStreamProcessing(float $microseconds): void { $this->sample($this->streamProcessingUs, $microseconds); }
+    public function recordIpcProcessing(float $microseconds): void { $this->sampleObservation('processingUs', $microseconds); }
+    public function recordQueueDelay(float $microseconds): void { $this->sampleObservation('queueDelayUs', $microseconds); }
+    public function recordStreamProcessing(float $microseconds): void { $this->sampleObservation('streamProcessingUs', $microseconds); }
+    public function recordSourceBufferDrop(): void { $this->sourceBufferDrops++; }
     public function recordQueue(int $depth, int $drops = 0): void
     {
         $this->ipcQueuePeak = max($this->ipcQueuePeak, $depth);
@@ -59,19 +68,20 @@ final class AudioPipelineMetrics
         return [
             'ipcPackets' => $this->ipcPackets,
             'ipcBytes' => $this->ipcBytes,
-            'ipcReceiveGapP95' => self::percentile($this->receiveGapsUs, 95),
-            'ipcReceiveGapP99' => self::percentile($this->receiveGapsUs, 99),
-            'ipcProcessingUsP95' => self::percentile($this->processingUs, 95),
-            'ipcProcessingUsP99' => self::percentile($this->processingUs, 99),
-            'ipcLatencyUsP95' => self::percentile($this->latencyUs, 95),
-            'ipcLatencyUsP99' => self::percentile($this->latencyUs, 99),
+            'ipcReceiveGapP95' => self::percentile($this->samples['receiveGapsUs'], 95),
+            'ipcReceiveGapP99' => self::percentile($this->samples['receiveGapsUs'], 99),
+            'ipcProcessingUsP95' => self::percentile($this->samples['processingUs'], 95),
+            'ipcProcessingUsP99' => self::percentile($this->samples['processingUs'], 99),
+            'ipcLatencyUsP95' => self::percentile($this->samples['latencyUs'], 95),
+            'ipcLatencyUsP99' => self::percentile($this->samples['latencyUs'], 99),
             'ipcQueueDepth' => $queueDepth,
             'ipcQueuePeak' => $this->ipcQueuePeak,
-            'ipcQueueDelayUsP95' => self::percentile($this->queueDelayUs, 95),
-            'ipcQueueDelayUsP99' => self::percentile($this->queueDelayUs, 99),
+            'ipcQueueDelayUsP95' => self::percentile($this->samples['queueDelayUs'], 95),
+            'ipcQueueDelayUsP99' => self::percentile($this->samples['queueDelayUs'], 99),
             'ipcDrops' => $this->ipcDrops,
-            'streamProcessingUsP95' => self::percentile($this->streamProcessingUs, 95),
-            'streamProcessingUsP99' => self::percentile($this->streamProcessingUs, 99),
+            'sourceBufferDrops' => $this->sourceBufferDrops,
+            'streamProcessingUsP95' => self::percentile($this->samples['streamProcessingUs'], 95),
+            'streamProcessingUsP99' => self::percentile($this->samples['streamProcessingUs'], 99),
             'resampleCalls' => $resampleCalls,
             'resampleBytes' => $resampleBytes,
             'resampleTimeUs' => round($resampleTimeUs, 1),
@@ -79,10 +89,26 @@ final class AudioPipelineMetrics
         ];
     }
 
-    private function sample(array &$samples, float $value): void
+    private function sample(string $series, float $value): void
     {
-        if (count($samples) >= self::MAX_SAMPLES) array_shift($samples);
-        $samples[] = max(0.0, $value);
+        $value = max(0.0, $value);
+        if (count($this->samples[$series]) < self::MAX_SAMPLES) {
+            $this->samples[$series][] = $value;
+            return;
+        }
+
+        // Fixed-size ring: array_shift() here used to copy 2,047 values for
+        // every frame after warm-up, turning diagnostics into a hot-path cost.
+        $cursor = (int)($this->sampleCursors[$series] ?? 0);
+        $this->samples[$series][$cursor] = $value;
+        $this->sampleCursors[$series] = ($cursor + 1) % self::MAX_SAMPLES;
+    }
+
+    private function sampleObservation(string $series, float $value): void
+    {
+        $count = ($this->observationCounters[$series] ?? 0) + 1;
+        $this->observationCounters[$series] = $count;
+        if (($count % self::SAMPLE_EVERY) === 0) $this->sample($series, $value);
     }
 
     private static function percentile(array $values, int $percentile): float

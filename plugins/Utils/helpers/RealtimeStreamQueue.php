@@ -66,4 +66,13 @@ final class RealtimeStreamQueue
     public function durationMs(): float { return $this->durationMs; }
     public function drops(): int { return $this->drops; }
     public function peak(): int { return $this->peak; }
+
+    /** Cooperative wait owned by the one persistent worker for this stream. */
+    public function waitForItem(float $timeoutSeconds = 0.02): bool
+    {
+        if (!$this->active || !$this->items->isEmpty()) return $this->active;
+        if (\Swoole\Coroutine::getCid() < 0) return false;
+        \Swoole\Coroutine::sleep(max(0.001, $timeoutSeconds));
+        return $this->active;
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace handlers;
 
+use helpers\utils\AudioIpcPacket;
 use helpers\utils\CallState;
 use helpers\utils\OpusConfig;
 use helpers\utils\SdpHelper;
@@ -11,7 +12,6 @@ use libspech\Network\network;
 use libspech\Packet\renderMessages;
 use libspech\Rtp\MediaChannel;
 use libspech\Sip\sip;
-use Swoole\Coroutine;
 use Swoole\WebSocket\Server;
 
 class callAccept
@@ -178,8 +178,6 @@ class callAccept
             ]));
         }
         // ── Media bridge ──────────────────────────────────────────────────────
-        $userCodec = $userData['codec'] ?? 'PCMA/8000';
-        $userFrequency = (int)(explode('/', $userCodec)[1] ?? 8000);
         // State object — flags shared with the media coroutine.
         // Stored in coroutinesProcess so BYE handler and hangUpCall can signal stop.
 
@@ -258,59 +256,54 @@ class callAccept
         }
 
 
-        // MediaChannel also decodes Opus for relay; the browser bridge needs an
-        // independent decoder because Opus decoder state cannot be advanced twice.
-        $browserOpusDecoder = new \opusChannel(48000, $channels);
-        $opusPlaybackRate = $isOpus ? (int)$effectiveOpusConfig['maxPlaybackRate'] : 0;
-        $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtpc, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan) use ($callId, $portHandler, $userFrequency, $frequency, $codecName, $browserOpusDecoder, $channels, $opusPlaybackRate) {
+        // MediaChannel also decodes stateful codecs for relay; the browser bridge
+        // uses independent Opus/G.729 state because a decoder cannot advance twice.
+        $browserOpusDecoder = $isOpus ? new \opusChannel(OpusConfig::RTP_RATE, $channels) : null;
+        $browserG729Decoder = strcasecmp((string)$codecName, 'G729') === 0 ? new \bcg729Channel() : null;
+        $mediaChannel->onReceive(function (\libspech\Rtp\rtpc $rtpc, array $peer, \libspech\Rtp\MediaChannel $mc, \libspech\Rtp\rtpChannel $rtpChan) use ($callId, $portHandler, $frequency, $codecName, $browserOpusDecoder, $browserG729Decoder, $channels) {
             if (strlen($rtpc->payloadRaw) < 1) {
                 return;
             }
             $targetId = "{$peer['address']}:{$peer['port']}";
 
 
-            switch (strtoupper($codecName)) {
-                case 'PCMU':
-                    $pcmData = decodePcmuToPcm($rtpc->payloadRaw);
-                    break;
-                case 'PCMA':
-                    $pcmData = decodePcmaToPcm($rtpc->payloadRaw);
-                    break;
-                case 'G729':
-                    $pcmData = $mc->members[$targetId]['rtpChannel']->bcg729Channel->decode($rtpc->payloadRaw);
-                    break;
-                case 'OPUS':
-                    $pcmData = $browserOpusDecoder->decode($rtpc->payloadRaw);
-                    break;
-                case 'L16':
-                    $pcmData = decodeL16ToPcm($rtpc->payloadRaw);
-                    break;
-                case 'TELEPHONE-EVENT':
-                    return;
-                default:
-                    cli::pcl("Codec não suportado: {$codecName}");
-                    $pcmData = false;
-                    break;
-            };
+            try {
+                $pcmData = match (strtoupper($codecName)) {
+                    'PCMU' => decodePcmuToPcm($rtpc->payloadRaw),
+                    'PCMA' => decodePcmaToPcm($rtpc->payloadRaw),
+                    'G729' => $browserG729Decoder?->decode($rtpc->payloadRaw),
+                    'GSM' => $mc->members[$targetId]['gsmDecodedPcm'] ?? false,
+                    'OPUS' => $browserOpusDecoder?->decode($rtpc->payloadRaw),
+                    'L16' => decodeL16ToPcm($rtpc->payloadRaw),
+                    'TELEPHONE-EVENT' => false,
+                    default => false,
+                };
+            } catch (\Throwable) {
+                return;
+            }
 
 
             if (!$pcmData) {
                 return;
             }
 
-            $decodedFrequency = $frequency;
-            if (strtoupper($codecName) === 'OPUS' && $opusPlaybackRate > 0 && $opusPlaybackRate < OpusConfig::RTP_RATE) {
-                $pcmData = OpusConfig::resamplePcm($pcmData, OpusConfig::RTP_RATE, $opusPlaybackRate, $channels);
-                $decodedFrequency = $opusPlaybackRate;
-            }
-
-
-            // Opus bandwidth is applied once above. audio.php only converts the
-            // resulting PCM to the browser playback rate and channel layout.
-            $id = implode(':', array_values($peer));
+            // maxplaybackrate constrains SDP/codec behavior; it is not an
+            // intermediate PCM transport rate.
+            $decodedFrequency = strtoupper($codecName) === 'OPUS'
+                ? OpusConfig::RTP_RATE
+                : (int)$frequency;
+            $id = "{$peer['address']}:{$peer['port']}";
             //cli::pcl("[ACCEPT-CO] RTP received from {$id} codec:{$codecName} pt:{$rtp->payloadType} freq:{$frequency} ssrc:{$rtp->ssrc}}", 'cyan');
 
-            $mc->eventSock->sendto('127.0.0.1', 9966, "{$pcmData}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$decodedFrequency}__::__{$channels}");
+            $packet = new AudioIpcPacket(
+                $pcmData,
+                $callId,
+                $id,
+                $decodedFrequency,
+                $channels,
+                $portHandler,
+            );
+            $mc->eventSock->sendto('127.0.0.1', 9966, $packet->encode());
         });
 
         $mediaChannel->onDtmf(function (string $digit) use ($callState, $fp, $socket, &$mediaChannel) {
@@ -353,7 +346,7 @@ class callAccept
         $callState->mediaChannel = $mediaChannel;
         \libspech\Cache\cache::subDefine('coroutinesProcess', $fp, $callState);
 
-        $mediaChannel->onStart(function () use (&$mediaChannel, &$callState, $sourceSampleRate, $sourceChannels, $isOpus) {
+        $mediaChannel->onStart(function () use (&$mediaChannel, &$callState, $callId, $sourceSampleRate, $sourceChannels) {
             cli::pcl("INICIANDO LISTENER DO AUDIO DO NAVEGADOR", 'bold_green');
             //$mediaChannel->eventSock->sendto('127.0.0.1', 9966, str_repeat('0', 12));
             while (true) {
@@ -367,21 +360,25 @@ class callAccept
                 }
 
 
-                if (!$raw || strlen($raw) < 12) {
-                    cli::pcl("[ACCEPT-CO] Raw data is invalid or too short", 'red');
-                    Coroutine::sleep(1);
+                if (!$raw) {
                     continue;
                 }
-                $pcmChunk = explode('__::__', $raw, 2)[0];
+                $packet = AudioIpcPacket::decode($raw)
+                    ?? AudioIpcPacket::decodeLegacyCapture($raw, $sourceSampleRate, $sourceChannels);
+                if (!$packet instanceof AudioIpcPacket || ($packet->stream !== $callId && $packet->stream !== 'legacy')) {
+                    continue;
+                }
                 // Conversion, codec state, accumulation, RTP timestamps and
                 // packetization are owned by libspech's negotiated member.
-                if ($pcmChunk !== '') {
-                    $mediaRate = $sourceSampleRate;
-                    if ($isOpus && $sourceChannels === 2 && $sourceSampleRate !== OpusConfig::RTP_RATE) {
-                        $pcmChunk = OpusConfig::resamplePcm($pcmChunk, $sourceSampleRate, OpusConfig::RTP_RATE, 2);
-                        $mediaRate = OpusConfig::RTP_RATE;
-                    }
-                    $mediaChannel->sendPcmToLeg('a', $pcmChunk, $mediaRate, $sourceChannels);
+                try {
+                    $mediaChannel->sendPcmToLeg(
+                        'a',
+                        $packet->payload,
+                        $packet->sampleRate,
+                        $packet->channels,
+                    );
+                } catch (\Throwable) {
+                    continue;
                 }
             }
 
@@ -400,7 +397,10 @@ class callAccept
             cli::pcl("[ACCEPT-CO] mediaChannel->block() Iniciado após {$msDiff}ms", 'bold_green');
         });
         $mediaChannel->close();
-        $browserOpusDecoder->destroy();
+        if ($browserOpusDecoder !== null) $browserOpusDecoder->destroy();
+        if ($browserG729Decoder !== null && method_exists($browserG729Decoder, 'close')) {
+            $browserG729Decoder->close();
+        }
 
 
         return true;

@@ -285,20 +285,20 @@ opusAssert($leftHz > 350 && $leftHz < 550, 'left 440 Hz did not survive Opus: ' 
 opusAssert($rightHz > 700 && $rightHz < 1050, 'right 880 Hz did not survive Opus: ' . $rightHz);
 $stereoDecoder->destroy();
 
-// Capture/playback bandwidth conversion preserves the two independent planes.
+// SDP maxplaybackrate/maxcapturerate must not force an intermediate PCM format.
+// A 48 kHz browser stream remains 48 kHz all the way into MediaChannel.
 $stereo24kConfig = OpusConfig::normalize([...$stereo, 'ptime' => 60, 'maxCaptureRate' => 24000, 'maxPlaybackRate' => 24000]);
 [$stereo24kMedia, $stereo24kSocket] = opusMedia($stereo24kConfig);
-$stereo24kCapture = OpusConfig::resamplePcm(stereoSines(1440, 24000, 440, 880), 24000, 48000, 2);
+$stereo24kCapture = stereoSines(2880, 48000, 440, 880);
 $stereo24kMedia->sendPcmToLeg('a', $stereo24kCapture, 48000, 2);
 opusSame(1, count($stereo24kSocket->packets), '24k stereo capture did not reach RTP');
 $stereo24kDecoder = new opusChannel(48000, 2);
 $stereo48kDecoded = $stereo24kDecoder->decode(decodeOpusRtp($stereo24kSocket->packets[0])['payload']);
-$stereo24kPlayback = OpusConfig::resamplePcm($stereo48kDecoded, 48000, 24000, 2);
-opusSame(1440 * 2 * 2, strlen($stereo24kPlayback), '24k stereo playback size');
-$left24kHz = zeroCrossFrequency($stereo24kPlayback, 0, 2, 24000);
-$right24kHz = zeroCrossFrequency($stereo24kPlayback, 1, 2, 24000);
-opusAssert($left24kHz > 350 && $left24kHz < 550, '24k playback collapsed left channel: ' . $left24kHz);
-opusAssert($right24kHz > 700 && $right24kHz < 1050, '24k playback collapsed right channel: ' . $right24kHz);
+opusSame(2880 * 2 * 2, strlen($stereo48kDecoded), 'fmtp forced an intermediate PCM playback size');
+$left24kHz = zeroCrossFrequency($stereo48kDecoded, 0, 2, 48000);
+$right24kHz = zeroCrossFrequency($stereo48kDecoded, 1, 2, 48000);
+opusAssert($left24kHz > 350 && $left24kHz < 550, 'fmtp playback collapsed left channel: ' . $left24kHz);
+opusAssert($right24kHz > 700 && $right24kHz < 1050, 'fmtp playback collapsed right channel: ' . $right24kHz);
 $stereo24kDecoder->destroy();
 $stereo24kMedia->close();
 

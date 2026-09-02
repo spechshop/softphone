@@ -16,7 +16,6 @@ final class OutboundMediaSession
     private \SocketMutable $rtpSocket;
     private bool $active = false;
     private string $callId;
-    private string $userCodec;
     /** @var array<string,mixed> */
     private array $offeredCodec;
     /** @var array<string,mixed> */
@@ -30,6 +29,8 @@ final class OutboundMediaSession
 
     public function __construct(
         string $callId,
+        // Retained for named-argument/source compatibility; PCM transport uses
+        // sourceSampleRate/sourceChannels instead of a configured codec rate.
         string $userCodec = 'PCMA/8000',
         array $offeredCodec = ['name' => 'PCMA', 'pt' => 8, 'rate' => 8000, 'channels' => 1],
         ?array $opusConfig = null,
@@ -38,7 +39,6 @@ final class OutboundMediaSession
     )
     {
         $this->callId = $callId;
-        $this->userCodec = $userCodec;
         $this->offeredCodec = $offeredCodec;
         $this->localOpusConfig = OpusConfig::normalize($opusConfig);
         $this->sourceSampleRate = max(8000, min(48000, $sourceSampleRate));
@@ -124,16 +124,18 @@ final class OutboundMediaSession
             throw new \RuntimeException('media_event_socket_bind_failed');
         }
         $portHandler = (int)$media->eventSock->getsockname()['port'];
-        $userFrequency = (int)(explode('/', $this->userCodec)[1] ?? 8000);
         $callId = $this->callId;
         // The MediaChannel also decodes packets for its own relay pipeline.
         // Keep independent stateful decoders for the browser bridge so G.729
         // and Opus are never advanced twice through the same codec instance.
-        $browserG729Decoder = $this->browserG729Decoder = new \bcg729Channel();
-        $browserOpusDecoder = $this->browserOpusDecoder = new \opusChannel(48000, $channels);
-        $opusPlaybackRate = $isOpus ? (int)$this->negotiatedOpusConfig['maxPlaybackRate'] : 0;
+        $browserG729Decoder = $this->browserG729Decoder = strcasecmp((string)$codec['name'], 'G729') === 0
+            ? new \bcg729Channel()
+            : null;
+        $browserOpusDecoder = $this->browserOpusDecoder = $isOpus
+            ? new \opusChannel(OpusConfig::RTP_RATE, $channels)
+            : null;
         $media->onReceive(static function (rtpc $packet, array $peer, MediaChannel $channel, rtpChannel $rtp)
-            use ($callId, $portHandler, $userFrequency, $browserG729Decoder, $browserOpusDecoder, $channels, $opusPlaybackRate): void {
+            use ($callId, $portHandler, $browserG729Decoder, $browserOpusDecoder, $channels): void {
             $memberId = "{$peer['address']}:{$peer['port']}";
             $member = $channel->members[$memberId] ?? [];
             $name = strtoupper((string)($member['codec'] ?? $channel->resolveCodecNameFromPt($packet->getCodec()) ?? ''));
@@ -143,9 +145,9 @@ final class OutboundMediaSession
                 $pcm = match ($name) {
                     'PCMU' => decodePcmuToPcm($packet->payloadRaw),
                     'PCMA' => decodePcmaToPcm($packet->payloadRaw),
-                    'G729' => $browserG729Decoder->decode($packet->payloadRaw),
+                    'G729' => $browserG729Decoder?->decode($packet->payloadRaw),
                     'GSM' => $member['gsmDecodedPcm'] ?? false,
-                    'OPUS' => $browserOpusDecoder->decode($packet->payloadRaw),
+                    'OPUS' => $browserOpusDecoder?->decode($packet->payloadRaw),
                     'L16' => decodeL16ToPcm($packet->payloadRaw),
                     default => false,
                 };
@@ -154,13 +156,10 @@ final class OutboundMediaSession
             }
             if (!is_string($pcm) || $pcm === '') return;
             $frequency = (int)($member['frequency'] ?? 8000);
-            if ($name === 'OPUS' && $opusPlaybackRate > 0 && $opusPlaybackRate < OpusConfig::RTP_RATE) {
-                $pcm = OpusConfig::resamplePcm($pcm, OpusConfig::RTP_RATE, $opusPlaybackRate, $channels);
-                $frequency = $opusPlaybackRate;
-            }
+            if ($name === 'OPUS') $frequency = OpusConfig::RTP_RATE;
             $id = "{$peer['address']}:{$peer['port']}";
-            $channel->eventSock->sendto('127.0.0.1', 9966,
-                "{$pcm}__::__{$callId}__::__{$id}__::__{$portHandler}__::__{$userFrequency}__::__{$frequency}__::__{$channels}");
+            $ipc = new AudioIpcPacket($pcm, $callId, $id, $frequency, $channels, $portHandler);
+            $channel->eventSock->sendto('127.0.0.1', 9966, $ipc->encode());
         });
         $sourceSampleRate = $this->sourceSampleRate;
         $sourceChannels = $this->sourceChannels;
@@ -170,27 +169,18 @@ final class OutboundMediaSession
 
 
 
-        $media->onStart(function () use ($media, $sourceSampleRate, $sourceChannels, $isOpus): void {
+        $media->onStart(function () use ($media, $callId, $sourceSampleRate, $sourceChannels): void {
            // $media->eventSock->sendto('127.0.0.1', 9966, str_repeat('0', 12));
             while ($this->active && $media->active) {
                 $peer = null;
                 $raw = $media->eventSock->recvfrom($peer, 0.2);
 
                 if (!$raw) continue;
-                $pcm = explode('__::__', $raw, 2)[0];
-                if ($pcm !== '') {
-                    $mediaRate = $sourceSampleRate;
-                    // libspech owns packetization; only make its existing mono
-                    // resampler channel-safe before injection when PCM is stereo.
-                    if ($isOpus && $sourceChannels === 2 && $sourceSampleRate !== OpusConfig::RTP_RATE) {
-                        $pcm = OpusConfig::resamplePcm($pcm, $sourceSampleRate, OpusConfig::RTP_RATE, 2);
-                        $mediaRate = OpusConfig::RTP_RATE;
-                    }
-
-
-
+                $ipc = AudioIpcPacket::decode($raw)
+                    ?? AudioIpcPacket::decodeLegacyCapture($raw, $sourceSampleRate, $sourceChannels);
+                if ($ipc instanceof AudioIpcPacket && ($ipc->stream === $callId || $ipc->stream === 'legacy')) {
                    try {
-                       $media->sendPcmToLeg('a', $pcm, $mediaRate, $sourceChannels);
+                       $media->sendPcmToLeg('a', $ipc->payload, $ipc->sampleRate, $ipc->channels);
                    } catch (\Throwable $e) {
 
                    }

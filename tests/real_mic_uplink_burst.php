@@ -6,8 +6,10 @@
  */
 
 require_once __DIR__ . '/../plugins/Utils/helpers/MicUplinkFrame.php';
+require_once __DIR__ . '/../plugins/Utils/helpers/AudioIpcPacket.php';
 require_once __DIR__ . '/../libspech/plugins/autoloader.php';
 
+use helpers\utils\AudioIpcPacket;
 use helpers\utils\MicUplinkFrame;
 use libspech\Rtp\rtpChannel;
 use Swoole\Coroutine\Http\Client;
@@ -53,10 +55,16 @@ try {
         if (!$udp->bind('127.0.0.1', 0)) throw new RuntimeException('UDP bind failed');
         $port = (int)$udp->getsockname()['port'];
 
-        // Register the exact local UDP peer that a media bridge would use.
-        $registration = str_repeat("\x00", 320)
-            . "__::__{$stream}__::__rtp-test__::__{$port}__::__8000__::__8000";
-        $udp->sendto('127.0.0.1', 9966, $registration);
+        // Register the exact local UDP peer through the production binary IPC.
+        $registration = new AudioIpcPacket(
+            str_repeat("\x00", 320),
+            $stream,
+            'rtp-test',
+            8000,
+            1,
+            $port,
+        );
+        $udp->sendto('127.0.0.1', 9966, $registration->encode());
         Swoole\Coroutine::sleep(0.03);
 
         $ws = new Client('127.0.0.1', 8889, true);
@@ -85,7 +93,9 @@ try {
             $peer = null;
             $raw = $udp->recvfrom($peer, 1.0);
             if (!is_string($raw) || $raw === '') throw new RuntimeException("UDP paced frame timeout at $received");
-            $pcm = explode('__::__', $raw, 2)[0];
+            $ipc = AudioIpcPacket::decode($raw);
+            if (!$ipc instanceof AudioIpcPacket) throw new RuntimeException('paced frame is not binary IPC');
+            $pcm = $ipc->payload;
             if (strlen($pcm) !== 320) throw new RuntimeException('unexpected paced PCM length');
             $rtp = $channel->buildAudioPacket(encodePcmToPcma($pcm));
             $header = unpack('nflags/nsequence/Ntimestamp/Nssrc', substr($rtp, 0, 12));

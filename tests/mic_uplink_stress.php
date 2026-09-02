@@ -35,7 +35,7 @@ function runVirtualStress(int $sessions, int $durationSeconds): array
     return [$elapsedMs, $packets, memory_get_usage(true), memory_get_peak_usage(true)];
 }
 
-foreach ([10, 30, 50] as $count) {
+foreach ([10, 30, 50, 100] as $count) {
     [$ms, $packets, $memory, $peak] = runVirtualStress($count, 60);
     echo sprintf(
         "VIRTUAL_STRESS sessions=%d duration=60s packets=%d cpu_wall=%.1fms memory=%.1fMB peak=%.1fMB\n",
