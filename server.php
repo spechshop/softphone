@@ -8,6 +8,7 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 }
 
 use helpers\utils\CallState;
+use helpers\utils\AccountIdentity;
 use helpers\utils\SipRegisterManager;
 use helpers\utils\PhoneController;
 use libspech\Cache\cache as cacheLibSpech;
@@ -228,14 +229,16 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         $toUri = sip::extractURI($parse['headers']['To'][0] ?? '');
         $toUser = $toUri['user'] ?? '';
         $toDomain = (string)($toUri['peer']['host'] ?? '');
-        $fp = CallState::findFpForInbound($toUser, $toDomain);
+        $route = AccountIdentity::resolve($toUser, $toDomain, (string)($info['address'] ?? ''));
+        $fp = $route['accountId'];
 
         if (!$fp) {
             $socket->sendto($info['address'], $info['port'], renderMessages::baseResponse($parse['headers'], "480", "Temporarily Unavailable"));
-            cli::pcl("[INBOUND] Usuário {$toUser} não encontrado em sipBindings — verifique se o dispositivo está registrado. 480 enviado", 'red');
+            $reason = $route['status'] === 'ambiguous' ? 'ambiguous' : 'not found';
+            cli::pcl("[CALL:ROUTE] {$reason} destination user={$toUser} domain={$toDomain} candidates=" . count($route['candidates']), 'red');
             return;
         }
-        cli::pcl("[INBOUND] Usuário {$toUser} → fp:{$fp}", 'cyan');
+        cli::pcl("[CALL:ROUTE] to={$toUser} domain={$toDomain} accountId={$fp}", 'cyan');
 
         if (empty(cache::get('connections')[$fp] ?? [])) {
             $pendingToTag = bin2hex(random_bytes(4));
@@ -271,8 +274,8 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
             cli::pcl("[INBOUND] fp:{$fp} sem WS ativo — enviando push e aguardando reconexão (até 15s)", 'yellow');
 
             $fromHeader = $parse['headers']['From'][0] ?? '';
-            go(fn() => \helpers\utils\WebPushHelper::notifyIncomingCall($toUser, [
-                'from' => $fromHeader,
+            go(fn() => \helpers\utils\WebPushHelper::notifyIncomingCall($fp, [
+                'fromUri' => AccountIdentity::sipUri($fromHeader),
                 'callId' => $callId,
             ]));
 
@@ -357,9 +360,12 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
             $socket->push($clientFd, json_encode([
                 'type' => 'incomingCall',
                 'data' => [
+                    'accountId' => $fp,
                     'callId' => $callId,
                     'from' => $parse['headers']['From'][0] ?? '',
                     'to' => $parse['headers']['To'][0] ?? '',
+                    'fromUri' => AccountIdentity::sipUri($parse['headers']['From'][0] ?? ''),
+                    'toUri' => AccountIdentity::sipUri($parse['headers']['To'][0] ?? ''),
                     'codec' => $chosenCodec['name'],
                 ],
             ]));
@@ -418,18 +424,36 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
         $respondOk = \libspech\Packet\renderMessages::respond200OK($parse['headers'], '');
         $socket->sendto($info['address'], $info['port'], $respondOk);
 
-        $fromUser = \libspech\Sip\sip::extractURI($parse['headers']['From'][0])['user'] ?? '';
-        $toUser = \libspech\Sip\sip::extractURI($parse['headers']['To'][0])['user'] ?? '';
+        $fromParsed = \libspech\Sip\sip::extractURI($parse['headers']['From'][0] ?? '');
+        $toParsed = \libspech\Sip\sip::extractURI($parse['headers']['To'][0] ?? '');
+        $fromUser = $fromParsed['user'] ?? '';
+        $fromDomain = (string)($fromParsed['peer']['host'] ?? '');
+        $toUser = $toParsed['user'] ?? '';
+        $toDomain = (string)($toParsed['peer']['host'] ?? '');
+        $fromUri = AccountIdentity::sipUri($parse['headers']['From'][0] ?? '');
+        $toUri = AccountIdentity::sipUri($parse['headers']['To'][0] ?? '');
         $body = trim($parse['body'] ?? '');
 
         if (!empty($fromUser) && !empty($toUser) && !empty($body)) {
-            $msg = \plugins\Utils\messages\messageStore::saveMessage($fromUser, $toUser, $body);
+            $route = AccountIdentity::resolve($toUser, $toDomain, (string)($info['address'] ?? ''));
+            $accountId = $route['accountId'];
+            if (!$accountId) {
+                if ($route['status'] === 'ambiguous') {
+                    cli::pcl("[MESSAGE:ROUTE] ambiguous destination user={$toUser} candidates=" . count($route['candidates']), 'red');
+                } else {
+                    cli::pcl("[MESSAGE:ROUTE] destination not found user={$toUser} domain={$toDomain}", 'red');
+                }
+                return;
+            }
+            cli::pcl("[MESSAGE:ROUTE] to={$toUser} domain={$toDomain} accountId={$accountId}", 'cyan');
+            cli::pcl("[MESSAGE:SIP] fromUser={$fromUser} fromDomain={$fromDomain} fromUri={$fromUri} toUser={$toUser} toDomain={$toDomain} toUri={$toUri}", 'cyan');
+            $msg = \plugins\Utils\messages\messageStore::saveMessage($accountId, $toUri, $fromUri, $body, 'inbound');
             if ($msg) {
-                \plugins\Utils\messages\messageStore::sendRealtime($socket, $toUser, [
+                \plugins\Utils\messages\messageStore::sendRealtime($socket, $accountId, [
                     'type' => 'messageNew',
                     'data' => ['message' => $msg]
                 ]);
-                go(fn() => \helpers\utils\WebPushHelper::notifyUser($toUser, $msg));
+                go(fn() => \helpers\utils\WebPushHelper::notifyUser($accountId, $msg));
             }
         }
     }

@@ -835,20 +835,35 @@ window.closeActiveCallBar = function () {
 // ===== Real-time Chat Store =====
 
 window.chatStore = {
-    renderedIds: new Set(), // message id → already rendered
-    unread: {},             // sipUser → pending unread count (not yet opened)
+    renderedIds: new Set(), // accountId|messageId → already rendered
+    unread: {},             // accountId|remoteUri → pending unread count
 };
 
-// Normalize SIP URI or plain username to lowercase username for comparison
+// Display helper only. Internal matching must use _chatKey(accountId, remoteUri).
 function _normSip(s) {
     if (!s) return '';
     const m = String(s).match(/sip:([^@>\s]+)/i);
     return (m ? m[1] : String(s)).trim().toLowerCase();
 }
 
+function _sipIdentity(s) {
+    const value = String(s || '').trim().replace(/[<>]/g, '');
+    const match = value.match(/sip:([^@;\s]+)@([^;\s]+)/i) || value.match(/^([^@;\s]+)@([^;\s]+)$/);
+    return match ? `sip:${match[1].toLowerCase()}@${match[2].toLowerCase()}` : value.toLowerCase();
+}
+
+function _chatKey(accountId, remoteUri) {
+    return `${accountId || ''}|${_sipIdentity(remoteUri)}`;
+}
+
 window.handleMessageNew = function (message) {
     if (!message) return;
-    const key = message.id || [message.from, message.to, message.timestamp, message.body].join('|');
+    const currentAccountId = (new UserManager()).getValue('fp') || '';
+    if (!message.accountId || (currentAccountId && message.accountId !== currentAccountId)) {
+        console.warn('[MESSAGE] evento descartado por accountId divergente');
+        return;
+    }
+    const key = `${message.accountId}|${message.id || [message.fromUri, message.toUri, message.timestamp, message.body].join('|')}`;
     if (window.chatStore.renderedIds.has(key)) {
         console.log('[MESSAGE] duplicado ignorado', key);
         return;
@@ -856,33 +871,36 @@ window.handleMessageNew = function (message) {
     window.chatStore.renderedIds.add(key);
     console.log('[MESSAGE] messageNew recebido', message);
 
-    const partner = message.from;
-    const partnerNorm = _normSip(partner);
-    const chatNorm = _normSip(window.currentChatUser || '');
+    const partner = message.remoteUri;
+    const conversationKey = _chatKey(message.accountId, partner);
+    const currentKey = window.currentChatKey || '';
 
-    console.log('[MESSAGE] partner:', partnerNorm, '| currentChatUser:', chatNorm, '| match:', chatNorm && chatNorm === partnerNorm);
+    console.log('[MESSAGE] conversationKey:', conversationKey, '| currentChatKey:', currentKey);
 
-    if (chatNorm && chatNorm === partnerNorm) {
+    if (currentKey && currentKey === conversationKey) {
         console.log('[MESSAGE] conversa aberta, renderizando direto');
         if (typeof window.appendMessageToChat === 'function') window.appendMessageToChat(message, true);
-        if (typeof window.markAsRead === 'function') window.markAsRead([message.id]);
+        if (message.direction === 'inbound' && typeof window.markAsRead === 'function') window.markAsRead([message.id]);
+    } else if (message.direction === 'outbound') {
+        // Sync previews in other tabs without turning sent messages into unread.
+        if (typeof window.loadConversations === 'function') window.loadConversations();
     } else {
         console.log('[MESSAGE] conversa fechada, incrementando unread');
-        window.chatStore.unread[partner] = (window.chatStore.unread[partner] || 0) + 1;
-        window._updateConvPreview(partner, message);
+        window.chatStore.unread[conversationKey] = (window.chatStore.unread[conversationKey] || 0) + 1;
+        window._updateConvPreview(conversationKey, message);
         window._updateMsgTabBadge();
         sendBrowserNotification(
-            'Nova mensagem de ' + (formatSipUri(partner) || partner),
+            'Nova mensagem de ' + String(partner || '').replace(/^sip:/i, ''),
             message.body || '',
-            {tag: 'msg-' + partnerNorm}
+            {tag: 'msg-' + conversationKey}
         );
     }
 };
 
-window._updateConvPreview = function (fromUser, msg) {
+window._updateConvPreview = function (conversationKey, msg) {
     const list = document.getElementById('convList');
     if (!list) return;
-    const item = list.querySelector('[data-conv-user="' + CSS.escape(fromUser) + '"]');
+    const item = list.querySelector('[data-conv-key="' + CSS.escape(conversationKey) + '"]');
     if (item) {
         const preview = item.querySelector('.conv-preview');
         if (preview) preview.textContent = msg.body;

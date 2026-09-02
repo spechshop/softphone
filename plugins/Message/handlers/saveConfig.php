@@ -4,6 +4,7 @@ namespace handlers;
 
 use helpers\utils\Registrar;
 use helpers\utils\SipRegisterManager;
+use helpers\utils\AccountIdentity;
 use Swoole\Timer;
 use Swoole\WebSocket\Server;
 
@@ -44,6 +45,8 @@ class saveConfig
             return self::respond($socket, $fd, $model, false, 'Identificador do dispositivo ausente.');
         }
         $fingerprint = $data['fp'];
+        $data['accountId'] = $fingerprint;
+        $data['fp'] = $fingerprint;
         $previousData = $vault->exists($fingerprint) ? $vault->get($fingerprint) : null;
 
         if (!$vault->exists($fingerprint)) {
@@ -82,6 +85,9 @@ class saveConfig
         } catch (\Throwable) {
             return self::respond($socket, $fd, $model, false, 'Servidor SIP inválido.');
         }
+        $data['sipDomain'] = strtolower(trim((string)($data['sipDomain'] ?? '')) ?: $endpoint['host']);
+        $data['registrarHost'] = strtolower($endpoint['host']);
+        $data = array_merge($data, AccountIdentity::fromData($fingerprint, $data));
 
         $result = Registrar::registerOneDetailed($socket, $fingerprint, $data);
         if (!$result['success']) {

@@ -1107,6 +1107,7 @@
 <script>
     // ===== MESSAGES SYSTEM =====
     window.currentChatUser = null;
+    window.currentChatKey = null;
 
     // Guard: only register once even if default.html re-renders
     if (!window._spechMsgListenerAdded) {
@@ -1141,16 +1142,22 @@
                 window.chatStore.unread = {};
             }
             res.conversations.forEach(conv => {
+                const accountId = conv.accountId || (new UserManager()).getValue('fp') || '';
+                const remoteUri = conv.remoteUri || conv.with || '';
+                const conversationKey = conv.conversationKey || _chatKey(accountId, remoteUri);
                 const unread = conv.unread || 0;
-                if (unread > 0 && window.chatStore) window.chatStore.unread[conv.with] = unread;
+                if (unread > 0 && window.chatStore) window.chatStore.unread[conversationKey] = unread;
 
                 const el = document.createElement('div');
                 el.className = 'conv-item';
-                el.setAttribute('data-conv-user', conv.with);
-                const _initial = (conv.with || '?')[0].toUpperCase();
+                el.setAttribute('data-conv-key', conversationKey);
+                const displayIdentity = remoteUri.replace(/^sip:/i, '');
+                const safeDisplayIdentity = displayIdentity.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                const _initial = (displayIdentity || '?')[0].toUpperCase();
                 const _avatarColors = ['#6366f1', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981', '#3b82f6', '#ef4444'];
-                const _avatarColor = _avatarColors[(conv.with || '').charCodeAt(0) % _avatarColors.length];
+                const _avatarColor = _avatarColors[(conversationKey || '?').charCodeAt(0) % _avatarColors.length];
                 const lastMsg = conv.lastMessage ? conv.lastMessage.body : '';
+                const safeLastMsg = String(lastMsg).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                 const lastTime = conv.lastMessage && conv.lastMessage.timestamp
                     ? new Date(conv.lastMessage.timestamp * 1000).toLocaleTimeString([], {
                         hour: '2-digit',
@@ -1162,16 +1169,16 @@
                     <div class="conv-avatar" style="background:${_avatarColor}">${_initial}</div>
                     <div style="flex:1;min-width:0">
                         <div class="d-flex justify-content-between align-items-center">
-                            <span class="conv-name">${conv.with}</span>
+                            <span class="conv-name">${safeDisplayIdentity}</span>
                             <span class="conv-time-label">${lastTime}</span>
                         </div>
                         <div class="d-flex justify-content-between align-items-center" style="gap:4px;margin-top:2px">
-                            <span class="conv-preview">${lastMsg}</span>
+                            <span class="conv-preview">${safeLastMsg}</span>
                             <div class="conv-badge-wrap flex-shrink-0">${badgeHtml}</div>
                         </div>
                     </div>
                 `;
-                el.onclick = () => openChat(conv.with);
+                el.onclick = () => openChat(remoteUri, accountId);
                 list.appendChild(el);
             });
 
@@ -1179,18 +1186,22 @@
         });
     }
 
-    window.openChat = function (userStr) {
-        window.currentChatUser = userStr;
+    window.openChat = function (userStr, accountId = (new UserManager()).getValue('fp') || '') {
+        const currentUser = new UserManager();
+        const fallbackDomain = currentUser.getValue('sipDomain') || String(currentUser.getValue('sipServer') || '').replace(/^sips?:\/\//i, '').replace(/:\d+$/, '');
+        const requestedIdentity = String(userStr || '').includes('@') ? userStr : `sip:${String(userStr || '').replace(/^sip:/i, '')}@${fallbackDomain}`;
+        window.currentChatUser = _sipIdentity(requestedIdentity);
+        window.currentChatKey = _chatKey(accountId, window.currentChatUser);
 
         // Clear unread counters for this conversation
         if (window.chatStore) {
-            delete window.chatStore.unread[userStr];
+            delete window.chatStore.unread[window.currentChatKey];
             if (typeof window._updateMsgTabBadge === 'function') window._updateMsgTabBadge();
         }
 
         document.getElementById('msgListView').style.setProperty('display', 'none', 'important');
         document.getElementById('msgChatView').style.setProperty('display', 'flex', 'important');
-        document.getElementById('chatWithUser').textContent = userStr;
+        document.getElementById('chatWithUser').textContent = window.currentChatUser.replace(/^sip:/i, '');
         const _chatAvatar = document.getElementById('chatAvatarEl');
         if (_chatAvatar) {
             const _ci = (userStr || '?')[0].toUpperCase();
@@ -1200,7 +1211,7 @@
         }
         document.getElementById('chatHistory').innerHTML = '<div class="text-center text-muted mt-3 mini">Carregando...</div>';
 
-        sendRecByToken({with: userStr, limit: 50}, 'messageHistory').then(res => {
+        sendRecByToken({with: window.currentChatUser, limit: 50}, 'messageHistory').then(res => {
             const history = document.getElementById('chatHistory');
             if (!history) return;
 
@@ -1212,9 +1223,9 @@
             const unreadIds = [];
             if (res && res.messages) {
                 res.messages.forEach(msg => {
-                    if (window.chatStore && msg.id) window.chatStore.renderedIds.add(msg.id);
+                    if (window.chatStore && msg.id) window.chatStore.renderedIds.add(`${msg.accountId}|${msg.id}`);
                     appendMessageToChat(msg, false);
-                    if (msg.to !== userStr && !msg.read) unreadIds.push(msg.id);
+                    if (msg.direction === 'inbound' && !msg.read) unreadIds.push(msg.id);
                 });
             }
 
@@ -1237,7 +1248,7 @@
         if (msg.id && history.querySelector('[data-msg-id="' + msg.id + '"]')) return;
         const el = document.createElement('div');
         if (msg.id) el.setAttribute('data-msg-id', msg.id);
-        const isMine = msg.to === window.currentChatUser;
+        const isMine = msg.direction === 'outbound';
         const time = msg.timestamp
             ? new Date(msg.timestamp * 1000).toLocaleTimeString([], {hour: '2-digit', minute: '2-digit'})
             : '';
@@ -1250,6 +1261,7 @@
 
     window.closeChat = function () {
         window.currentChatUser = null;
+        window.currentChatKey = null;
         document.getElementById('msgChatView').style.setProperty('display', 'none', 'important');
         document.getElementById('msgListView').style.setProperty('display', 'flex', 'important');
         loadConversations();

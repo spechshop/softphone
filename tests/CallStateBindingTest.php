@@ -27,6 +27,6 @@ foreach ($rows as $row) {
 }
 if (CallState::findFpForInbound('shared', 'one.test') !== 'device-a') throw new RuntimeException('domínio one cruzou binding');
 if (CallState::findFpForInbound('shared', 'two.test') !== 'device-b') throw new RuntimeException('domínio two cruzou binding');
-if (CallState::findFpBySipUser('shared') !== null) throw new RuntimeException('username ambíguo não pode selecionar conta');
-if (CallState::findFpBySipUser('unique') !== 'device-c') throw new RuntimeException('fallback único deve funcionar');
+if (CallState::findFpForInbound('shared', '') !== null) throw new RuntimeException('username sem domínio não pode selecionar conta');
+if (CallState::findFpForInbound('unique', '') !== null) throw new RuntimeException('nem username único pode ser chave de roteamento');
 echo "OK: bindings separados por usuário, domínio e registrar na porta compartilhada 4000.\n";

@@ -12,8 +12,7 @@ class messageList
         $limit = $data['limit'] ?? 50;
 
         $fp = messageStore::getFpFromFd($fd);
-        $user = $fp ? messageStore::getSipUserFromFp($fp) : null;
-        if (!$user) {
+        if (!$fp) {
             return $socket->push($fd, json_encode([
                 'byToken' => $model['id'] ?? null,
                 'type' => 'messageList',
@@ -21,7 +20,7 @@ class messageList
             ]));
         }
 
-        $conversations = messageStore::listConversations($user, (int)$limit);
+        $conversations = messageStore::listConversations($fp, (int)$limit);
 
 
         return $socket->push($fd, json_encode([

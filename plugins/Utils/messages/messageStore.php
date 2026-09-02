@@ -2,227 +2,238 @@
 
 namespace plugins\Utils\messages;
 
+use helpers\utils\AccountIdentity;
 use libspech\Cache\cache;
-use libspech\Cli\cli;
 use Swoole\WebSocket\Server;
 
 class messageStore
 {
     private static string $file = '/data/spechphone/messages.json';
 
-    public static function saveMessage(string $from, string $to, string $body): ?array
+    public static function setFile(string $file): void
     {
-        if (trim($body) === '') return null;
-        if (strlen($body) > 4096) {
-            $body = substr($body, 0, 4096);
-        }
+        self::$file = $file;
+    }
 
-        $data = self::loadData();
-        $convId = self::getConversationId($from, $to);
+    public static function saveMessage(
+        string $accountId,
+        string $localIdentity,
+        string $remoteIdentity,
+        string $body,
+        string $direction = 'outbound'
+    ): ?array {
+        $body = trim($body);
+        if ($accountId === '' || $body === '' || !in_array($direction, ['inbound', 'outbound'], true)) return null;
+        if (strlen($body) > 4096) $body = substr($body, 0, 4096);
+        $localUri = self::normalizeUri($localIdentity);
+        $remoteUri = self::normalizeUri($remoteIdentity);
+        if ($localUri === '' || $remoteUri === '') return null;
+        $convId = self::getConversationId($accountId, $remoteUri);
 
-        // Deduplicate recent same message (avoid duplication if routed back by SIP PBX)
-        if (isset($data['messages'][$convId])) {
-            $lastMsgs = array_slice($data['messages'][$convId], -5);
-            foreach ($lastMsgs as $lm) {
-                if ($lm['from'] === $from && $lm['to'] === $to && $lm['body'] === $body) {
-                    if (time() - $lm['timestamp'] < 10) {
-                        return $lm; // Already saved recently
-                    }
-                }
+        return self::mutate(function (array &$data) use ($accountId, $localUri, $remoteUri, $body, $direction, $convId): array {
+            $fromUri = $direction === 'inbound' ? $remoteUri : $localUri;
+            $toUri = $direction === 'inbound' ? $localUri : $remoteUri;
+            foreach (array_slice($data['messages'][$convId] ?? [], -5) as $recent) {
+                if (($recent['accountId'] ?? '') === $accountId
+                    && ($recent['fromUri'] ?? '') === $fromUri && ($recent['toUri'] ?? '') === $toUri
+                    && ($recent['body'] ?? '') === $body && time() - (int)($recent['timestamp'] ?? 0) < 10) return $recent;
             }
-        }
 
-        $msgId = uniqid('msg_', true);
-        $msg = [
-            'id' => $msgId,
-            'from' => $from,
-            'to' => $to,
-            'body' => $body,
-            'timestamp' => time(),
-            'read' => false
-        ];
-
-        if (!isset($data['messages'][$convId])) {
-            $data['messages'][$convId] = [];
-        }
-        $data['messages'][$convId][] = $msg;
-
-        $data['conversations'][$convId] = [
-            'id' => $convId,
-            'participants' => [$from, $to],
-            'lastMessage' => $msg,
-            'updatedAt' => time()
-        ];
-
-        self::saveData($data);
-        return $msg;
+            $msg = [
+                'id' => uniqid('msg_', true), 'accountId' => $accountId, 'conversationId' => $convId,
+                'localUri' => $localUri, 'remoteUri' => $remoteUri, 'fromUri' => $fromUri, 'toUri' => $toUri,
+                'from' => $fromUri, 'to' => $toUri, 'direction' => $direction, 'body' => $body,
+                'timestamp' => time(), 'read' => $direction === 'outbound',
+            ];
+            $data['schemaVersion'] = 2;
+            $data['messages'][$convId][] = $msg;
+            $data['conversations'][$convId] = [
+                'id' => $convId, 'accountId' => $accountId, 'remoteUri' => $remoteUri,
+                'conversationKey' => $accountId . '|' . $remoteUri,
+                'lastMessage' => $msg, 'updatedAt' => $msg['timestamp'],
+            ];
+            return $msg;
+        });
     }
 
     public static function loadData(): array
     {
-        if (!is_dir(dirname(self::$file))) {
-            cli::pcl('Creating directory: ' . dirname(self::$file), 'yellow');
-            mkdir(dirname(self::$file), 0777, true);
-        }
-        if (!file_exists(self::$file)) {
-            return ['conversations' => [], 'messages' => []];
-        }
-
-        $fp = fopen(self::$file, 'r');
-        if (!$fp) return ['conversations' => [], 'messages' => []];
-
+        if (!file_exists(self::$file)) return self::emptyData();
+        $fp = @fopen(self::$file, 'r');
+        if (!$fp) return self::emptyData();
         flock($fp, LOCK_SH);
         $content = stream_get_contents($fp);
         flock($fp, LOCK_UN);
         fclose($fp);
-
-        if (empty($content)) {
-            return ['conversations' => [], 'messages' => []];
-        }
-
+        if ($content === '') return self::emptyData();
         $data = json_decode($content, true);
-        if (json_last_error() !== JSON_ERROR_NONE) {
-            $backup = self::$file . '.corrupted.' . time();
-            rename(self::$file, $backup);
-            return ['conversations' => [], 'messages' => []];
+        if (!is_array($data)) {
+            @rename(self::$file, self::$file . '.corrupted.' . time());
+            return self::emptyData();
         }
+        $data = array_replace(self::emptyData(), $data);
+        return self::migrateLegacyData($data, AccountIdentity::all());
+    }
+
+    /** Safely migrate username-only history only when one local account is provable. */
+    public static function migrateLegacyData(array $data, array $accounts): array
+    {
+        $legacyConversations = array_filter($data['conversations'] ?? [], static fn(array $c): bool => empty($c['accountId']));
+        if (!$legacyConversations) return $data;
+        $unresolved = $data['legacyUnresolved'] ?? ['conversations' => [], 'messages' => []];
+
+        foreach ($legacyConversations as $oldId => $conv) {
+            $participants = $conv['participants'] ?? [];
+            $possible = [];
+            foreach ($participants as $participant) {
+                $parsed = AccountIdentity::parseSipIdentity((string)$participant);
+                foreach ($accounts as $accountId => $account) {
+                    if (strcasecmp((string)($account['sipUser'] ?? ''), $parsed['user']) === 0) {
+                        $possible[$accountId] = ['account' => $account, 'localParticipant' => (string)$participant];
+                    }
+                }
+            }
+            if (count($possible) !== 1 || count($participants) !== 2) {
+                $unresolved['conversations'][$oldId] = $conv;
+                $unresolved['messages'][$oldId] = $data['messages'][$oldId] ?? [];
+                unset($data['conversations'][$oldId], $data['messages'][$oldId]);
+                continue;
+            }
+            $accountId = (string)array_key_first($possible);
+            $match = $possible[$accountId];
+            $account = $match['account'];
+            $localLegacy = $match['localParticipant'];
+            $remoteLegacy = $participants[0] === $localLegacy ? $participants[1] : $participants[0];
+            $localUri = AccountIdentity::sipUri((string)$account['sipUser'], (string)$account['sipDomain']);
+            $remoteUri = AccountIdentity::sipUri((string)$remoteLegacy, (string)$account['sipDomain']);
+            $newId = self::getConversationId($accountId, $remoteUri);
+            foreach ($data['messages'][$oldId] ?? [] as $oldMessage) {
+                $direction = strcasecmp((string)($oldMessage['from'] ?? ''), $localLegacy) === 0 ? 'outbound' : 'inbound';
+                $fromUri = $direction === 'outbound' ? $localUri : $remoteUri;
+                $toUri = $direction === 'outbound' ? $remoteUri : $localUri;
+                $data['messages'][$newId][] = $oldMessage + [
+                    'accountId' => $accountId, 'conversationId' => $newId, 'localUri' => $localUri,
+                    'remoteUri' => $remoteUri, 'fromUri' => $fromUri, 'toUri' => $toUri, 'direction' => $direction,
+                ];
+                $lastIndex = array_key_last($data['messages'][$newId]);
+                $data['messages'][$newId][$lastIndex]['from'] = $fromUri;
+                $data['messages'][$newId][$lastIndex]['to'] = $toUri;
+                if ($direction === 'outbound') $data['messages'][$newId][$lastIndex]['read'] = true;
+            }
+            $last = end($data['messages'][$newId]);
+            $data['conversations'][$newId] = [
+                'id' => $newId, 'accountId' => $accountId, 'remoteUri' => $remoteUri,
+                'conversationKey' => $accountId . '|' . $remoteUri, 'lastMessage' => $last ?: null,
+                'updatedAt' => (int)($last['timestamp'] ?? $conv['updatedAt'] ?? 0),
+            ];
+            unset($data['conversations'][$oldId], $data['messages'][$oldId]);
+        }
+        if ($unresolved['conversations']) $data['legacyUnresolved'] = $unresolved;
+        $data['schemaVersion'] = 2;
         return $data;
     }
 
-    public static function getConversationId(string $user1, string $user2): string
+    public static function getConversationId(string $accountId, string $remoteSipIdentity): string
     {
-        $participants = [$user1, $user2];
-        sort($participants);
-        return hash('sha256', implode(':', $participants));
+        return hash('sha256', $accountId . "\n" . self::normalizeUri($remoteSipIdentity));
     }
 
-    public static function saveData(array $data): void
+    public static function getHistory(string $accountId, string $remoteSipIdentity, int $limit = 50): array
     {
-        if (!is_dir(dirname(self::$file))) {
-            mkdir(dirname(self::$file), 0777, true);
-        }
-
-        $tempFile = self::$file . '.tmp.' . uniqid();
-        $fp = fopen($tempFile, 'w');
-        if ($fp) {
-            flock($fp, LOCK_EX);
-            fwrite($fp, json_encode($data, JSON_PRETTY_PRINT));
-            fflush($fp);
-            flock($fp, LOCK_UN);
-            fclose($fp);
-            rename($tempFile, self::$file);
-        }
+        $remoteUri = self::normalizeUri($remoteSipIdentity);
+        $convId = self::getConversationId($accountId, $remoteUri);
+        $messages = self::loadData()['messages'][$convId] ?? [];
+        $messages = array_values(array_filter($messages, static fn(array $m): bool => ($m['accountId'] ?? '') === $accountId));
+        if (count($messages) > $limit) $messages = array_slice($messages, -$limit);
+        return ['conversationId' => $convId, 'accountId' => $accountId, 'remoteUri' => $remoteUri, 'messages' => $messages];
     }
 
-    public static function getHistory(string $user1, string $user2, int $limit = 50): array
-    {
-        $data = self::loadData();
-        $convId = self::getConversationId($user1, $user2);
-
-        if (!isset($data['messages'][$convId])) {
-            return ['conversationId' => $convId, 'messages' => []];
-        }
-
-        $msgs = $data['messages'][$convId];
-        // Return last $limit messages
-        if (count($msgs) > $limit) {
-            $msgs = array_slice($msgs, -$limit);
-        }
-
-        // Remove keys to make it a clean array list
-        $msgs = array_values($msgs);
-
-        return ['conversationId' => $convId, 'messages' => $msgs];
-    }
-
-    public static function listConversations(string $user, int $limit = 50): array
+    public static function listConversations(string $accountId, int $limit = 50): array
     {
         $data = self::loadData();
         $list = [];
-
         foreach ($data['conversations'] as $conv) {
-            if (in_array($user, $conv['participants'])) {
-                $otherUser = $conv['participants'][0] === $user ? $conv['participants'][1] : $conv['participants'][0];
-                $conv['with'] = $otherUser;
-                // Count unread
-                $unread = 0;
-                if (isset($data['messages'][$conv['id']])) {
-                    foreach ($data['messages'][$conv['id']] as $m) {
-                        if ($m['to'] === $user && empty($m['read'])) {
-                            $unread++;
-                        }
-                    }
-                }
-                $conv['unread'] = $unread;
-                $list[] = $conv;
+            if (($conv['accountId'] ?? '') !== $accountId) continue;
+            $unread = 0;
+            foreach ($data['messages'][$conv['id']] ?? [] as $message) {
+                if (($message['accountId'] ?? '') === $accountId && ($message['direction'] ?? '') === 'inbound' && empty($message['read'])) $unread++;
             }
+            $conv['with'] = $conv['remoteUri'];
+            $conv['unread'] = $unread;
+            $list[] = $conv;
         }
+        usort($list, static fn(array $a, array $b): int => ($b['updatedAt'] ?? 0) <=> ($a['updatedAt'] ?? 0));
+        return array_slice($list, 0, max(0, $limit));
+    }
 
-        usort($list, function ($a, $b) {
-            return $b['updatedAt'] <=> $a['updatedAt'];
+    public static function markAsRead(string $accountId, string $remoteSipIdentity, array $messageIds): void
+    {
+        if (!$messageIds) return;
+        $convId = self::getConversationId($accountId, $remoteSipIdentity);
+        self::mutate(function (array &$data) use ($convId, $accountId, $messageIds): bool {
+            $changed = false;
+            if (!isset($data['messages'][$convId])) return false;
+            foreach ($data['messages'][$convId] as &$message) {
+                if (($message['accountId'] ?? '') === $accountId && ($message['direction'] ?? '') === 'inbound'
+                    && in_array($message['id'] ?? '', $messageIds, true)) {
+                    $message['read'] = true;
+                    $changed = true;
+                }
+            }
+            unset($message);
+            return $changed;
         });
-
-        if (count($list) > $limit) {
-            $list = array_slice($list, 0, $limit);
-        }
-        return $list;
     }
 
-    public static function markAsRead(string $user1, string $user2, array $messageIds): void
+    public static function sendRealtime(Server $socket, string $accountId, array $messagePayload): void
     {
-        $data = self::loadData();
-        $convId = self::getConversationId($user1, $user2);
-
-        if (!isset($data['messages'][$convId])) {
-            return;
-        }
-
-        $changed = false;
-        foreach ($data['messages'][$convId] as &$m) {
-            if (in_array($m['id'], $messageIds)) {
-                $m['read'] = true;
-                $changed = true;
-            }
-        }
-
-        if ($changed) {
-            self::saveData($data);
+        foreach (self::connectionFdsForAccount(cache::get('connections') ?? [], $accountId) as $fd) {
+            if ($socket->isEstablished((int)$fd)) $socket->push((int)$fd, json_encode($messagePayload));
         }
     }
 
-    public static function sendRealtime(Server $socket, string $toUser, array $messagePayload): void
+    public static function connectionFdsForAccount(array $connections, string $accountId): array
     {
-        $connections = cache::get('connections') ?? [];
-        foreach ($connections as $fp => $fds) {
-            $sipUser = self::getSipUserFromFp($fp);
-            if ($sipUser === $toUser) {
-                foreach ($fds as $fd) {
-                    $socket->push($fd, json_encode($messagePayload));
-                }
-            }
-        }
-    }
-
-    public static function getSipUserFromFp(string $fp): ?string
-    {
-        try {
-            $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
-            if ($vault->exists($fp)) {
-                return $vault->get($fp)['sipUser'] ?? null;
-            }
-        } catch (\Exception $e) {
-        }
-        return null;
+        return array_values(array_map('intval', $connections[$accountId] ?? []));
     }
 
     public static function getFpFromFd(int $fd): ?string
     {
-        $connections = cache::get('connections') ?? [];
-        foreach ($connections as $fp => $fds) {
-            if (in_array($fd, $fds)) {
-                return $fp;
-            }
+        foreach (cache::get('connections') ?? [] as $accountId => $fds) {
+            if (in_array($fd, $fds, true)) return (string)$accountId;
         }
         return null;
+    }
+
+    private static function normalizeUri(string $identity): string
+    {
+        $value = trim($identity);
+        if (preg_match('/sip:([^@;>\s]+)@([^;>\s]+)/i', $value, $m)
+            || preg_match('/^([^@;>\s]+)@([^;>\s]+)$/', $value, $m)) {
+            return 'sip:' . strtolower($m[1]) . '@' . strtolower(rtrim($m[2], '.'));
+        }
+        return $value === '' ? '' : 'sip:' . strtolower(preg_replace('/^sip:/i', '', $value));
+    }
+
+    private static function emptyData(): array
+    {
+        return ['schemaVersion' => 2, 'conversations' => [], 'messages' => []];
+    }
+
+    private static function mutate(callable $callback): mixed
+    {
+        $dir = dirname(self::$file);
+        if (!is_dir($dir)) mkdir($dir, 0777, true);
+        $lock = fopen(self::$file . '.lock', 'c');
+        if (!$lock) throw new \RuntimeException('Não foi possível bloquear o messageStore');
+        flock($lock, LOCK_EX);
+        $data = self::loadData();
+        $result = $callback($data);
+        $tmp = self::$file . '.tmp.' . bin2hex(random_bytes(6));
+        file_put_contents($tmp, json_encode($data, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES));
+        rename($tmp, self::$file);
+        flock($lock, LOCK_UN);
+        fclose($lock);
+        return $result;
     }
 }

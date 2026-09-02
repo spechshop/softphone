@@ -4,6 +4,7 @@ namespace handlers;
 
 
 use helpers\utils\CallState;
+use helpers\utils\AccountIdentity;
 use helpers\utils\Registrar;
 use libspech\Cache\cache;
 use libspech\Cli\cli;
@@ -35,6 +36,10 @@ class connect
             cache::set('connections', $connections);
 
             $userDatas = $vault->get($data['fp']);
+            $identity = AccountIdentity::fromData((string)$data['fp'], $userDatas);
+            $userDatas = array_merge($userDatas, $identity);
+            $vault->set((string)$data['fp'], $userDatas);
+            $vault->flush();
 
 
             foreach ($userDatas as $key => $value) {

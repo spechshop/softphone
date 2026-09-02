@@ -80,8 +80,7 @@ class Registrar
     {
         $result = self::registerOneDetailed($server, $fp, $data);
         if (!$result['success'] && $result['reason'] !== 'registration_in_progress') {
-            $sipUser = (string)($data['sipUser'] ?? '');
-            go(fn() => WebPushHelper::notifyUser($sipUser, [
+            go(fn() => WebPushHelper::notifyUser($fp, [
                 'message' => self::messageForResult($result),
             ]));
         }

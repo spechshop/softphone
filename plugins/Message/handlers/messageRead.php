@@ -13,8 +13,7 @@ class messageRead
         $messageIds = $data['messageIds'] ?? [];
 
         $fp = messageStore::getFpFromFd($fd);
-        $user = $fp ? messageStore::getSipUserFromFp($fp) : null;
-        if (!$user) {
+        if (!$fp) {
             return $socket->push($fd, json_encode([
                 'byToken' => $model['id'] ?? null,
                 'type' => 'messageRead',
@@ -31,7 +30,7 @@ class messageRead
         }
 
         if (count($messageIds) > 0) {
-            messageStore::markAsRead($user, $with, $messageIds);
+            messageStore::markAsRead($fp, $with, $messageIds);
         }
 
         return $socket->push($fd, json_encode([

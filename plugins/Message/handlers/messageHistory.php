@@ -13,8 +13,7 @@ class messageHistory
         $limit = $data['limit'] ?? 50;
 
         $fp = messageStore::getFpFromFd($fd);
-        $user = $fp ? messageStore::getSipUserFromFp($fp) : null;
-        if (!$user) {
+        if (!$fp) {
             return $socket->push($fd, json_encode([
                 'byToken' => $model['id'] ?? null,
                 'type' => 'messageHistory',
@@ -30,7 +29,7 @@ class messageHistory
             ]));
         }
 
-        $history = messageStore::getHistory($user, $with, (int)$limit);
+        $history = messageStore::getHistory($fp, $with, (int)$limit);
 
         return $socket->push($fd, json_encode([
             'byToken' => $model['id'] ?? null,

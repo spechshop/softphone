@@ -4,6 +4,7 @@ namespace handlers;
 
 use helpers\utils\WebPushHelper;
 use libspech\Cli\cli;
+use plugins\Utils\messages\messageStore;
 
 class savePushSubscription
 {
@@ -24,6 +25,13 @@ class savePushSubscription
             ]));
         }
 
+        if (messageStore::getFpFromFd($fd) !== $fp) {
+            return $socket->push($fd, json_encode([
+                'byToken' => $model['id'] ?? null,
+                'data' => ['success' => false, 'error' => 'Conta não autenticada'],
+            ]));
+        }
+
         $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
         if (!$vault->exists($fp)) {
             return $socket->push($fd, json_encode([
@@ -32,19 +40,8 @@ class savePushSubscription
             ]));
         }
 
-        $userData = $vault->get($fp);
-        $sipUser = $userData['sipUser'] ?? '';
-
-        if (empty($sipUser)) {
-            return $socket->push($fd, json_encode([
-                'byToken' => $model['id'] ?? null,
-                'data' => ['success' => false, 'error' => 'Usuário SIP não definido'],
-            ]));
-        }
-
-        WebPushHelper::saveSubscription($sipUser, $subscription, $fp);
-
-        cli::pcl("[PUSH] Subscription salva — fp:{$fp} sipUser:{$sipUser}", 'green');
+        WebPushHelper::saveSubscription($fp, $subscription);
+        cli::pcl("[PUSH] Subscription salva — accountId:{$fp}", 'green');
 
         return $socket->push($fd, json_encode([
             'byToken' => $model['id'] ?? null,

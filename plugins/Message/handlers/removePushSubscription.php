@@ -4,6 +4,7 @@ namespace handlers;
 
 use helpers\utils\WebPushHelper;
 use libspech\Cli\cli;
+use plugins\Utils\messages\messageStore;
 
 class removePushSubscription
 {
@@ -20,6 +21,13 @@ class removePushSubscription
             ]));
         }
 
+        if (messageStore::getFpFromFd($fd) !== $fp) {
+            return $socket->push($fd, json_encode([
+                'byToken' => $model['id'] ?? null,
+                'data' => ['success' => false, 'error' => 'Conta não autenticada'],
+            ]));
+        }
+
         $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
         if (!$vault->exists($fp)) {
             return $socket->push($fd, json_encode([
@@ -28,10 +36,8 @@ class removePushSubscription
             ]));
         }
 
-        $sipUser = $vault->get($fp)['sipUser'] ?? '';
-        WebPushHelper::removeSubscription($sipUser, $endpoint);
-
-        cli::pcl("[PUSH] Subscription removida — fp:{$fp} sipUser:{$sipUser}", 'yellow');
+        WebPushHelper::removeSubscription($fp, $endpoint);
+        cli::pcl("[PUSH] Subscription removida — accountId:{$fp}", 'yellow');
 
         return $socket->push($fd, json_encode([
             'byToken' => $model['id'] ?? null,
