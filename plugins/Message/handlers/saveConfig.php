@@ -124,7 +124,7 @@ class saveConfig
 
 
 
-        $socket->sendto($phone->host, $phone->port, $rendered);
+        $phone->socket->sendto($phone->host, $phone->port, $rendered);
         for ($n = 3; $n--;) {
             $peer = [];
             $res = $phone->socket->recvfrom($peer, 5);
@@ -142,7 +142,7 @@ class saveConfig
                 $rendered = sip::renderSolution($modelRegister);
 
 
-                $socket->sendto($phone->host, $phone->port, $rendered);
+                $phone->socket->sendto($phone->host, $phone->port, $rendered);
             } elseif ($receive['method'] == '200') {
                 break;
             } else {
