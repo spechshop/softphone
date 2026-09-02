@@ -209,33 +209,6 @@ final class OpusConfig
         ];
     }
 
-    /**
-     * Preserves PCM channel planes while delegating rate conversion to the
-     * existing libspech/global resampler, whose input is one PCM plane.
-     */
-    public static function resamplePcm(string $pcm, int $sourceRate, int $targetRate, int $channels): string
-    {
-        if ($pcm === '' || $sourceRate === $targetRate) return $pcm;
-        $channels = max(1, min(2, $channels));
-        if ($channels === 1) return \resampler($pcm, $sourceRate, $targetRate);
-
-        $left = '';
-        $right = '';
-        $usable = strlen($pcm) - (strlen($pcm) % 4);
-        for ($offset = 0; $offset < $usable; $offset += 4) {
-            $left .= substr($pcm, $offset, 2);
-            $right .= substr($pcm, $offset + 2, 2);
-        }
-        $left = \resampler($left, $sourceRate, $targetRate);
-        $right = \resampler($right, $sourceRate, $targetRate);
-        $samples = min(intdiv(strlen($left), 2), intdiv(strlen($right), 2));
-        $result = '';
-        for ($sample = 0; $sample < $samples; $sample++) {
-            $result .= substr($left, $sample * 2, 2) . substr($right, $sample * 2, 2);
-        }
-        return $result;
-    }
-
     private static function boolValue(mixed $value): bool
     {
         if (is_bool($value)) return $value;

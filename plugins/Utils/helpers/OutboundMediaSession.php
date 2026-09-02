@@ -137,6 +137,8 @@ final class OutboundMediaSession
             $memberId = "{$peer['address']}:{$peer['port']}";
             $member = $channel->members[$memberId] ?? [];
             $name = strtoupper((string)($member['codec'] ?? $channel->resolveCodecNameFromPt($packet->getCodec()) ?? ''));
+
+
             try {
                 $pcm = match ($name) {
                     'PCMU' => decodePcmuToPcm($packet->payloadRaw),
@@ -162,11 +164,18 @@ final class OutboundMediaSession
         });
         $sourceSampleRate = $this->sourceSampleRate;
         $sourceChannels = $this->sourceChannels;
+
+
+
+
+
+
         $media->onStart(function () use ($media, $sourceSampleRate, $sourceChannels, $isOpus): void {
-            $media->eventSock->sendto('127.0.0.1', 9966, str_repeat('0', 12));
+           // $media->eventSock->sendto('127.0.0.1', 9966, str_repeat('0', 12));
             while ($this->active && $media->active) {
                 $peer = null;
                 $raw = $media->eventSock->recvfrom($peer, 0.2);
+
                 if (!$raw) continue;
                 $pcm = explode('__::__', $raw, 2)[0];
                 if ($pcm !== '') {
@@ -177,7 +186,14 @@ final class OutboundMediaSession
                         $pcm = OpusConfig::resamplePcm($pcm, $sourceSampleRate, OpusConfig::RTP_RATE, 2);
                         $mediaRate = OpusConfig::RTP_RATE;
                     }
-                    $media->sendPcmToLeg('a', $pcm, $mediaRate, $sourceChannels);
+
+
+
+                   try {
+                       $media->sendPcmToLeg('a', $pcm, $mediaRate, $sourceChannels);
+                   } catch (\Throwable $e) {
+
+                   }
                 }
             }
         });
