@@ -435,7 +435,7 @@
 
             <div class="mt-2 mb-3">
                 <label class="form-label mini mb-1">Senha</label>
-                <input class="form-control soft-input" id="sipPass" type="text" value="">
+                <input class="form-control soft-input" id="sipPass" type="password" value="">
             </div>
 
             <div class="mb-3">
@@ -457,7 +457,7 @@
             </div>
 
             <div class="d-flex gap-2">
-                <button class="btn btn-soft w-100" type="button" onclick="saveConfig()">
+                <button class="btn btn-soft w-100" type="button" id="btnSaveConfig" onclick="saveConfig()">
                     <i
                             class="fa-solid fa-floppy-disk me-1"></i><span>Salvar</span></button>
                 <button class="btn btn-soft w-100" type="button" id="btnReset"><i
@@ -1379,7 +1379,11 @@
         user.updateUserData('selectedCodecFormat', selectedCodecFormat);
     }
     window.getSelectedCodec = () => selectedCodecFormat;
-    window.saveConfig = () => {
+    window.saveConfig = async () => {
+        const button = document.getElementById('btnSaveConfig');
+        const state = document.getElementById('cfgState');
+        if (!button || button.disabled) return;
+
         const sipServer = document.getElementById('sipServer').value;
         const sipUser = document.getElementById('sipUser').value;
         const sipDomain = document.getElementById('sipDomain').value;
@@ -1390,9 +1394,47 @@
         const data = {sipServer, sipUser, sipDomain, sipPass, codec, trunkCodec};
 
 
-        sendRecByToken(data, 'saveConfig').then((res) => {
-            console.log(res)
-        });
+        const originalHtml = button.innerHTML;
+        button.disabled = true;
+        button.setAttribute('aria-busy', 'true');
+        button.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i><span>Verificando...</span>';
+        if (state) {
+            state.className = 'mini mt-3 text-info';
+            state.textContent = 'Verificando registro SIP...';
+        }
+
+        try {
+            const res = await sendRecByToken(data, 'saveConfig');
+            if (!res) {
+                if (state) {
+                    state.className = 'mini mt-3 text-danger';
+                    state.textContent = 'Tempo limite ao aguardar resposta do backend.';
+                }
+                return;
+            }
+            if (state) {
+                state.className = res.success ? 'mini mt-3 text-success' : 'mini mt-3 text-danger';
+                state.textContent = res.message || (res.success ? 'Registro confirmado.' : 'Falha no registro.');
+            }
+        } catch (error) {
+            if (state) {
+                state.className = 'mini mt-3 text-danger';
+                state.textContent = 'Falha de comunicação ao verificar o registro.';
+            }
+        } finally {
+            button.disabled = false;
+            button.removeAttribute('aria-busy');
+            button.innerHTML = originalHtml;
+        }
+    }
+    if (window.latestRegistrationState) {
+        const state = document.getElementById('cfgState');
+        if (state) {
+            state.className = window.latestRegistrationState.success
+                ? 'mini mt-3 text-success'
+                : 'mini mt-3 text-danger';
+            state.textContent = window.latestRegistrationState.message;
+        }
     }
     window.digits = "";
 

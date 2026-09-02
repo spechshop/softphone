@@ -1,18 +1,51 @@
-/fullchain.pem
-/privkey.pem
-# /libspech/
+# Secrets and local environment
+/.env
+/.env.*
+!/.env.example
+/*.pem
+/*.key
+/*.p12
+/*.pfx
 /devices.vault
-/.idea/shelf/Uncommitted_changes_before_Update_at_05_01_2026_10_02_[Changes]/shelved.patch
-/.idea/shelf/Uncommitted_changes_before_Update_at_05_01_2026_10_02__Changes_.xml
-.env
-vendor
-.idea
-.ai
-.junie
-composer.lock
-st
-/stubs/
-/.junie/
+/auth.json
+/credentials.*
+
+# Dependencies and generated dependency metadata
+/vendor/
+/node_modules/
+/composer.lock
+
+# IDEs, editors and local assistant metadata
+/.idea/
+/.vscode/
+/.fleet/
 /.ai/
+/.junie/
 /.claude/
-.github
+*.iml
+*.swp
+*.swo
+*~
+
+# Repository metadata kept local in this project
+/.github/
+
+# Runtime and generated files
+/audio_control.txt
+/rec.wav
+*.log
+*.pid
+*.tmp
+*.cache
+/.phpunit.result.cache
+/.phpunit.cache/
+/coverage/
+
+# OS metadata
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# Project-specific generated directories/files
+/st
+/stubs/

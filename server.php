@@ -8,6 +8,7 @@ if (file_exists(__DIR__ . '/vendor/autoload.php')) {
 }
 
 use helpers\utils\CallState;
+use helpers\utils\SipRegisterManager;
 use libspech\Cache\cache as cacheLibSpech;
 use libspech\Network\network;
 use libspech\Packet\renderMessages;
@@ -119,6 +120,21 @@ function inboundCSeqMethod(array $parse): string
 $server->on('packet', function (Server $socket, string $data, array $info) {
     $parse = \libspech\Sip\sip::parse($data);
     if (empty($parse['method'])) {
+        return;
+    }
+
+    // REGISTER uses this listener as both its source and its only response
+    // reader. Consume a response before the generic SIP dispatcher can route,
+    // log or otherwise race with the pending client transaction.
+    if (SipRegisterManager::handleResponse($parse, $info)) {
+        $code = (int)$parse['method'];
+        $color = $code >= 400 ? 'red' : ($code >= 200 ? 'green' : 'yellow');
+        cli::pcl(
+            '[REGISTER] resposta ' . $code
+            . ' Call-ID:' . ($parse['headers']['Call-ID'][0] ?? 'N/A')
+            . ' CSeq:' . ($parse['headers']['CSeq'][0] ?? 'N/A'),
+            $color
+        );
         return;
     }
 

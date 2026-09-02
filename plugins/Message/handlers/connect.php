@@ -4,10 +4,9 @@ namespace handlers;
 
 
 use helpers\utils\CallState;
+use helpers\utils\Registrar;
 use libspech\Cache\cache;
 use libspech\Cli\cli;
-use libspech\Network\network;
-use libspech\Sip\sip;
 use Swoole\Timer;
 
 class connect
@@ -38,18 +37,6 @@ class connect
             $userDatas = $vault->get($data['fp']);
 
 
-            if (!empty($userDatas['sipUser']) && CallState::$sipBindings !== null) {
-                CallState::$sipBindings->set($userDatas['sipUser'], [
-                    'fp' => $data['fp'],
-                    'sip_user' => $userDatas['sipUser'],
-                    'sip_server' => $userDatas['sipServer'] ?? '',
-                    'sip_domain' => $userDatas['sipServer'] ?? '',
-                    'contact_port' => 4000,
-                    'registered_at' => time(),
-                    'expires_at' => time() + 3600,
-                ]);
-            }
-
             foreach ($userDatas as $key => $value) {
                 $socket->push($fd, json_encode([
                     'type' => 'setKey',
@@ -61,7 +48,7 @@ class connect
         if (empty($data['token'])) {
             if (empty($data['currentPage'])) {
                 $currentPage = 'default';
-                return $socket->push($fd, json_encode([
+                $socket->push($fd, json_encode([
                     'type' => 'setPage',
                     'page' => $currentPage,
                 ]));
@@ -78,7 +65,7 @@ class connect
             ]));
         }
 
-        if (cache::get('interface')['pages'][$data['currentPage']]) {
+        if (!empty(cache::get('interface')['pages'][$data['currentPage']] ?? false)) {
             $socket->push($fd, json_encode([
                 'type' => 'setPage',
                 'page' => $data['currentPage'],
@@ -126,6 +113,9 @@ class connect
 
 
         $idTimer = Timer::tick(10000, function ($idTimer) use ($socket, $fd, $data) {
+            if (!$socket->isEstablished($fd)) {
+                return Timer::clear($idTimer);
+            }
             $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
             if ($vault->exists($data['fp'])) {
                 $userDatas = $vault->get($data['fp']);
@@ -206,75 +196,29 @@ class connect
         $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
         if (!$vault->exists($data['fp'])) return false;
         $Rules = ['sipServer', 'sipUser', 'sipPass'];
-        foreach ($Rules as $rule) {
-            if (empty($data[$rule])) return false;
-        }
-
         $userDatas = $vault->get($data['fp']);
         if (array_any($Rules, fn($rule) => empty($userDatas[$rule]))) {
             return false;
         }
 
-        $sipServer = $userDatas['sipServer'];
-        $sipUser = $userDatas['sipUser'];
-        $sipPass = $userDatas['sipPass'];
-
-        try {
-            $phone = new \libspech\Sip\trunkController($sipUser, $sipPass, $sipServer);
-        } catch (\Throwable $e) {
-            return false;
+        // Reconnect validates registration through the same :4000 transaction
+        // manager. Periodic renewal remains server-owned and keeps working with
+        // every browser closed.
+        $result = Registrar::registerOneDetailed($socket, $data['fp'], $userDatas);
+        if ($socket->isEstablished($fd)) {
+            $socket->push($fd, json_encode([
+                'type' => 'registrationState',
+                'data' => [
+                    'success' => (bool)$result['success'],
+                    'reason' => $result['reason'],
+                    'code' => $result['code'],
+                    'message' => $result['success']
+                        ? 'Registro SIP confirmado.'
+                        : Registrar::messageForResult($result),
+                ],
+            ]));
         }
-        $modelRegister = $phone->modelRegister(1800);
-        $modelRegister['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":$phone->socketPortListen;branch=z9hG4bK$phone->callId;rport";
-        $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
-        for ($n = 3; $n--;) {
-            $peer = [];
-            $res = $phone->socket->recvfrom($peer, 5);
-            $receive = sip::parse($res);
-            if ($receive['method'] == '401') {
-                $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
-                $nonce = value($wwwAuthenticate, 'nonce="', '"');
-                $realm = value($wwwAuthenticate, 'realm="', '"');
-                $response = sip::generateAuthorizationHeader($phone->username, $realm, $phone->password, $nonce, 'sip:' . $phone->host, 'REGISTER');
-                $modelRegister['headers']['Authorization'][0] = $response;
-                $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
-            } elseif ($receive['method'] == '200') {
-                break;
-            } else {
-                $phone->close();
-                return $socket->push($fd, json_encode([
-                    'type' => 'notify',
-                    'data' => [
-                        'type' => 'bg-danger text-white',
-                        'message' => "Registro falhou [$receive[methodForParser], verifique as credenciais fornecidas"
-                    ]
-                ]));
-            }
-        }
-
-        if (CallState::$sipBindings !== null) {
-            CallState::$sipBindings->set($sipUser, [
-                'fp' => $data['fp'],
-                'sip_user' => $sipUser,
-                'sip_server' => $sipServer,
-                'sip_domain' => $sipServer,
-                'contact_port' => 4000,
-                'registered_at' => time(),
-                'expires_at' => time() + 1800,
-            ]);
-        }
-
-        // Re-register every 1500 s (25 min) to refresh before the 1800 s expiry
-        $reRegFp = $data['fp'];
-        $idReRegister = Timer::tick(1500 * 1000, function () use ($socket, $fd, $reRegFp) {
-            $model = ['id' => uniqid('rereg_', true), 'type' => 'register', 'data' => ['fp' => $reRegFp]];
-            \handlers\register::resolve($socket, $model, $fd);
-            cli::pcl("[REGISTER] Re-registro automático fp:{$reRegFp}", 'cyan');
-        });
-        self::addTimerToConnection($fd, $idReRegister);
-
-        $phone->close();
-        return true;
+        return (bool)$result['success'];
     }
 
     private

@@ -2,123 +2,62 @@
 
 namespace handlers;
 
-
-use helpers\utils\CallState;
-use libspech\Cli\cli;
-use libspech\Network\network;
-use libspech\Sip\sip;
-use Random\RandomException;
-use Swoole\Timer;
+use helpers\utils\Registrar;
+use helpers\utils\SipRegisterManager;
 
 class register
 {
-    private static array $connectionTimers = [];
-
     public static function resolve(\Swoole\WebSocket\Server $socket, array $model, int $fd): ?bool
     {
-        print 'register' . PHP_EOL;
-
-
-        self::clearConnectionTimers($fd);
-        $data = $model['data'];
-
-
+        $fp = trim((string)($model['data']['fp'] ?? ''));
         $vault = new \spechphoneVault('/data/spechphone/devices.vault', getenv('SPECH_VAULT_KEY_HEX'));
-        if (!$vault->exists($data['fp'])) return false;
-
-        $userDatas = $vault->get($data['fp']);
-        $needInputs = ['sipServer', 'sipUser', 'sipPass'];
-        if (array_any($needInputs, fn($input) => empty($userDatas[$input]))) {
-            return false;
-        }
-
-        $sipServer = $userDatas['sipServer'];
-        $sipUser = $userDatas['sipUser'];
-        $sipPass = $userDatas['sipPass'];
-
-
-        try {
-            $phone = new \libspech\Sip\trunkController($sipUser, $sipPass, $sipServer);
-        } catch (RandomException $e) {
-            return false;
-        }
-
-
-
-
-        $modelRegister = $phone->modelRegister(1800);
-        $modelRegister['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":$phone->socketPortListen;branch=z9hG4bK$phone->callId;rport";
-
-
-        $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
-        for ($n = 3; $n--;) {
-            $peer = [];
-            $res = $phone->socket->recvfrom($peer, 1);
-            cli::pcl($res);
-            if (!$res) {
-                continue;
-            }
-            $receive = sip::parse($res);
-            if ($receive['method'] == '401') {
-                $wwwAuthenticate = $receive["headers"]["WWW-Authenticate"][0];
-                $nonce = value($wwwAuthenticate, 'nonce="', '"');
-                $realm = value($wwwAuthenticate, 'realm="', '"');
-                $response = sip::generateAuthorizationHeader($phone->username, $realm, $phone->password, $nonce, 'sip:' . $phone->host, 'REGISTER');
-                $modelRegister['headers']['Authorization'][0] = $response;
-                $socket->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
-                break;
-            } elseif ($receive['method'] == '200') {
-
-                break;
-            }
-        }
-        if (CallState::$sipBindings !== null) {
-            CallState::$sipBindings->set($sipUser, [
-                'fp' => $data['fp'],
-                'sip_user' => $sipUser,
-                'sip_server' => $sipServer,
-                'sip_domain' => $sipServer,
-                'contact_port' => 4000,
-                'registered_at' => time(),
-                'expires_at' => time() + 1800,
+        if ($fp === '' || !$vault->exists($fp)) {
+            return self::respond($socket, $fd, $model, false, 'Configuração SIP não encontrada.', [
+                'reason' => 'invalid_configuration',
             ]);
         }
-        $phone->close();
-        return true;
+
+        $data = $vault->get($fp);
+        $result = Registrar::registerOneDetailed($socket, $fp, $data);
+        if (!$result['success']) {
+            return self::respond($socket, $fd, $model, false, Registrar::messageForResult($result), [
+                'reason' => $result['reason'],
+                'code' => $result['code'],
+            ]);
+        }
+
+        return self::respond($socket, $fd, $model, true, 'Registro SIP confirmado.', [
+            'reason' => 'registered',
+            'code' => 200,
+            'contactPort' => SipRegisterManager::SIP_PORT,
+            'bindingConfirmed' => (bool)($result['binding_confirmed'] ?? false),
+        ]);
     }
 
-    public
-    static function clearConnectionTimers(int $fd): void
-    {
-        if (isset(self::$connectionTimers[$fd])) {
-            foreach (self::$connectionTimers[$fd] as $timerId) {
-                Timer::clear($timerId);
-            }
-            unset(self::$connectionTimers[$fd]);
-        }
+    private static function respond(
+        \Swoole\WebSocket\Server $socket,
+        int $fd,
+        array $model,
+        bool $success,
+        string $message,
+        array $extra = []
+    ): bool {
+        $socket->push($fd, json_encode([
+            'type' => 'notify',
+            'data' => [
+                'type' => $success ? 'bg-success text-white' : 'bg-danger text-white',
+                'message' => $message,
+            ],
+        ]));
+        return $socket->push($fd, json_encode([
+            'byToken' => $model['id'] ?? null,
+            'data' => $extra + ['success' => $success, 'message' => $message],
+        ]));
     }
 
-    private
-    static function addTimerToConnection(int $fd, int $timerId): void
+    public static function clearConnectionTimers(int $fd): void
     {
-        if (!isset(self::$connectionTimers[$fd])) {
-            self::$connectionTimers[$fd] = [];
-        }
-        self::$connectionTimers[$fd][] = $timerId;
-    }
-
-    private
-    static function removeTimerFromConnection(int $fd, int $timerId): void
-    {
-        if (isset(self::$connectionTimers[$fd])) {
-            $key = array_search($timerId, self::$connectionTimers[$fd]);
-            if ($key !== false) {
-                unset(self::$connectionTimers[$fd][$key]);
-            }
-
-            if (empty(self::$connectionTimers[$fd])) {
-                unset(self::$connectionTimers[$fd]);
-            }
-        }
+        // Renewal belongs to Registrar and is intentionally independent from
+        // browser connections.
     }
 }

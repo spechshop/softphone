@@ -2,11 +2,7 @@
 
 namespace helpers\utils;
 
-use handlers\saveConfig;
 use libspech\Cli\cli;
-use libspech\Network\network;
-use libspech\Sip\sip;
-use libspech\Sip\trunkController;
 use Swoole\Table;
 use Swoole\WebSocket\Server;
 
@@ -21,6 +17,7 @@ class Registrar
 
     public static function init(): void
     {
+        if (self::$states !== null) return;
         $t = new Table(512);
         $t->column('fp', Table::TYPE_STRING, 128);
         $t->column('sip_user', Table::TYPE_STRING, 128);
@@ -81,93 +78,99 @@ class Registrar
 
     public static function registerOne(Server $server, string $fp, array $data): bool
     {
-        $sipServer = saveConfig::parseSipServer($data['sipServer']);
+        $result = self::registerOneDetailed($server, $fp, $data);
+        if (!$result['success'] && $result['reason'] !== 'registration_in_progress') {
+            $sipUser = (string)($data['sipUser'] ?? '');
+            go(fn() => WebPushHelper::notifyUser($sipUser, [
+                'message' => self::messageForResult($result),
+            ]));
+        }
+        return (bool)$result['success'];
+    }
 
-        $data['sipServer'] = $sipServer;
-        $sipServer = $data['sipServer'];
-        $sipUser = $data['sipUser'];
-        $sipPass = $data['sipPass'];
-        $sipDomain = !empty($data['sipDomain']) ? $data['sipDomain'] : $sipServer;
+    /**
+     * Single registration entry point used by setup, frontend requests,
+     * reconnect and the background renewal loop.
+     *
+     * @return array<string,mixed>
+     */
+    public static function registerOneDetailed(Server $server, string $fp, array $data): array
+    {
+        if (self::$states === null) self::init();
 
-        try {
-            $phone = new trunkController($sipUser, $sipPass, $sipServer);
-        } catch (\Throwable $e) {
+        $sipUser = trim((string)($data['sipUser'] ?? ''));
+        $sipServer = trim((string)($data['sipServer'] ?? ''));
+        $sipDomain = trim((string)($data['sipDomain'] ?? '')) ?: $sipServer;
+        $result = SipRegisterManager::register($server, $data, self::EXPIRES);
+
+        if ($result['success']) {
+            self::recordSuccess($fp, $sipUser, $sipServer, $sipDomain);
+            cli::pcl(
+                "[REGISTRAR] {$sipUser}@{$sipServer} registrado via UDP :" . SipRegisterManager::SIP_PORT
+                . " (fp:{$fp}) expira em " . self::EXPIRES . 's',
+                'green'
+            );
+            return $result;
+        }
+
+        if ($result['reason'] !== 'registration_in_progress') {
             self::recordFailure($fp, $sipUser, $sipServer, $sipDomain);
-            cli::pcl("[REGISTRAR] Falha ao instanciar trunkController para {$sipUser}@{$sipServer}: " . $e->getMessage(), 'red');
-            return false;
+            cli::pcl(
+                "[REGISTRAR] falha {$sipUser}@{$sipServer} (fp:{$fp}) motivo:{$result['reason']}"
+                . ($result['code'] !== null ? " SIP:{$result['code']}" : ''),
+                'red'
+            );
         }
+        return $result;
+    }
 
-        $modelRegister = $phone->modelRegister(self::EXPIRES);
-        $modelRegister['headers']['Via'][] = "SIP/2.0/UDP " . network::getLocalIp() . ":{$phone->socketPortListen};branch=z9hG4bK{$phone->callId};rport";
+    /** @param array<string,mixed> $result */
+    public static function messageForResult(array $result): string
+    {
+        return match ($result['reason'] ?? '') {
+            'authentication_failed' => 'Falha de autenticação SIP. Verifique usuário e senha.',
+            'timeout' => 'O servidor SIP não respondeu dentro do tempo limite.',
+            'host_resolution_failed' => 'Não foi possível resolver o servidor SIP informado.',
+            'nat_port_mismatch' => 'O NAT não preservou a porta SIP 4000; revise o redirecionamento UDP.',
+            'registration_in_progress' => 'Já existe uma tentativa de registro em andamento.',
+            'unsupported_challenge' => 'O servidor SIP solicitou um método de autenticação não suportado.',
+            'invalid_configuration' => 'Preencha servidor, usuário e senha SIP.',
+            'sip_error' => 'O servidor SIP recusou o registro (código ' . ($result['code'] ?? 'desconhecido') . ').',
+            default => 'Não foi possível confirmar o registro SIP.',
+        };
+    }
 
-        $server->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
-
-        $authenticated = false;
-        for ($n = 4; $n--;) {
-            $peer = [];
-            $res = $phone->socket->recvfrom($peer, 5);
-            if ($res === false || $res === '') continue;
-
-            $receive = sip::parse($res);
-            $code = (string)($receive['method'] ?? '');
-
-            if ($code === '401' || $code === '407') {
-                $hKey = $code === '407' ? 'Proxy-Authenticate' : 'WWW-Authenticate';
-                $aKey = $code === '407' ? 'Proxy-Authorization' : 'Authorization';
-                $hVal = $receive['headers'][$hKey][0] ?? '';
-                if ($hVal === '') break;
-                $nonce = value($hVal, 'nonce="', '"');
-                $realm = value($hVal, 'realm="', '"');
-                $auth = sip::generateAuthorizationHeader($phone->username, $realm, $phone->password, $nonce, 'sip:' . $phone->host, 'REGISTER');
-                $modelRegister['headers'][$aKey][0] = $auth;
-                $server->sendto($phone->host, $phone->port, sip::renderSolution($modelRegister));
-                continue;
-            }
-
-            if ($code === '200') {
-                $authenticated = true;
-                break;
-            }
-
-            cli::pcl("[REGISTRAR] {$sipUser}@{$sipServer} resposta inesperada: {$code}", 'red');
-            break;
-        }
-        $phone->close();
-
+    private static function recordSuccess(string $fp, string $sipUser, string $sipServer, string $sipDomain): void
+    {
+        if (self::$states === null) return;
         $now = time();
-        if ($authenticated) {
-            self::$states->set($fp, [
+        self::$states->set($fp, [
+            'fp' => $fp,
+            'sip_user' => $sipUser,
+            'sip_server' => $sipServer,
+            'sip_domain' => $sipDomain,
+            'expires_at' => $now + self::EXPIRES,
+            'last_registered_at' => $now,
+            'last_attempt_at' => $now,
+            'status' => 'registered',
+            'failures' => 0,
+        ]);
+        if (CallState::$sipBindings !== null) {
+            foreach (CallState::$sipBindings as $bindingKey => $binding) {
+                if ($binding['fp'] === $fp && $binding['sip_user'] !== $sipUser) {
+                    CallState::$sipBindings->del((string)$bindingKey);
+                }
+            }
+            CallState::$sipBindings->set($sipUser, [
                 'fp' => $fp,
                 'sip_user' => $sipUser,
                 'sip_server' => $sipServer,
                 'sip_domain' => $sipDomain,
+                'contact_port' => SipRegisterManager::SIP_PORT,
+                'registered_at' => $now,
                 'expires_at' => $now + self::EXPIRES,
-                'last_registered_at' => $now,
-                'last_attempt_at' => $now,
-                'status' => 'registered',
-                'failures' => 0,
             ]);
-            if (CallState::$sipBindings !== null) {
-                CallState::$sipBindings->set($sipUser, [
-                    'fp' => $fp,
-                    'sip_user' => $sipUser,
-                    'sip_server' => $sipServer,
-                    'sip_domain' => $sipDomain,
-                    'contact_port' => 4000,
-                    'registered_at' => $now,
-                    'expires_at' => $now + self::EXPIRES,
-                ]);
-            }
-            cli::pcl("[REGISTRAR] {$sipUser}@{$sipServer} registrado (fp:{$fp}) expira em " . self::EXPIRES . 's', 'green');
-            return true;
         }
-
-        self::recordFailure($fp, $sipUser, $sipServer, $sipDomain);
-        cli::pcl("[REGISTRAR] Falha ao registrar {$sipUser}@{$sipServer} $sipPass (fp:{$fp})", 'red');
-        WebPushHelper::notifyUser($sipUser, [
-            'message' => "Falha ao registrar sua conta, verifique os dados fornecidos!"
-        ]);
-        return false;
     }
 
     private static function recordFailure(string $fp, string $sipUser, string $sipServer, string $sipDomain): void
@@ -187,5 +190,11 @@ class Registrar
             'status' => 'failed',
             'failures' => $failures,
         ]);
+        if (CallState::$sipBindings !== null && $sipUser !== '') {
+            $binding = CallState::$sipBindings->get($sipUser);
+            if ($binding && $binding['fp'] === $fp) {
+                CallState::$sipBindings->del($sipUser);
+            }
+        }
     }
 }

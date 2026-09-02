@@ -909,6 +909,18 @@ const onMessageSocket = (event, socket) => {
     }
 
     switch (data.type) {
+        case 'registrationState': {
+            window.latestRegistrationState = data.data;
+            const state = document.getElementById('cfgState');
+            if (state) {
+                state.className = data.data.success ? 'mini mt-3 text-success' : 'mini mt-3 text-danger';
+                state.textContent = data.data.message || (data.data.success
+                    ? 'Registro SIP confirmado.'
+                    : 'Registro SIP não confirmado.');
+            }
+            break;
+        }
+
         case 'incomingCall':
             handleIncomingCall(data.data);
             break;
@@ -973,7 +985,6 @@ const onMessageSocket = (event, socket) => {
                 toastClass: data.data.type,
                 colorHeader: 'text-white',
             });
-            sendRecByToken({}, 'register');
             break;
 
         case 'brand':
@@ -1471,6 +1482,3 @@ class templateManager {
 const template = new templateManager();
 const user = new UserManager();
 autoSocket();
-
-
-

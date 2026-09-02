@@ -150,35 +150,9 @@ class startCall
         ]));
 
 
-        if (!$phone->register(2)) {
-            $phone->close();
-            $socket->push($fd, json_encode([
-                'byToken' => $model['id'],
-                'data' => [
-                    'success' => true,
-                    'callId' => $phone->callId
-                ]
-            ]));
-            $fds = (cache::get('connections')[$fingerprint] ?? []);
-            foreach ($fds as $fd) {
-                $socket->push($fd, json_encode([
-                    'type' => 'event',
-                    'data' => 'bye'
-                ]));
-                $socket->push($fd, json_encode([
-                    'type' => 'notify',
-                    'data' => [
-                        'type' => 'bg-danger text-white',
-                        'message' => '[SIP] Erro ao registrar'
-                    ]
-                ]));
-            }
-            cache::unset('coroutinesProcess', $fingerprint);
-            return false;
-        }
-        else {
-            cli::pcl("Registrado com sucesso", "green");
-        }
+        // Account registration is owned by Registrar on UDP :4000. Registering
+        // this per-call trunkController would overwrite the inbound Contact
+        // with its ephemeral signaling port.
 
 
         $phone->onRinging(function (trunkController $phone) use ($socket, $fingerprint) {
@@ -494,7 +468,6 @@ class startCall
             'data' => ['success' => true,
                 'callId' => $phone->callId]]));
         $phone->bye();
-        $phone->unRegister();
         $phone->close();
         cache::unset('coroutinesProcess', $fingerprint);
         unset($phone);
