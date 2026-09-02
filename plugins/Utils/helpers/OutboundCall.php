@@ -104,6 +104,7 @@ final class OutboundCall
 
     public function start(): bool
     {
+
         $this->dialog->state = 'CALLING';
         $this->sendInvite(null);
         try {
