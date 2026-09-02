@@ -5,6 +5,7 @@ namespace handlers;
 
 use helpers\utils\CallState;
 use helpers\utils\AccountIdentity;
+use helpers\utils\AudioConfig;
 use helpers\utils\Registrar;
 use helpers\utils\OpusConfig;
 use libspech\Cache\cache;
@@ -41,6 +42,12 @@ class connect
                 && !is_array($userDatas['opus'] ?? null)) {
                 $userDatas['opus'] = OpusConfig::defaults();
             }
+            $normalizedAudio = AudioConfig::normalize(
+                is_array($userDatas['audio'] ?? null) ? $userDatas['audio'] : null,
+                is_array($userDatas['opus'] ?? null) ? $userDatas['opus'] : null,
+            );
+            $userDatas['audio'] = $normalizedAudio['audio'];
+            $userDatas['opus'] = $normalizedAudio['opus'];
             $identity = AccountIdentity::fromData((string)$data['fp'], $userDatas);
             $userDatas = array_merge($userDatas, $identity);
             $vault->set((string)$data['fp'], $userDatas);

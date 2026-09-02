@@ -5,7 +5,7 @@ namespace handlers;
 use helpers\utils\Registrar;
 use helpers\utils\SipRegisterManager;
 use helpers\utils\AccountIdentity;
-use helpers\utils\OpusConfig;
+use helpers\utils\AudioConfig;
 use Swoole\Timer;
 use Swoole\WebSocket\Server;
 
@@ -78,7 +78,12 @@ class saveConfig
                 );
             }
         }
-        $data['opus'] = OpusConfig::normalize(is_array($data['opus'] ?? null) ? $data['opus'] : null);
+        $normalizedAudio = AudioConfig::normalize(
+            is_array($data['audio'] ?? null) ? $data['audio'] : null,
+            is_array($data['opus'] ?? null) ? $data['opus'] : null,
+        );
+        $data['audio'] = $normalizedAudio['audio'];
+        $data['opus'] = $normalizedAudio['opus'];
 
         try {
             $endpoint = SipRegisterManager::parseEndpoint((string)$data['sipServer']);
@@ -119,7 +124,7 @@ class saveConfig
             // remove the old provider binding without risking loss of service.
             SipRegisterManager::register($socket, $previousData, 0, 5.0);
         }
-        foreach ([...$needInputs, 'opus'] as $input) {
+        foreach ([...$needInputs, 'audio', 'opus'] as $input) {
             $socket->push($fd, json_encode([
                 'type' => 'setKey',
                 'key' => $input,

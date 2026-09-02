@@ -86,6 +86,19 @@ for (const id of ['micQualityPanel', 'micQualityState', 'micQualityJitter', 'mic
 for (const id of ['opusSettings', 'opusProfile', 'opusMono', 'opusStereo', 'opusBitrate', 'opusPlaybackRate', 'opusCaptureRate', 'opusFec', 'opusPtime']) {
     assert.ok(html.includes(`id="${id}"`), `Opus UI missing ${id}`);
 }
+for (const id of ['micInputDevice', 'btnRefreshMicrophones', 'btnSaveAudioConfig', 'audioConfigState']) {
+    assert.ok(html.includes(`id="${id}"`), `microphone settings UI missing ${id}`);
+}
+const audioViewStart = html.indexOf('<section data-view="audio">');
+const configViewStart = html.indexOf('<section data-view="config">');
+for (const id of ['micInputDevice', 'opusMono', 'opusStereo', 'opusPtime']) {
+    const position = html.indexOf(`id="${id}"`);
+    assert.ok(position > audioViewStart && position < configViewStart, `${id} is not in the audio tab`);
+}
+assert.ok(html.includes("sendRecByToken({audio, opus}, 'saveAudioConfig')"), 'audio settings are not sent to backend');
+assert.ok(html.includes('navigator.mediaDevices.enumerateDevices()'), 'microphone devices are not enumerated');
+assert.ok(html.includes('deviceId: {exact: microphoneId}'), 'selected microphone is not used by getUserMedia');
+assert.ok(html.includes('&ptime=${ptime}'), 'ptime is not sent to audio backend handshake');
 assert.ok(html.includes('channelCount: desiredChannels'), 'capture does not request the desired channel count');
 assert.ok(html.includes("addModule('/js/opus-recorder-worklet.js')"), 'stereo recorder worklet is not loaded');
 assert.ok(html.includes('Estéreo indisponível neste dispositivo — usando mono'), 'hardware fallback warning missing');

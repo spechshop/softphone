@@ -339,10 +339,56 @@
     <!-- VIEW: ÁUDIO -->
     <section data-view="audio">
 
+        <div class="mt-3 card bg-dark p-3">
+            <div class="section-title">Microfone</div>
+            <div class="mini">Dispositivo e formato usados na captura e na negociação com o backend.</div>
+            <div class="divider"></div>
+
+            <div class="mb-3">
+                <label class="form-label mini mb-1" for="micInputDevice">Dispositivo de entrada</label>
+                <div class="d-flex gap-2">
+                    <select class="form-control soft-input" id="micInputDevice">
+                        <option value="">Padrão do sistema</option>
+                    </select>
+                    <button class="btn btn-soft" type="button" id="btnRefreshMicrophones" title="Atualizar microfones">
+                        <i class="fa-solid fa-rotate"></i>
+                    </button>
+                </div>
+            </div>
+
+            <div class="row g-2">
+                <div class="col-6">
+                    <label class="form-label mini mb-1">Canais</label>
+                    <div class="d-flex gap-3" style="min-height:38px;align-items:center">
+                        <label class="mini"><input type="radio" name="opusChannels" id="opusMono" value="1"> Mono</label>
+                        <label class="mini"><input type="radio" name="opusChannels" id="opusStereo" value="2"> Estéreo</label>
+                    </div>
+                </div>
+                <div class="col-6">
+                    <label class="form-label mini mb-1" for="opusPtime">ptime</label>
+                    <select class="form-control soft-input" id="opusPtime">
+                        <option value="10">10 ms</option><option value="20">20 ms</option>
+                        <option value="40">40 ms</option><option value="60">60 ms</option>
+                    </select>
+                </div>
+            </div>
+            <div class="mini text-white-50 mt-2">Mono/estéreo e ptime são negociados no Opus; outros codecs usam mono e frames de 20 ms.</div>
+
+            <div class="mini text-warning mt-2" id="opusHardwareStatus" style="display:none"></div>
+            <label class="mini mt-3" style="display:flex;align-items:center;gap:9px;cursor:pointer">
+                <input id="micAgcEnabled" type="checkbox" checked>
+                <span>Controle automático de ganho</span>
+            </label>
+
+            <button class="btn btn-soft w-100 mt-3" type="button" id="btnSaveAudioConfig">
+                <i class="fa-solid fa-floppy-disk me-1"></i><span>Salvar áudio</span>
+            </button>
+            <div class="mini mt-2" id="audioConfigState">As alterações serão aplicadas na próxima chamada.</div>
+        </div>
 
         <div class="mt-3 card bg-dark p-3 p-3">
             <div class="section-title">Codecs</div>
-            <div class="mini">Simulação de preferência (pra sua UI)</div>
+            <div class="mini">Preferência de codec para captura e reprodução.</div>
             <div class="divider"></div>
 
             <div class="row g-2">
@@ -442,11 +488,6 @@
                     </div>
                 </div>
             </div>
-            <div class="divider"></div>
-            <label class="mini" style="display:flex;align-items:center;gap:9px;cursor:pointer">
-                <input id="micAgcEnabled" type="checkbox" checked>
-                <span>Controle automático de ganho do microfone (A/B experimental)</span>
-            </label>
         </div>
 
     </section>
@@ -501,14 +542,6 @@
                 <div class="fw-bold mb-2">Opus — RTP/SIP</div>
                 <div class="mini mb-2">O clock RTP permanece 48 kHz; modo e bandwidth são negociados via fmtp.</div>
                 <div class="mb-2">
-                    <label class="form-label mini mb-1">Modo de áudio</label>
-                    <div class="d-flex gap-3">
-                        <label class="mini"><input type="radio" name="opusChannels" id="opusMono" value="1"> Mono</label>
-                        <label class="mini"><input type="radio" name="opusChannels" id="opusStereo" value="2"> Estéreo</label>
-                    </div>
-                    <div class="mini text-warning mt-1" id="opusHardwareStatus" style="display:none"></div>
-                </div>
-                <div class="mb-2">
                     <label class="form-label mini mb-1" for="opusProfile">Perfil</label>
                     <select class="form-control soft-input" id="opusProfile">
                         <option value="economy">Voz econômica</option>
@@ -525,13 +558,6 @@
                             <option value="16000">16 kbps</option><option value="24000">24 kbps</option>
                             <option value="32000">32 kbps</option><option value="48000">48 kbps</option>
                             <option value="64000">64 kbps</option><option value="96000">96 kbps</option>
-                        </select>
-                    </div>
-                    <div class="col-6">
-                        <label class="form-label mini mb-1" for="opusPtime">Packet time</label>
-                        <select class="form-control soft-input" id="opusPtime">
-                            <option value="10">10 ms</option><option value="20">20 ms</option>
-                            <option value="40">40 ms</option><option value="60">60 ms</option>
                         </select>
                     </div>
                     <div class="col-6">
@@ -1519,7 +1545,39 @@
         capture: document.getElementById('opusCaptureRate'), fec: document.getElementById('opusFec'),
         ptime: document.getElementById('opusPtime'), hardware: document.getElementById('opusHardwareStatus')
     };
+    const audioConfigEls = {
+        microphone: document.getElementById('micInputDevice'),
+        refresh: document.getElementById('btnRefreshMicrophones'),
+        save: document.getElementById('btnSaveAudioConfig'),
+        state: document.getElementById('audioConfigState'),
+        agc: document.getElementById('micAgcEnabled')
+    };
     const trunkCodecSelect = document.getElementById('trunkCodec');
+    let preferredMicrophoneId = '';
+    let mediaStream = null;
+
+    function normalizeAudioConfig(value) {
+        const input = value && typeof value === 'object' ? value : {};
+        const storedOpus = normalizeOpusConfig(user.getValue('opus'));
+        const linkedOpus = normalizeOpusConfig({
+            ...storedOpus,
+            channels: input.channels ?? storedOpus.channels,
+            stereo: input.stereo ?? storedOpus.stereo,
+            ptime: input.ptime ?? storedOpus.ptime
+        });
+        const legacyAgc = user.getValue('micAutoGainControl');
+        return {
+            microphoneId: typeof input.microphoneId === 'string' ? input.microphoneId : '',
+            channels: linkedOpus.channels,
+            stereo: linkedOpus.stereo,
+            ptime: linkedOpus.ptime,
+            autoGainControl: input.autoGainControl === undefined
+                ? (legacyAgc === null || legacyAgc === undefined
+                    ? true
+                    : !(legacyAgc === false || legacyAgc === 'false'))
+                : !(input.autoGainControl === false || input.autoGainControl === 0 || input.autoGainControl === '0')
+        };
+    }
 
     function renderOpusControls(config) {
         const opus = normalizeOpusConfig(config);
@@ -1546,28 +1604,95 @@
         });
     }
 
+    function renderAudioControls(config) {
+        const audio = normalizeAudioConfig(config);
+        preferredMicrophoneId = audio.microphoneId;
+        opusEls.mono.checked = audio.channels === 1;
+        opusEls.stereo.checked = audio.channels === 2;
+        opusEls.ptime.value = String(audio.ptime);
+        audioConfigEls.agc.checked = audio.autoGainControl;
+        if (Array.from(audioConfigEls.microphone.options).some(option => option.value === preferredMicrophoneId)) {
+            audioConfigEls.microphone.value = preferredMicrophoneId;
+        }
+    }
+
+    function readAudioControls() {
+        return {
+            microphoneId: audioConfigEls.microphone.value || preferredMicrophoneId || '',
+            channels: opusEls.stereo.checked ? 2 : 1,
+            stereo: opusEls.stereo.checked,
+            ptime: Number(opusEls.ptime.value),
+            autoGainControl: audioConfigEls.agc.checked
+        };
+    }
+
+    async function loadMicrophoneDevices(requestPermission = false) {
+        if (!navigator.mediaDevices?.enumerateDevices) return;
+        let permissionStream = null;
+        try {
+            if (requestPermission && !mediaStream) {
+                permissionStream = await navigator.mediaDevices.getUserMedia({audio: true});
+            }
+            const devices = (await navigator.mediaDevices.enumerateDevices())
+                .filter(device => device.kind === 'audioinput');
+            const selected = audioConfigEls.microphone.value || preferredMicrophoneId;
+            audioConfigEls.microphone.replaceChildren(new Option('Padrão do sistema', ''));
+            devices.forEach((device, index) => {
+                audioConfigEls.microphone.add(new Option(device.label || `Microfone ${index + 1}`, device.deviceId));
+            });
+            if (selected && !devices.some(device => device.deviceId === selected)) {
+                audioConfigEls.microphone.add(new Option('Microfone salvo (indisponível)', selected));
+            }
+            audioConfigEls.microphone.value = selected || '';
+        } catch (error) {
+            audioConfigEls.state.className = 'mini mt-2 text-warning';
+            audioConfigEls.state.textContent = 'Não foi possível listar os microfones. Verifique a permissão do navegador.';
+        } finally {
+            permissionStream?.getTracks().forEach(track => track.stop());
+        }
+    }
+
     function updateOpusVisibility() {
         opusEls.panel.style.display = trunkCodecSelect.value.toUpperCase().startsWith('OPUS/') ? '' : 'none';
     }
 
     renderOpusControls(normalizeOpusConfig(user.getValue('opus')));
+    renderAudioControls(user.getValue('audio'));
     updateOpusVisibility();
+    void loadMicrophoneDevices(false);
     trunkCodecSelect.addEventListener('change', updateOpusVisibility);
     opusEls.profile.addEventListener('change', () => {
         if (OPUS_PRESETS[opusEls.profile.value]) renderOpusControls(OPUS_PRESETS[opusEls.profile.value]);
         window._effectiveOpusConfig = null;
         user.updateUserData('opus', readOpusControls());
+        user.updateUserData('audio', readAudioControls());
     });
     [opusEls.mono, opusEls.stereo, opusEls.bitrate, opusEls.playback, opusEls.capture, opusEls.fec, opusEls.ptime]
         .forEach(element => element.addEventListener('change', () => {
             opusEls.profile.value = 'custom';
             window._effectiveOpusConfig = null;
             user.updateUserData('opus', readOpusControls());
+            user.updateUserData('audio', readAudioControls());
             opusEls.hardware.style.display = 'none';
         }));
 
+    audioConfigEls.microphone.addEventListener('change', () => {
+        preferredMicrophoneId = audioConfigEls.microphone.value;
+        user.updateUserData('audio', readAudioControls());
+    });
+    audioConfigEls.agc.addEventListener('change', () => {
+        user.updateUserData('micAutoGainControl', audioConfigEls.agc.checked);
+        user.updateUserData('audio', readAudioControls());
+    });
+    audioConfigEls.refresh.addEventListener('click', () => loadMicrophoneDevices(true));
+    navigator.mediaDevices?.addEventListener?.('devicechange', () => loadMicrophoneDevices(false));
+
     window.getDesiredOpusConfig = () => readOpusControls();
     window.refreshOpusControls = config => renderOpusControls(normalizeOpusConfig(config));
+    window.refreshAudioControls = config => {
+        renderAudioControls(config);
+        void loadMicrophoneDevices(false);
+    };
     window.refreshOpusVisibility = updateOpusVisibility;
     window.getEffectiveOpusConfig = () => normalizeOpusConfig(window._effectiveOpusConfig || readOpusControls());
     window.setEffectiveOpusConfig = config => {
@@ -1577,6 +1702,42 @@
         }
         if (typeof renderMicQuality === 'function' && uplinkMetrics) renderMicQuality(uplinkMetrics.snapshot());
     };
+
+    window.saveAudioConfig = async () => {
+        if (audioConfigEls.save.disabled) return;
+        const audio = readAudioControls();
+        const opus = readOpusControls();
+        user.updateUserData('audio', audio);
+        user.updateUserData('opus', opus);
+
+        const originalHtml = audioConfigEls.save.innerHTML;
+        audioConfigEls.save.disabled = true;
+        audioConfigEls.save.setAttribute('aria-busy', 'true');
+        audioConfigEls.save.innerHTML = '<i class="fa-solid fa-spinner fa-spin me-1"></i><span>Salvando...</span>';
+        audioConfigEls.state.className = 'mini mt-2 text-info';
+        audioConfigEls.state.textContent = 'Enviando configurações ao backend...';
+        try {
+            const response = await sendRecByToken({audio, opus}, 'saveAudioConfig');
+            if (!response) throw new Error('timeout');
+            audioConfigEls.state.className = response.success ? 'mini mt-2 text-success' : 'mini mt-2 text-danger';
+            audioConfigEls.state.textContent = response.message || (response.success ? 'Configurações salvas.' : 'Falha ao salvar.');
+            if (response.success) {
+                if (response.audio) user.updateUserData('audio', response.audio);
+                if (response.opus) {
+                    user.updateUserData('opus', response.opus);
+                    renderOpusControls(response.opus);
+                }
+            }
+        } catch (_) {
+            audioConfigEls.state.className = 'mini mt-2 text-danger';
+            audioConfigEls.state.textContent = 'Falha de comunicação com o backend.';
+        } finally {
+            audioConfigEls.save.disabled = false;
+            audioConfigEls.save.removeAttribute('aria-busy');
+            audioConfigEls.save.innerHTML = originalHtml;
+        }
+    };
+    audioConfigEls.save.addEventListener('click', window.saveAudioConfig);
 
     window.saveConfig = async () => {
         const button = document.getElementById('btnSaveConfig');
@@ -1592,7 +1753,9 @@
 
         const opus = readOpusControls();
         user.updateUserData('opus', opus);
-        const data = {sipServer, sipUser, sipDomain, sipPass, codec, trunkCodec, opus};
+        const audio = readAudioControls();
+        user.updateUserData('audio', audio);
+        const data = {sipServer, sipUser, sipDomain, sipPass, codec, trunkCodec, audio, opus};
 
 
         const originalHtml = button.innerHTML;
@@ -2134,7 +2297,6 @@
 
     // ===== Microphone Audio Capture & WebSocket Stream
     let audioContext = null;
-    let mediaStream = null;
     let audioWorkletNode = null;
     let websocket = null;
     let isRecording = false;
@@ -2155,15 +2317,7 @@
     const btnMicPause = document.getElementById('btnMicPause');
     const micQualityPanel = document.getElementById('micQualityPanel');
     const micQualityToggle = document.getElementById('micQualityToggle');
-    const micAgcEnabled = document.getElementById('micAgcEnabled');
-
-    const storedAgc = user.getValue('micAutoGainControl');
-    micAgcEnabled.checked = storedAgc === null || storedAgc === undefined
-        ? true
-        : !(storedAgc === false || storedAgc === 'false');
-    micAgcEnabled.addEventListener('change', () => {
-        user.updateUserData('micAutoGainControl', micAgcEnabled.checked);
-    });
+    const micAgcEnabled = audioConfigEls.agc;
     micQualityToggle.addEventListener('click', () => {
         const expanded = micQualityPanel.classList.toggle('expanded');
         micQualityToggle.setAttribute('aria-expanded', String(expanded));
@@ -2257,7 +2411,10 @@
 
         const sampleRate = audioContext ? audioContext.sampleRate : 8000;
         const userFp = user.getValue('fp') || 'anon';
-        const wsUrl = `${proto}//${infoURI().host}:8889?fp=${fp}&ssrc=mic-${userFp}&sampleRate=${sampleRate}&channels=${micCaptureChannels}&frameMs=${micFrameMs}`;
+        const ptime = trunkCodecSelect.value.toUpperCase().startsWith('OPUS/')
+            ? getEffectiveOpusConfig().ptime
+            : 20;
+        const wsUrl = `${proto}//${infoURI().host}:8889?fp=${fp}&ssrc=mic-${userFp}&sampleRate=${sampleRate}&channels=${micCaptureChannels}&frameMs=${micFrameMs}&ptime=${ptime}`;
         const isNewCall = lastCallId !== null && fp !== lastCallId;
 
         // Fecha conexão anterior se existir
@@ -2342,16 +2499,29 @@
             await audioContext.audioWorklet.addModule('/js/opus-recorder-worklet.js');
 
             // Microfone com config PADRÃO (navegador faz AGC/NC/EC)
-            mediaStream = await navigator.mediaDevices.getUserMedia({
-                audio: {
-                    echoCancellation: true,
-                    noiseSuppression: true,
-                    autoGainControl: micAgcEnabled.checked,
-                    sampleRate: currentSampleRate,
-                    sampleSize: 16,
-                    channelCount: desiredChannels
-                }
-            });
+            const microphoneId = audioConfigEls.microphone.value || preferredMicrophoneId;
+            const captureConstraints = {
+                echoCancellation: true,
+                noiseSuppression: true,
+                autoGainControl: micAgcEnabled.checked,
+                sampleRate: currentSampleRate,
+                sampleSize: 16,
+                channelCount: desiredChannels,
+                ...(microphoneId ? {deviceId: {exact: microphoneId}} : {})
+            };
+            try {
+                mediaStream = await navigator.mediaDevices.getUserMedia({audio: captureConstraints});
+            } catch (error) {
+                if (!microphoneId || !['NotFoundError', 'OverconstrainedError'].includes(error?.name)) throw error;
+                preferredMicrophoneId = '';
+                audioConfigEls.microphone.value = '';
+                delete captureConstraints.deviceId;
+                mediaStream = await navigator.mediaDevices.getUserMedia({audio: captureConstraints});
+                user.updateUserData('audio', readAudioControls());
+                audioConfigEls.state.className = 'mini mt-2 text-warning';
+                audioConfigEls.state.textContent = 'Microfone salvo indisponível; usando o padrão do sistema.';
+            }
+            void loadMicrophoneDevices(false);
 
             const track = mediaStream.getAudioTracks()[0];
             const trackSettings = track && typeof track.getSettings === 'function' ? track.getSettings() : {};

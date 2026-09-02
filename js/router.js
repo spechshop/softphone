@@ -1039,6 +1039,9 @@ const onMessageSocket = (event, socket) => {
             if (data.key === 'opus' && typeof window.refreshOpusControls === 'function') {
                 window.refreshOpusControls(data.value);
             }
+            if (data.key === 'audio' && typeof window.refreshAudioControls === 'function') {
+                window.refreshAudioControls(data.value);
+            }
             if (data.key === 'trunkCodec' && typeof window.refreshOpusVisibility === 'function') {
                 const select = document.getElementById('trunkCodec');
                 if (select) select.value = data.value;

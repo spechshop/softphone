@@ -709,8 +709,11 @@ $server->on("open", function (Server $server, Request $req) use (
     $ssrc = $req->get["ssrc"] ?? "ws-{$req->fd}";
     $sampleRate = $req->get["sampleRate"] ?? 8000;
     $channels = max(1, min(2, (int)($req->get['channels'] ?? 1)));
+    $ptime = (int)($req->get['ptime'] ?? 20);
+    if (!in_array($ptime, \helpers\utils\OpusConfig::ALLOWED_PACKET_TIMES, true)) $ptime = 20;
     $frameMs = (int)($req->get['frameMs'] ?? MicUplinkFrame::FRAME_MS);
-    if (!in_array($frameMs, [10, MicUplinkFrame::FRAME_MS], true)) $frameMs = MicUplinkFrame::FRAME_MS;
+    $expectedFrameMs = $ptime === 10 ? 10 : MicUplinkFrame::FRAME_MS;
+    if ($frameMs !== $expectedFrameMs) $frameMs = $expectedFrameMs;
 
     $clients[$stream] ??= [];
     $clients[$stream][$req->fd] = $req->fd;
@@ -725,11 +728,12 @@ $server->on("open", function (Server $server, Request $req) use (
         'ssrc' => $ssrc,
         'sampleRate' => (int)$sampleRate,
         'channels' => $channels,
+        'ptime' => $ptime,
         'frameMs' => $frameMs,
         'micPacerStarted' => false,
     ];
 
-    echo "🎧 Cliente áudio {$sampleRate}Hz/{$channels}ch/{$frameMs}ms conectado stream={$stream}, fd={$req->fd}, ssrc={$ssrc}\n";
+    echo "🎧 Cliente áudio {$sampleRate}Hz/{$channels}ch frame={$frameMs}ms ptime={$ptime}ms conectado stream={$stream}, fd={$req->fd}, ssrc={$ssrc}\n";
 });
 
 /**
