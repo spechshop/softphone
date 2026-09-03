@@ -185,10 +185,17 @@ function runOutbound(OutboundProvider $provider, array $account, ?callable $conf
 Coroutine\run(function (): void {
     foreach (['auth401', 'auth407'] as $mode) {
         $provider = new OutboundProvider($mode);
-        [$result, $call, $controller] = runOutbound($provider, outboundAccount(), static function (OutboundCall $call): void {
-            $call->onAnswer(static fn(OutboundCall $call) => $call->hangup());
+        $answerResponse = null;
+        [$result, $call, $controller] = runOutbound($provider, outboundAccount(), static function (OutboundCall $call) use (&$answerResponse): void {
+            $call->onAnswer(static function (OutboundCall $call, array $response) use (&$answerResponse): void {
+                $answerResponse = $response;
+                $call->hangup();
+            });
         });
         outboundAssert($result, "{$mode} deve estabelecer e encerrar");
+        outboundSame($call->callId, $answerResponse['headers']['Call-ID'][0] ?? null, 'callback de atendimento deve receber Call-ID');
+        outboundSame($provider->packets[0]['message']['headers']['From'][0], $answerResponse['headers']['From'][0] ?? null,
+            'callback de atendimento deve receber From');
         $methods = array_column(array_column($provider->packets, 'message'), 'method');
         outboundAssert(in_array('ACK', $methods, true), 'challenge e 200 devem receber ACK');
         outboundAssert(in_array('BYE', $methods, true), 'hangup local deve gerar BYE');

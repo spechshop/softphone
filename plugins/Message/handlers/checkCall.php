@@ -42,6 +42,7 @@ class checkCall
         }
         if (!array_key_exists($fingerprint, cache::get('coroutinesProcess'))) {
             $userDatas = $vault->get($data['fp']);
+
             $lastPacket = $userDatas['lastPacket'] ?? [];
             $renderURI = $lastPacket['headers']['From'][0] ?? 'invalid';
             $socket->push($fd, json_encode([

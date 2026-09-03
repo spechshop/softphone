@@ -256,6 +256,10 @@ final class OutboundCall
         if ($code >= 100 && $code < 200) {
             $this->dialog->state = $code === 100 ? 'PROCEEDING' : 'EARLY';
             if (isset($message['sdp'])) $this->dialog->remoteSdp = $message['sdp'];
+            if (isset($message['sdp'])) {
+                $this->media->start($this->dialog->remoteSdp);
+                $this->mediaChannel = $this->media->mediaChannel;
+            }
             if (($code === 180 || $code === 183) && !$this->ringingNotified) {
                 $this->ringingNotified = true;
                 if (is_callable($this->onRinging)) ($this->onRinging)($this, $code);
@@ -313,7 +317,7 @@ final class OutboundCall
             $this->callActive = true;
             $this->dialog->state = 'ESTABLISHED';
             cli::pcl("[DIALOG] ESTABLISHED Call-ID={$this->callId}", 'green');
-            if (is_callable($this->onAnswer)) ($this->onAnswer)($this);
+            if (is_callable($this->onAnswer)) ($this->onAnswer)($this, $message);
             return;
         }
 

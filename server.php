@@ -147,7 +147,7 @@ $server->on('packet', function (Server $socket, string $data, array $info) {
     if (empty($parse['method'])) {
         return;
     }
-    cli::pcl($data);
+
 
     // REGISTER uses this listener as both its source and its only response
     // reader. Consume a response before the generic SIP dispatcher can route,

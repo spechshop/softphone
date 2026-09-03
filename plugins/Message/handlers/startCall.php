@@ -53,13 +53,12 @@ final class startCall
             self::notify($socket, $fingerprint, 'bg-primary text-white', 'Chamada tocando...');
             self::broadcast($socket, $fingerprint, ['type' => 'changeCallId', 'data' => $call->callId]);
         });
-        $call->onAnswer(function (OutboundCall $call) use ($socket, $fingerprint, $vault): void {
+        $call->onAnswer(function (OutboundCall $call, array $response) use ($socket, $fingerprint, $vault): void {
             $stored = $vault->get($fingerprint);
-            $stored['lastPacket'] = [
-                'call_id' => $call->callId,
-                'remote_target' => $call->dialog->remoteTarget,
-                'route_set' => $call->dialog->routeSet,
-            ];
+            $response['call_id'] = $call->callId;
+            $response['remote_target'] = $call->dialog->remoteTarget;
+            $response['route_set'] = $call->dialog->routeSet;
+            $stored['lastPacket'] = $response;
             $vault->set($fingerprint, $stored);
             self::notify($socket, $fingerprint, 'bg-success text-white', 'Chamada conectada com ' . $call->calledNumber);
             if ($call->effectiveOpusConfig() !== null) {
