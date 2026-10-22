@@ -18,7 +18,7 @@ class register
         }
 
         $data = $vault->get($fp);
-        $result = Registrar::registerOneDetailed($socket, $fp, $data);
+        $result = Registrar::registerOneDetailed($socket, $fp, $data, true);
         if (!$result['success']) {
             return self::respond($socket, $fd, $model, false, Registrar::messageForResult($result), [
                 'reason' => $result['reason'],
