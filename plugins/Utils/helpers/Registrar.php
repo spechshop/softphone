@@ -29,7 +29,7 @@ class Registrar
         $t->column('status', Table::TYPE_STRING, 32);
         $t->column('failures', Table::TYPE_INT);
         $t->column('next_retry_at', Table::TYPE_INT);
-        $t->column('config_hash', Table::TYPE_STRING, 64);
+        $t->column('config_hash', Table::TYPE_STRING, 128);
         $t->create();
         self::$states = $t;
     }
