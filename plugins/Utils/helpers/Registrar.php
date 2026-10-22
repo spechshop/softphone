@@ -256,7 +256,8 @@ class Registrar
         if (self::$states === null) return;
         $now = time();
         $current = self::$states->get($fp) ?: [];
-        $failures = (int)($current['failures'] ?? 0) + 1;
+        $sameConfiguration = (string)($current['config_hash'] ?? '') === self::configurationHash($data);
+        $failures = ($sameConfiguration ? (int)($current['failures'] ?? 0) : 0) + 1;
         $permanent = in_array($reason, ['authentication_failed', 'unsupported_challenge',
             'invalid_configuration'], true);
         $pause = $permanent || $failures >= self::MAX_AUTOMATIC_FAILURES;
