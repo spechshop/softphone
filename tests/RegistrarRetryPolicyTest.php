@@ -23,6 +23,14 @@ function failedAttempt(string $fp, array $account, string $reason, ?int $retryAf
         $account['sipDomain'], $account, $reason, $retryAfter, $code);
 }
 
+if (($argv[1] ?? '') === 'restart-check') {
+    DataPath::setDir($argv[2]);
+    Registrar::init();
+    $restartAccount = json_decode($argv[3], true, 512, JSON_THROW_ON_ERROR);
+    echo Registrar::automaticAttemptAllowed('auth-failure', $restartAccount) ? "allowed\n" : "suspended\n";
+    exit(0);
+}
+
 Registrar::init();
 $dataDir = sys_get_temp_dir() . '/spechphone-retry-test-' . bin2hex(random_bytes(5));
 DataPath::setDir($dataDir);
@@ -60,6 +68,18 @@ retryAssert(Registrar::$states->get('auth-failure')['status'] === 'paused',
     'invalid credentials must suspend immediately');
 retryAssert(!Registrar::automaticAttemptAllowed('auth-failure', $account),
     'invalid credentials must never spin');
+$pipes = [];
+$child = proc_open([PHP_BINARY, __FILE__, 'restart-check', $dataDir,
+    json_encode($account, JSON_THROW_ON_ERROR)],
+    [0 => ['pipe', 'r'], 1 => ['pipe', 'w'], 2 => ['pipe', 'w']], $pipes);
+retryAssert(is_resource($child), 'could not launch process restart probe');
+fclose($pipes[0]);
+$childOutput = trim((string)stream_get_contents($pipes[1]));
+$childError = (string)stream_get_contents($pipes[2]);
+fclose($pipes[1]);
+fclose($pipes[2]);
+retryAssert(proc_close($child) === 0, 'process restart probe failed: ' . $childError);
+retryAssert($childOutput === 'suspended', 'fresh process must load persistent auth suspension');
 Registrar::$states->del('auth-failure'); // Simulate process restart losing its Swoole table.
 retryAssert(!Registrar::automaticAttemptAllowed('auth-failure', $account),
     'authentication suspension must survive process restart');
