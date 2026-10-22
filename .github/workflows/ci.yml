@@ -57,7 +57,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          for test in tests/SipRegisterManagerTest.php tests/RegistrarRetryPolicyTest.php tests/AccountMessagingIsolationTest.php tests/CallStateBindingTest.php tests/WebPushStorageTest.php tests/WebPushTlsTest.php tests/SpechphoneVaultFailureTest.php tests/IdentityStressTest.php; do
+          for test in tests/SipRegisterManagerTest.php tests/RegistrarRetryPolicyTest.php tests/RegistrarCrossProcessLockTest.php tests/AccountMessagingIsolationTest.php tests/CallStateBindingTest.php tests/WebPushStorageTest.php tests/WebPushTlsTest.php tests/SpechphoneVaultFailureTest.php tests/IdentityStressTest.php; do
             echo "=== $test ==="
             "$PCG729_PHP" "$test"
           done

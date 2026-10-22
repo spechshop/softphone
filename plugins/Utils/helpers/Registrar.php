@@ -97,14 +97,8 @@ class Registrar
     {
         if (self::$states === null) self::init();
         try {
-            $lockDir = DataPath::dir() . DIRECTORY_SEPARATOR . 'sip-registration-locks';
-            if (!is_dir($lockDir) && !@mkdir($lockDir, 0700, true) && !is_dir($lockDir)) {
-                throw new \RuntimeException('cannot create registration lock directory');
-            }
-            $lock = @fopen($lockDir . DIRECTORY_SEPARATOR . hash('sha256', $fp) . '.lock', 'c');
-            if ($lock === false) throw new \RuntimeException('cannot open registration lock');
-            if (!flock($lock, LOCK_EX | LOCK_NB)) {
-                fclose($lock);
+            $lock = SipRegistrationLock::acquire($fp);
+            if ($lock === false) {
                 return ['success' => false, 'reason' => 'registration_in_progress', 'code' => null];
             }
         } catch (\Throwable $e) {
@@ -114,8 +108,7 @@ class Registrar
         try {
             return self::registerOneWhileLocked($server, $fp, $data, $explicit);
         } finally {
-            flock($lock, LOCK_UN);
-            fclose($lock);
+            SipRegistrationLock::release($lock);
         }
     }
 
