@@ -221,6 +221,7 @@ class connect
         // Reconnect validates registration through the same :4000 transaction
         // manager. Periodic renewal remains server-owned and keeps working with
         // every browser closed.
+        // Reconnect must respect the same retry circuit as periodic refresh.
         $result = Registrar::registerOneDetailed($socket, $data['fp'], $userDatas);
         if ($socket->isEstablished($fd)) {
             $socket->push($fd, json_encode([

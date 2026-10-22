@@ -32,6 +32,7 @@ final class OpusCaptureSocket extends SocketMutable
     public array $sentAtMs = [];
     public function __construct() {}
     public function __destruct() {}
+    public function cancel(int $event = SWOOLE_EVENT_READ): bool { return true; }
     public function isClosed(): bool { return false; }
     public function sendto(string $addr, int $port, string $data): int|false
     {

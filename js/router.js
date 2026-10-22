@@ -240,9 +240,13 @@ async function _updatePushBtnState() {
     try {
         const reg = await navigator.serviceWorker.ready;
         const sub = await reg.pushManager.getSubscription();
+        const fp = (new UserManager()).getValue('fp');
+        const savePending = sub && fp && localStorage.getItem(`spechphone.push.pending.${fp}`) === '1';
         if (sub) {
-            icon.className = 'fa-solid fa-bell text-success';
-            btn.title = 'Notificações ativas — clique para desativar';
+            icon.className = savePending ? 'fa-solid fa-bell text-warning' : 'fa-solid fa-bell text-success';
+            btn.title = savePending
+                ? 'Vinculação de notificações pendente — clique para tentar novamente'
+                : 'Notificações ativas — clique para desativar';
         } else {
             icon.className = 'fa-solid fa-bell text-secondary';
             btn.title = 'Ativar notificações de mensagens';
@@ -280,9 +284,10 @@ async function _savePushSubscription(sub) {
     }, 'savePushSubscription');
     if (result?.success) {
         console.log('[PUSH] Subscription salva no backend');
-    } else {
-        console.warn('[PUSH] Falha ao salvar subscription', result);
+        return true;
     }
+    console.warn('[PUSH] Falha ao salvar subscription', result);
+    return false;
 }
 
 window.enablePushMessages = async function () {
@@ -293,12 +298,50 @@ window.enablePushMessages = async function () {
 
     const reg = await navigator.serviceWorker.ready;
     const existing = await reg.pushManager.getSubscription();
+    const fp = (new UserManager()).getValue('fp');
+    const pendingKey = `spechphone.push.pending.${fp}`;
 
     // --- DESATIVAR ---
     if (existing) {
-        await existing.unsubscribe();
-        const fp = (new UserManager()).getValue('fp');
-        sendRecByToken({fp, endpoint: existing.endpoint}, 'removePushSubscription');
+        if (localStorage.getItem(pendingKey) === '1') {
+            let stored = false;
+            try { stored = await _savePushSubscription(existing); } catch (error) {
+                console.warn('[PUSH] Erro ao repetir vínculo da subscription', error);
+            }
+            if (!stored) {
+                toast('Falha ao vincular notificações ao servidor. Tente novamente.', 'Push', 5000, 'error');
+                return;
+            }
+            localStorage.removeItem(pendingKey);
+            await _updatePushBtnState();
+            toast('Notificações de mensagens ativadas!', 'Push', 3000, 'success');
+            return;
+        }
+        let removed;
+        try {
+            removed = await sendRecByToken({fp, endpoint: existing.endpoint}, 'removePushSubscription');
+        } catch (error) {
+            console.warn('[PUSH] Falha ao desvincular subscription no servidor', error);
+        }
+        if (!removed?.success) {
+            toast('Não foi possível desativar notificações no servidor. Tente novamente.', 'Push', 5000, 'error');
+            return;
+        }
+        let unsubscribed = false;
+        try { unsubscribed = await existing.unsubscribe(); } catch (error) {
+            console.warn('[PUSH] Falha ao cancelar subscription no navegador', error);
+        }
+        if (!unsubscribed) {
+            let restored = false;
+            try { restored = await _savePushSubscription(existing); } catch (error) {
+                console.warn('[PUSH] Falha ao restaurar subscription no servidor', error);
+            }
+            if (!restored) localStorage.setItem(pendingKey, '1');
+            await _updatePushBtnState();
+            toast('Não foi possível desativar a subscription do navegador.', 'Push', 5000, 'error');
+            return;
+        }
+        localStorage.removeItem(pendingKey);
         await _updatePushBtnState();
         toast('Notificações de mensagens desativadas.', 'Push', 3000, 'info');
         return;
@@ -325,7 +368,21 @@ window.enablePushMessages = async function () {
         return;
     }
 
-    await _savePushSubscription(sub);
+    let stored = false;
+    try {
+        stored = await _savePushSubscription(sub);
+    } catch (error) {
+        console.warn('[PUSH] Erro ao salvar subscription no backend', error);
+    }
+    if (!stored) {
+        // A browser subscription alone is not an active backend delivery.
+        // Avoid falsely reporting success and let the user retry explicitly.
+        localStorage.setItem(pendingKey, '1');
+        await _updatePushBtnState();
+        toast('Falha ao vincular notificações ao servidor. Tente novamente.', 'Push', 5000, 'error');
+        return;
+    }
+    localStorage.removeItem(pendingKey);
     await _updatePushBtnState();
     toast('Notificações de mensagens ativadas!', 'Push', 3000, 'success');
 };

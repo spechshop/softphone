@@ -64,6 +64,9 @@ storageExpect(is_file($legacyData) && is_file($legacyTmp), 'arquivo legado foi r
 
 WebPushHelper::saveSubscription('fp-a', $sub('https://push.example/restart', 'fp-a', 'restart'));
 storageExpect(WebPushHelper::subscriptionCountForAccount('fp-a') === 3, 'subscription não ficou disponível após releitura');
+storageExpect(!WebPushHelper::saveSubscription('fp-a', [
+    'endpoint' => 'http://invalid.example/push', 'keys' => ['p256dh' => 'public', 'auth' => 'auth'],
+]), 'endpoint HTTP inválido foi aceito como subscription Push');
 @unlink($legacyData);
 @unlink($legacyTmp);
 storageExpect(WebPushHelper::subscriptionCountForAccount('fp-a') === 3, 'limpeza de tmp/legados afetou novo storage');

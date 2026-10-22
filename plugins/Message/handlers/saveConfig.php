@@ -96,7 +96,7 @@ class saveConfig
         $data['registrarHost'] = strtolower($endpoint['host']);
         $data = array_merge($data, AccountIdentity::fromData($fingerprint, $data));
 
-        $result = Registrar::registerOneDetailed($socket, $fingerprint, $data);
+        $result = Registrar::registerOneDetailed($socket, $fingerprint, $data, true);
         if (!$result['success']) {
             return self::respond($socket, $fd, $model, false, Registrar::messageForResult($result), [
                 'reason' => $result['reason'],
