@@ -13,7 +13,7 @@
 
 Execução com o binário pcg729 indicado abaixo:
 
-- 174 arquivos PHP passaram em `php -l`; stubs gerados de extensões foram excluídos porque redeclaram funções já fornecidas pelo runtime.
+- 176 arquivos PHP passaram em `php -l`; stubs gerados de extensões foram excluídos porque redeclaram funções já fornecidas pelo runtime.
 - 15 arquivos JavaScript passaram em `node --check`.
 - 20 scripts de teste distintos foram executados com sucesso; 23 invocações contando repetições dos checks compartilhados entre jobs. Nenhum teste dos jobs obrigatórios foi ignorado.
 - O laboratório UDP local passou: challenge Digest e resposta 200 em dois datagramas, resposta final duplicada descartada, timeout com duas retransmissões, rejeição 403 e zero transações pendentes ao terminar.
@@ -32,6 +32,6 @@ Quatro testes browser-driven existentes não fazem parte dos checks obrigatório
 
 ## Limites que ainda precisam de execução
 
-Execução GitHub Actions para o commit `c30adfb`: [run 39733677527](https://github.com/spechshop/softphone/actions/runs/39733677527). Os sete checks obrigatórios concluíram com `success`: PHP Syntax, JavaScript Syntax, Unit Tests, SIP Integration, Regression Tests, Frontend Tests e Security Checks. O job `Stress Tests` ficou `skipped` neste evento de pull request porque é deliberadamente manual; o mesmo script de stress passou localmente. A primeira execução do workflow falhou antes dos testes por falta de `.env` vazio no runner e pela ausência de `rg`; ambos os pré-requisitos foram corrigidos e a execução seguinte passou.
+Execução GitHub Actions para o commit `e0177f1`: [run 39734046886](https://github.com/spechshop/softphone/actions/runs/39734046886). Os sete checks obrigatórios concluíram com `success`: PHP Syntax, JavaScript Syntax, Unit Tests, SIP Integration, Regression Tests, Frontend Tests e Security Checks. O job `Stress Tests` ficou `skipped` neste evento de pull request porque é deliberadamente manual; o mesmo script de stress passou localmente. A primeira execução do workflow falhou antes dos testes por falta de `.env` vazio no runner e pela ausência de `rg`; ambos os pré-requisitos foram corrigidos e a execução seguinte passou.
 
 A suíte SIP de carga usa UDP real e loopback no processo Swoole, mas não mede concorrência entre processos/hosts nem faz soak de longa duração. A entrega criptográfica final do Web Push também não é testada contra serviços externos; os testes locais verificam armazenamento, isolamento, falhas e recuperação sem enviar notificações reais.
