@@ -11,6 +11,8 @@ class Registrar
     public const EXPIRES = 1800;
     public const REFRESH_THRESHOLD = 300;
     public const TICK_INTERVAL_MS = 30000;
+    public const MAX_AUTOMATIC_FAILURES = 3;
+    public const BACKOFF_SECONDS = [60, 120, 300];
     public static ?Table $states = null;
 
     public static function init(): void
@@ -26,6 +28,8 @@ class Registrar
         $t->column('last_attempt_at', Table::TYPE_INT);
         $t->column('status', Table::TYPE_STRING, 32);
         $t->column('failures', Table::TYPE_INT);
+        $t->column('next_retry_at', Table::TYPE_INT);
+        $t->column('config_hash', Table::TYPE_STRING, 64);
         $t->create();
         self::$states = $t;
     }
@@ -54,6 +58,7 @@ class Registrar
             if (!self::hasCredentials($data)) continue;
 
             $row = self::$states->get($fp);
+            if (!self::automaticAttemptAllowed($fp, $data)) continue;
             $expiresAt = $row ? (int)$row['expires_at'] : 0;
             $isRegistered = $row && $row['status'] === 'registered';
 
@@ -77,11 +82,8 @@ class Registrar
     public static function registerOne(Server $server, string $fp, array $data): bool
     {
         $result = self::registerOneDetailed($server, $fp, $data);
-        if (!$result['success'] && $result['reason'] !== 'registration_in_progress') {
-            go(fn() => WebPushHelper::notifyUser($fp, [
-                'message' => self::messageForResult($result),
-            ]));
-        }
+        // Registration failures belong to SIP state, not to Web Push messages.
+        // Never send a Push notification from the automatic retry loop.
         return (bool)$result['success'];
     }
 
@@ -91,9 +93,16 @@ class Registrar
      *
      * @return array<string,mixed>
      */
-    public static function registerOneDetailed(Server $server, string $fp, array $data): array
+    public static function registerOneDetailed(Server $server, string $fp, array $data, bool $explicit = false): array
     {
         if (self::$states === null) self::init();
+        if (!$explicit && !self::automaticAttemptAllowed($fp, $data)) {
+            $row = self::$states?->get($fp) ?: [];
+            $reason = ($row['status'] ?? '') === 'paused' ? 'retry_suspended' : 'retry_backoff';
+            return ['success' => false, 'reason' => $reason, 'code' => null,
+                'next_retry_at' => (int)($row['next_retry_at'] ?? 0)];
+        }
+        if ($explicit) self::$states?->del($fp);
 
         // The Contact URI must identify the local account even for vault rows
         // created before accountId/fp became explicit fields.
@@ -122,7 +131,7 @@ class Registrar
 
         if ($result['success']) {
             if ($legacyContactRemoved) self::markContactIdentityMigrated($fp);
-            self::recordSuccess($fp, $sipUser, $sipServer, $sipDomain);
+            self::recordSuccess($fp, $sipUser, $sipServer, $sipDomain, $data);
             cli::pcl(
                 "[REGISTRAR] {$sipUser}@{$sipServer} registrado via UDP :" . SipRegisterManager::SIP_PORT
                 . " (fp:{$fp}) expira em " . self::EXPIRES . 's',
@@ -138,7 +147,7 @@ class Registrar
         }
 
         if ($result['reason'] !== 'registration_in_progress') {
-            self::recordFailure($fp, $sipUser, $sipServer, $sipDomain);
+            self::recordFailure($fp, $sipUser, $sipServer, $sipDomain, $data, (string)$result['reason']);
             cli::pcl(
                 "[REGISTRAR] falha {$sipUser}@{$sipServer} (fp:{$fp}) motivo:{$result['reason']}"
                 . ($result['code'] !== null ? " SIP:{$result['code']}" : ''),
@@ -174,6 +183,8 @@ class Registrar
             'host_resolution_failed' => 'Não foi possível resolver o servidor SIP informado.',
             'nat_port_mismatch' => 'O NAT não preservou a porta SIP 4000; revise o redirecionamento UDP.',
             'registration_in_progress' => 'Já existe uma tentativa de registro em andamento.',
+            'retry_backoff' => 'Nova tentativa SIP aguardando intervalo de recuperação.',
+            'retry_suspended' => 'Registro automático suspenso após falhas. Verifique a configuração e tente registrar novamente.',
             'unsupported_challenge' => 'O servidor SIP solicitou um método de autenticação não suportado.',
             'invalid_configuration' => 'Preencha servidor, usuário e senha SIP.',
             'sip_error' => 'O servidor SIP recusou o registro (código ' . ($result['code'] ?? 'desconhecido') . ').',
@@ -181,7 +192,7 @@ class Registrar
         };
     }
 
-    private static function recordSuccess(string $fp, string $sipUser, string $sipServer, string $sipDomain): void
+    private static function recordSuccess(string $fp, string $sipUser, string $sipServer, string $sipDomain, array $data): void
     {
         if (self::$states === null) return;
         $now = time();
@@ -195,6 +206,8 @@ class Registrar
             'last_attempt_at' => $now,
             'status' => 'registered',
             'failures' => 0,
+            'next_retry_at' => 0,
+            'config_hash' => self::configurationHash($data),
         ]);
         if (CallState::$sipBindings !== null) {
             $newBindingKey = PhoneController::accountKey([
@@ -218,12 +231,36 @@ class Registrar
         }
     }
 
-    private static function recordFailure(string $fp, string $sipUser, string $sipServer, string $sipDomain): void
+    private static function configurationHash(array $data): string
+    {
+        // Never store credentials in the state table; only their fingerprint.
+        return hash('sha256', implode("\0", array_map(
+            static fn(string $key): string => (string)($data[$key] ?? ''),
+            ['sipServer', 'sipDomain', 'sipUser', 'sipPass', 'registrarHost', 'registrarPort']
+        )));
+    }
+
+    public static function automaticAttemptAllowed(string $fp, array $data): bool
+    {
+        $row = self::$states?->get($fp);
+        if (!$row) return true;
+        if (!hash_equals((string)($row['config_hash'] ?? ''), self::configurationHash($data))) {
+            return true; // A new configuration should be retried immediately.
+        }
+        if (($row['status'] ?? '') === 'paused') return false;
+        return (int)($row['next_retry_at'] ?? 0) <= time();
+    }
+
+    private static function recordFailure(string $fp, string $sipUser, string $sipServer, string $sipDomain, array $data, string $reason): void
     {
         if (self::$states === null) return;
         $now = time();
         $current = self::$states->get($fp) ?: [];
         $failures = (int)($current['failures'] ?? 0) + 1;
+        $permanent = in_array($reason, ['authentication_failed', 'unsupported_challenge',
+            'invalid_configuration'], true);
+        $pause = $permanent || $failures >= self::MAX_AUTOMATIC_FAILURES;
+        $backoff = self::BACKOFF_SECONDS[min($failures - 1, count(self::BACKOFF_SECONDS) - 1)];
         self::$states->set($fp, [
             'fp' => $fp,
             'sip_user' => $sipUser,
@@ -232,8 +269,10 @@ class Registrar
             'expires_at' => (int)($current['expires_at'] ?? 0),
             'last_registered_at' => (int)($current['last_registered_at'] ?? 0),
             'last_attempt_at' => $now,
-            'status' => 'failed',
+            'status' => $pause ? 'paused' : 'failed',
             'failures' => $failures,
+            'next_retry_at' => $pause ? 0 : $now + $backoff,
+            'config_hash' => self::configurationHash($data),
         ]);
         if (CallState::$sipBindings !== null && $sipUser !== '') {
             foreach (CallState::$sipBindings as $bindingKey => $binding) {
