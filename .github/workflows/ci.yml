@@ -51,6 +51,8 @@ jobs:
       - uses: ./.github/actions/setup-pcg729
         with:
           release: ${{ inputs.pcg729_release || 'stable' }}
+      - name: Prepare empty test environment
+        run: touch .env
       - name: Run unit and isolation suites
         shell: bash
         run: |
@@ -68,6 +70,8 @@ jobs:
       - uses: ./.github/actions/setup-pcg729
         with:
           release: ${{ inputs.pcg729_release || 'stable' }}
+      - name: Prepare empty test environment
+        run: touch .env
       - name: Run isolated UDP SIP lab
         run: "$PCG729_PHP tests/udp_sip_lab.php"
   regression-tests:
@@ -79,6 +83,8 @@ jobs:
       - uses: ./.github/actions/setup-pcg729
         with:
           release: ${{ inputs.pcg729_release || 'stable' }}
+      - name: Prepare empty test environment
+        run: touch .env
       - name: Run retry and media regressions
         shell: bash
         run: |
@@ -111,14 +117,25 @@ jobs:
       - uses: ./.github/actions/setup-pcg729
         with:
           release: ${{ inputs.pcg729_release || 'stable' }}
+      - name: Prepare empty test environment
+        run: touch .env
       - name: Check for committed secrets and unsafe retry paths
         shell: bash
         run: |
           set -euo pipefail
-          if rg -n --hidden -g '!.git/**' -g '!*.lock' '(AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|SPECH_VAULT_KEY_HEX\s*=\s*[0-9a-fA-F]{64})' .; then
-            echo 'Potential committed secret found' >&2; exit 1
-          fi
-          rg -q 'SipRegisterManager::handleResponse\(\$parse, \$info\)' server.php
+          scan_found=0
+          scan_error=0
+          while IFS= read -r -d '' file; do
+            if grep -nIE '(AKIA[0-9A-Z]{16}|-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|SPECH_VAULT_KEY_HEX\s*=\s*[0-9a-fA-F]{64})' "$file"; then
+              scan_found=1
+            else
+              scan_status=$?
+              if (( scan_status > 1 )); then scan_error=1; fi
+            fi
+          done < <(git ls-files -z -- . ':!libspech' ':!vendor/**' ':!**/vendor/**' ':!node_modules/**' ':!**/node_modules/**')
+          if (( scan_error != 0 )); then echo 'Secret scanner failed while reading tracked files' >&2; exit 1; fi
+          if (( scan_found != 0 )); then echo 'Potential committed secret found' >&2; exit 1; fi
+          grep -qE 'SipRegisterManager::handleResponse\(\$parse, \$info\)' server.php
           "$PCG729_PHP" tests/RegistrarRetryPolicyTest.php
           "$PCG729_PHP" tests/AccountMessagingIsolationTest.php
   stress-tests:
@@ -132,5 +149,7 @@ jobs:
       - uses: ./.github/actions/setup-pcg729
         with:
           release: ${{ inputs.pcg729_release || 'stable' }}
+      - name: Prepare empty test environment
+        run: touch .env
       - name: Run bounded local UDP registration stress suite
         run: "$PCG729_PHP tests/udp_sip_stress.php"
