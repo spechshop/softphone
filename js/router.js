@@ -280,9 +280,10 @@ async function _savePushSubscription(sub) {
     }, 'savePushSubscription');
     if (result?.success) {
         console.log('[PUSH] Subscription salva no backend');
-    } else {
-        console.warn('[PUSH] Falha ao salvar subscription', result);
+        return true;
     }
+    console.warn('[PUSH] Falha ao salvar subscription', result);
+    return false;
 }
 
 window.enablePushMessages = async function () {
@@ -298,7 +299,9 @@ window.enablePushMessages = async function () {
     if (existing) {
         await existing.unsubscribe();
         const fp = (new UserManager()).getValue('fp');
-        sendRecByToken({fp, endpoint: existing.endpoint}, 'removePushSubscription');
+        await sendRecByToken({fp, endpoint: existing.endpoint}, 'removePushSubscription').catch(
+            error => console.warn('[PUSH] Falha ao desvincular subscription no servidor', error)
+        );
         await _updatePushBtnState();
         toast('Notificações de mensagens desativadas.', 'Push', 3000, 'info');
         return;
@@ -325,7 +328,18 @@ window.enablePushMessages = async function () {
         return;
     }
 
-    await _savePushSubscription(sub);
+    let stored = false;
+    try {
+        stored = await _savePushSubscription(sub);
+    } catch (error) {
+        console.warn('[PUSH] Erro ao salvar subscription no backend', error);
+    }
+    if (!stored) {
+        // A browser subscription alone is not an active backend delivery.
+        // Avoid falsely reporting success and let the user retry explicitly.
+        toast('Falha ao vincular notificações ao servidor. Tente novamente.', 'Push', 5000, 'error');
+        return;
+    }
     await _updatePushBtnState();
     toast('Notificações de mensagens ativadas!', 'Push', 3000, 'success');
 };
