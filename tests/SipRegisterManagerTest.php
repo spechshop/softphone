@@ -38,6 +38,8 @@ final class FakeSipProvider
 
             if ($this->mode === 'unexpected') {
                 $code = 500;
+            } elseif ($this->mode === 'rate-limit') {
+                $code = 429;
             } elseif ($this->mode === 'forbidden' && $hasAuthorization) {
                 $code = 403;
             } elseif ($this->mode === 'proxy') {
@@ -56,7 +58,7 @@ final class FakeSipProvider
 
     private function response(array $request, int $code, array $override = []): string
     {
-        $reason = [200 => 'OK', 401 => 'Unauthorized', 403 => 'Forbidden', 407 => 'Proxy Authentication Required', 500 => 'Server Error'][$code];
+        $reason = [200 => 'OK', 401 => 'Unauthorized', 403 => 'Forbidden', 407 => 'Proxy Authentication Required', 429 => 'Too Many Requests', 500 => 'Server Error'][$code];
         $via = $request['headers']['Via'][0];
         $via = preg_replace('/;rport(?:=\d+)?/i', ';received=198.51.100.10;rport=4000', $via);
         $headers = [
@@ -73,6 +75,8 @@ final class FakeSipProvider
         } elseif ($code === 200) {
             $headers['Contact'] = [$request['headers']['Contact'][0] . ';expires=1800'];
             $headers['Expires'] = ['1800'];
+        } elseif ($code === 429) {
+            $headers['Retry-After'] = ['45'];
         }
         $headers = array_replace($headers, $override);
 
@@ -121,6 +125,14 @@ Coroutine\run(function (): void {
     assertSameValue(4000, $provider->sourcePort, 'transporte deve representar listener :4000');
     assertTrue(!isset($provider->packets[0]['message']['headers']['Authorization']), 'primeiro REGISTER não deve ter Authorization');
     assertTrue(isset($provider->packets[1]['message']['headers']['Authorization']), 'segundo REGISTER deve ter Authorization');
+    preg_match_all('/([a-z][a-z0-9_-]*)\s*=\s*(?:"([^"]*)"|([^,\s]+))/i',
+        $provider->packets[1]['message']['headers']['Authorization'][0], $authMatches, PREG_SET_ORDER);
+    $authFields = [];
+    foreach ($authMatches as $match) $authFields[strtolower($match[1])] = $match[2] !== '' ? $match[2] : $match[3];
+    $ha1 = md5('1000:spechshop.test:test-only-password');
+    $ha2 = md5('REGISTER:' . $authFields['uri']);
+    $digest = md5($ha1 . ':test-nonce:' . $authFields['nc'] . ':' . $authFields['cnonce'] . ':auth:' . $ha2);
+    assertSameValue($digest, $authFields['response'] ?? null, 'Authorization Digest deve validar com as credenciais e challenge recebidos');
     assertSameValue(
         (int)$provider->packets[0]['message']['headers']['CSeq'][0] + 1,
         (int)$provider->packets[1]['message']['headers']['CSeq'][0],
@@ -176,6 +188,11 @@ Coroutine\run(function (): void {
     assertSameValue('sip_error', $unexpectedResult['reason'], 'resposta SIP inesperada deve ser erro explícito');
     assertSameValue(500, $unexpectedResult['code'], 'código SIP inesperado deve ser preservado');
 
+    $rateLimited = new FakeSipProvider('rate-limit');
+    $rateLimitResult = runRegistration($rateLimited);
+    assertSameValue('sip_error', $rateLimitResult['reason'], '429 deve ser falha temporária SIP');
+    assertSameValue(45, $rateLimitResult['retry_after'], 'Retry-After deve ser preservado');
+
     $correlated = new FakeSipProvider('wrong-correlation');
     $correlatedResult = runRegistration($correlated);
     assertTrue($correlatedResult['success'], 'resposta de Call-ID errado não deve roubar a transação correta');
@@ -213,6 +230,24 @@ Coroutine\run(function (): void {
     go(function () use ($providerB, &$distinct): void { $distinct[] = runRegistration($providerB, account('1002')); });
     while (count($distinct) < 2) Coroutine::sleep(0.01);
     assertTrue($distinct[0]['success'] && $distinct[1]['success'], 'contas distintas devem registrar simultaneamente');
+
+    $sharedDeviceA = new FakeSipProvider('valid', 0.02);
+    $sharedDeviceB = new FakeSipProvider('valid', 0.02);
+    $sameAorAccounts = account('shared-aor');
+    $sameAorAccounts['fp'] = 'shared-aor-device-a';
+    $sameAorAccounts['contactIdentityVersion'] = 2;
+    $sameAorAccountB = $sameAorAccounts;
+    $sameAorAccountB['fp'] = 'shared-aor-device-b';
+    $sameAorResults = [];
+    go(function () use ($sharedDeviceA, $sameAorAccounts, &$sameAorResults): void {
+        $sameAorResults[] = runRegistration($sharedDeviceA, $sameAorAccounts);
+    });
+    go(function () use ($sharedDeviceB, $sameAorAccountB, &$sameAorResults): void {
+        $sameAorResults[] = runRegistration($sharedDeviceB, $sameAorAccountB);
+    });
+    while (count($sameAorResults) < 2) Coroutine::sleep(0.01);
+    assertTrue($sameAorResults[0]['success'] && $sameAorResults[1]['success'],
+        'AOR compartilhado com fp distintas deve registrar em paralelo');
 
     $sameUserDomainA = new FakeSipProvider('valid', 0.02);
     $sameUserDomainB = new FakeSipProvider('valid', 0.02);

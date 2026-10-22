@@ -30,13 +30,23 @@ class WebPushHelper
         return count(self::loadSubs()[$accountId] ?? []);
     }
 
-    public static function saveSubscription(string $accountId, array $sub): void
+    public static function saveSubscription(string $accountId, array $sub): bool
     {
         if ($accountId === '' || empty($sub['endpoint'])) {
             cli::pcl('[PUSH:SAVE] ERRO: accountId/endpoint ausente', 'red');
-            return;
+            return false;
         }
-        $hash = hash('sha256', (string)$sub['endpoint']);
+        $endpoint = (string)$sub['endpoint'];
+        $parts = parse_url($endpoint);
+        if (!filter_var($endpoint, FILTER_VALIDATE_URL) || !is_array($parts)
+            || strtolower((string)($parts['scheme'] ?? '')) !== 'https'
+            || empty($parts['host'])
+            || !is_string($sub['keys']['p256dh'] ?? null) || ($sub['keys']['p256dh'] ?? '') === ''
+            || !is_string($sub['keys']['auth'] ?? null) || ($sub['keys']['auth'] ?? '') === '') {
+            cli::pcl('[PUSH:SAVE] ERRO: assinatura inválida', 'red');
+            return false;
+        }
+        $hash = hash('sha256', $endpoint);
         $count = self::mutateSubs(function (array &$data) use ($accountId, $sub, $hash): int {
             $existing = $data[$accountId][$hash] ?? [];
             $data[$accountId][$hash] = [
@@ -47,6 +57,7 @@ class WebPushHelper
             return count($data[$accountId]);
         });
         cli::pcl("[PUSH:SAVE] accountId={$accountId} subscriptions={$count}", 'green');
+        return true;
     }
 
     public static function removeSubscription(string $accountId, string $endpoint): void

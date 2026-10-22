@@ -1,5 +1,13 @@
 # SpechPhone
 
+[![PHP Syntax](https://github.com/spechshop/softphone/actions/workflows/ci.yml/badge.svg?branch=inbound&job=PHP%20Syntax)](https://github.com/spechshop/softphone/actions/workflows/ci.yml?query=branch%3Ainbound)
+[![JavaScript Syntax](https://github.com/spechshop/softphone/actions/workflows/ci.yml/badge.svg?branch=inbound&job=JavaScript%20Syntax)](https://github.com/spechshop/softphone/actions/workflows/ci.yml?query=branch%3Ainbound)
+[![Unit Tests](https://github.com/spechshop/softphone/actions/workflows/ci.yml/badge.svg?branch=inbound&job=Unit%20Tests)](https://github.com/spechshop/softphone/actions/workflows/ci.yml?query=branch%3Ainbound)
+[![SIP Integration](https://github.com/spechshop/softphone/actions/workflows/ci.yml/badge.svg?branch=inbound&job=SIP%20Integration)](https://github.com/spechshop/softphone/actions/workflows/ci.yml?query=branch%3Ainbound)
+[![Regression Tests](https://github.com/spechshop/softphone/actions/workflows/ci.yml/badge.svg?branch=inbound&job=Regression%20Tests)](https://github.com/spechshop/softphone/actions/workflows/ci.yml?query=branch%3Ainbound)
+[![Frontend Tests](https://github.com/spechshop/softphone/actions/workflows/ci.yml/badge.svg?branch=inbound&job=Frontend%20Tests)](https://github.com/spechshop/softphone/actions/workflows/ci.yml?query=branch%3Ainbound)
+[![Security Checks](https://github.com/spechshop/softphone/actions/workflows/ci.yml/badge.svg?branch=inbound&job=Security%20Checks)](https://github.com/spechshop/softphone/actions/workflows/ci.yml?query=branch%3Ainbound)
+
 > 🎧 **Demonstração ao vivo disponível em [phone.spechshop.com](https://phone.spechshop.com)**
 
 Softphone web open-source construído com PHP + Swoole, focado em sinalização SIP, mídia RTP, ponte de mídia em tempo

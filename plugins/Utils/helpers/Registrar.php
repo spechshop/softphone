@@ -12,7 +12,7 @@ class Registrar
     public const REFRESH_THRESHOLD = 300;
     public const TICK_INTERVAL_MS = 30000;
     public const MAX_AUTOMATIC_FAILURES = 3;
-    public const BACKOFF_SECONDS = [60, 120, 300];
+    public const BACKOFF_SECONDS = [60, 120];
     public static ?Table $states = null;
 
     public static function init(): void
@@ -96,6 +96,32 @@ class Registrar
     public static function registerOneDetailed(Server $server, string $fp, array $data, bool $explicit = false): array
     {
         if (self::$states === null) self::init();
+        try {
+            $lockDir = DataPath::dir() . DIRECTORY_SEPARATOR . 'sip-registration-locks';
+            if (!is_dir($lockDir) && !@mkdir($lockDir, 0700, true) && !is_dir($lockDir)) {
+                throw new \RuntimeException('cannot create registration lock directory');
+            }
+            $lock = @fopen($lockDir . DIRECTORY_SEPARATOR . hash('sha256', $fp) . '.lock', 'c');
+            if ($lock === false) throw new \RuntimeException('cannot open registration lock');
+            if (!flock($lock, LOCK_EX | LOCK_NB)) {
+                fclose($lock);
+                return ['success' => false, 'reason' => 'registration_in_progress', 'code' => null];
+            }
+        } catch (\Throwable $e) {
+            return ['success' => false, 'reason' => 'registration_lock_unavailable', 'code' => null,
+                'detail' => $e->getMessage()];
+        }
+        try {
+            return self::registerOneWhileLocked($server, $fp, $data, $explicit);
+        } finally {
+            flock($lock, LOCK_UN);
+            fclose($lock);
+        }
+    }
+
+    /** @return array<string,mixed> */
+    private static function registerOneWhileLocked(Server $server, string $fp, array $data, bool $explicit): array
+    {
         if (!$explicit && !self::automaticAttemptAllowed($fp, $data)) {
             $row = self::$states?->get($fp) ?: [];
             $reason = ($row['status'] ?? '') === 'paused' ? 'retry_suspended' : 'retry_backoff';
@@ -147,7 +173,9 @@ class Registrar
         }
 
         if ($result['reason'] !== 'registration_in_progress') {
-            self::recordFailure($fp, $sipUser, $sipServer, $sipDomain, $data, (string)$result['reason']);
+            self::recordFailure($fp, $sipUser, $sipServer, $sipDomain, $data, (string)$result['reason'],
+                isset($result['retry_after']) ? (int)$result['retry_after'] : null,
+                isset($result['code']) ? (int)$result['code'] : null);
             cli::pcl(
                 "[REGISTRAR] falha {$sipUser}@{$sipServer} (fp:{$fp}) motivo:{$result['reason']}"
                 . ($result['code'] !== null ? " SIP:{$result['code']}" : ''),
@@ -195,6 +223,7 @@ class Registrar
     private static function recordSuccess(string $fp, string $sipUser, string $sipServer, string $sipDomain, array $data): void
     {
         if (self::$states === null) return;
+        self::removeDurablePause($fp);
         $now = time();
         self::$states->set($fp, [
             'fp' => $fp,
@@ -243,15 +272,41 @@ class Registrar
     public static function automaticAttemptAllowed(string $fp, array $data): bool
     {
         $row = self::$states?->get($fp);
+        try {
+            $durablePause = self::readDurablePause($fp);
+        } catch (\Throwable $e) {
+            cli::pcl('[REGISTRAR] Estado de suspensão ilegível; bloqueando nova tentativa: ' . $e->getMessage(), 'red');
+            return false;
+        }
+        $configHash = self::configurationHash($data);
+        $pauseExpired = false;
+        if ($durablePause !== null) {
+            if (hash_equals($durablePause['config_hash'], $configHash)
+                && ($durablePause['expires_at'] === 0 || $durablePause['expires_at'] > time())) {
+                return false;
+            }
+            $pauseExpired = $durablePause['expires_at'] > 0 && $durablePause['expires_at'] <= time();
+            self::removeDurablePause($fp);
+        }
         if (!$row) return true;
-        if (!hash_equals((string)($row['config_hash'] ?? ''), self::configurationHash($data))) {
+        if (!hash_equals((string)($row['config_hash'] ?? ''), $configHash)) {
             return true; // A new configuration should be retried immediately.
         }
-        if (($row['status'] ?? '') === 'paused') return false;
+        if (($row['status'] ?? '') === 'paused') {
+            if (!$pauseExpired) return false;
+            self::$states?->set($fp, [
+                'fp' => $row['fp'], 'sip_user' => $row['sip_user'], 'sip_server' => $row['sip_server'],
+                'sip_domain' => $row['sip_domain'], 'expires_at' => $row['expires_at'],
+                'last_registered_at' => $row['last_registered_at'], 'last_attempt_at' => $row['last_attempt_at'],
+                'status' => 'failed', 'failures' => $row['failures'], 'next_retry_at' => time(),
+                'config_hash' => $row['config_hash'],
+            ]);
+            return true;
+        }
         return (int)($row['next_retry_at'] ?? 0) <= time();
     }
 
-    private static function recordFailure(string $fp, string $sipUser, string $sipServer, string $sipDomain, array $data, string $reason): void
+    private static function recordFailure(string $fp, string $sipUser, string $sipServer, string $sipDomain, array $data, string $reason, ?int $retryAfter = null, ?int $code = null): void
     {
         if (self::$states === null) return;
         $now = time();
@@ -259,9 +314,9 @@ class Registrar
         $sameConfiguration = (string)($current['config_hash'] ?? '') === self::configurationHash($data);
         $failures = ($sameConfiguration ? (int)($current['failures'] ?? 0) : 0) + 1;
         $permanent = in_array($reason, ['authentication_failed', 'unsupported_challenge',
-            'invalid_configuration'], true);
+            'invalid_configuration'], true) || ($reason === 'sip_error' && in_array($code, [400, 404, 405, 410, 416, 484], true));
         $pause = $permanent || $failures >= self::MAX_AUTOMATIC_FAILURES;
-        $backoff = self::BACKOFF_SECONDS[min($failures - 1, count(self::BACKOFF_SECONDS) - 1)];
+        $backoff = $retryAfter ?? self::BACKOFF_SECONDS[min($failures - 1, count(self::BACKOFF_SECONDS) - 1)];
         self::$states->set($fp, [
             'fp' => $fp,
             'sip_user' => $sipUser,
@@ -275,6 +330,12 @@ class Registrar
             'next_retry_at' => $pause ? 0 : $now + $backoff,
             'config_hash' => self::configurationHash($data),
         ]);
+        if ($pause) {
+            // Permanent authentication/configuration failures stay suspended
+            // until configuration changes. Temporary exhaustion expires after
+            // one day, allowing one controlled recovery probe after an outage.
+            self::persistPause($fp, self::configurationHash($data), $permanent ? 0 : $now + 86400);
+        }
         if (CallState::$sipBindings !== null && $sipUser !== '') {
             foreach (CallState::$sipBindings as $bindingKey => $binding) {
                 if ($binding['fp'] === $fp && $binding['sip_user'] === $sipUser) {
@@ -282,5 +343,74 @@ class Registrar
                 }
             }
         }
+    }
+
+    private static function durablePauseFile(): string
+    {
+        return DataPath::file('sip_registration_pauses.json');
+    }
+
+    /** @return array{config_hash:string,expires_at:int}|null */
+    private static function readDurablePause(string $fp): ?array
+    {
+        $path = self::durablePauseFile();
+        if (!is_file($path)) return null;
+        $handle = fopen($path, 'r');
+        if ($handle === false) throw new \RuntimeException('cannot read pause state');
+        try {
+            if (!flock($handle, LOCK_SH)) throw new \RuntimeException('cannot lock pause state');
+            $contents = stream_get_contents($handle);
+            flock($handle, LOCK_UN);
+        } finally { fclose($handle); }
+        try { $entries = json_decode($contents ?: '{}', true, 512, JSON_THROW_ON_ERROR); }
+        catch (\Throwable $e) { throw new \RuntimeException('pause state is corrupt', 0, $e); }
+        $entry = is_array($entries) ? ($entries[$fp] ?? null) : null;
+        return is_array($entry) && isset($entry['config_hash'], $entry['expires_at'])
+            ? ['config_hash' => (string)$entry['config_hash'], 'expires_at' => (int)$entry['expires_at']]
+            : null;
+    }
+
+    private static function persistPause(string $fp, string $configHash, int $expiresAt): void
+    {
+        try {
+            $path = self::durablePauseFile();
+            $handle = fopen($path, 'c+');
+            if ($handle === false || !flock($handle, LOCK_EX)) throw new \RuntimeException('pause lock unavailable');
+            rewind($handle);
+            $entries = json_decode(stream_get_contents($handle) ?: '{}', true, 512, JSON_THROW_ON_ERROR);
+            if (!is_array($entries)) $entries = [];
+            $entries[$fp] = ['config_hash' => $configHash, 'expires_at' => $expiresAt];
+            rewind($handle);
+            ftruncate($handle, 0);
+            fwrite($handle, json_encode($entries, JSON_THROW_ON_ERROR));
+            fflush($handle);
+            @chmod($path, 0600);
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        } catch (\Throwable $e) {
+            cli::pcl('[REGISTRAR] Não foi possível persistir suspensão: ' . $e->getMessage(), 'red');
+            throw $e;
+        }
+    }
+
+    private static function removeDurablePause(string $fp): void
+    {
+        try {
+            $path = self::durablePauseFile();
+            if (!is_file($path)) return;
+            $handle = fopen($path, 'c+');
+            if ($handle === false || !flock($handle, LOCK_EX)) return;
+            rewind($handle);
+            $entries = json_decode(stream_get_contents($handle) ?: '{}', true, 512, JSON_THROW_ON_ERROR);
+            if (is_array($entries) && array_key_exists($fp, $entries)) {
+                unset($entries[$fp]);
+                rewind($handle);
+                ftruncate($handle, 0);
+                fwrite($handle, json_encode($entries, JSON_THROW_ON_ERROR));
+                fflush($handle);
+            }
+            flock($handle, LOCK_UN);
+            fclose($handle);
+        } catch (\Throwable) { /* A stale hash is invalidated on the next check. */ }
     }
 }

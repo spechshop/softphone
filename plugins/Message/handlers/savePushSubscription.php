@@ -32,7 +32,15 @@ class savePushSubscription
             ]));
         }
 
-        $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
+        try {
+            $vault = new \spechphoneVault(\helpers\utils\AccountIdentity::vaultPath(), getenv('SPECH_VAULT_KEY_HEX'));
+        } catch (\Throwable $e) {
+            cli::pcl('[PUSH] Falha ao abrir vault para salvar subscription: ' . get_class($e), 'red');
+            return $socket->push($fd, json_encode([
+                'byToken' => $model['id'] ?? null,
+                'data' => ['success' => false, 'error' => 'Não foi possível validar o dispositivo'],
+            ]));
+        }
         if (!$vault->exists($fp)) {
             return $socket->push($fd, json_encode([
                 'byToken' => $model['id'] ?? null,
@@ -40,7 +48,20 @@ class savePushSubscription
             ]));
         }
 
-        WebPushHelper::saveSubscription($fp, $subscription);
+        try {
+            if (!WebPushHelper::saveSubscription($fp, $subscription)) {
+                return $socket->push($fd, json_encode([
+                    'byToken' => $model['id'] ?? null,
+                    'data' => ['success' => false, 'error' => 'Subscription inválida'],
+                ]));
+            }
+        } catch (\Throwable $e) {
+            cli::pcl('[PUSH] Falha ao persistir subscription: ' . get_class($e), 'red');
+            return $socket->push($fd, json_encode([
+                'byToken' => $model['id'] ?? null,
+                'data' => ['success' => false, 'error' => 'Falha ao salvar subscription'],
+            ]));
+        }
         cli::pcl("[PUSH] Subscription salva — accountId:{$fp}", 'green');
 
         return $socket->push($fd, json_encode([

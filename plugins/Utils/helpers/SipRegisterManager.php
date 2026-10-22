@@ -66,7 +66,8 @@ class SipRegisterManager
         }
 
         $accountKey = hash('sha256', strtolower($endpoint['host']) . ':' . $endpoint['port'] . '|'
-            . strtolower($domain) . '|' . strtolower($username));
+            . strtolower($domain) . '|' . strtolower($username) . '|'
+            . strtolower($accountId));
         if (isset(self::$activeAccounts[$accountKey])) {
             return self::result(false, 'registration_in_progress', null, $startedAt);
         }
@@ -196,7 +197,9 @@ class SipRegisterManager
                     return self::result(false, 'authentication_failed', 403, $startedAt);
                 }
                 if ($lastCode >= 300) {
-                    return self::result(false, 'sip_error', $lastCode, $startedAt);
+                    return self::result(false, 'sip_error', $lastCode, $startedAt, [
+                        'retry_after' => self::retryAfterSeconds($lastResponse),
+                    ]);
                 }
 
                 return self::result(false, 'unexpected_response', $lastCode, $startedAt);
@@ -492,6 +495,15 @@ class SipRegisterManager
     private static function transactionKey(string $callId, int $cseq): string
     {
         return $callId . '|' . $cseq . '|REGISTER';
+    }
+
+    private static function retryAfterSeconds(array $response): ?int
+    {
+        $value = trim((string)($response['headers']['Retry-After'][0] ?? ''));
+        if ($value === '') return null;
+        if (ctype_digit($value)) return min(86400, max(1, (int)$value));
+        $timestamp = strtotime($value);
+        return $timestamp === false ? null : min(86400, max(1, $timestamp - time()));
     }
 
     private static function localIp(): string
